@@ -38,6 +38,7 @@ uint16_t pev_numberOfCableCheckReq;
 uint8_t pev_wasPowerDeliveryRequestedOn;
 uint8_t pev_isBulbOn;
 uint16_t pev_cyclesLightBulbDelay;
+uint16_t EVSEPresentVoltage;
 
 /***local function prototypes *****************************************/
 
@@ -569,7 +570,7 @@ void stateFunctionWaitForPreChargeResponse(void) {
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.PreChargeRes_isUsed) {
         addToTrace("PreCharge aknowledge received.");
-        u = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
+        EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
                   dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
         //addToTrace("EVSEPresentVoltage.Value " + String(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value));
         //addToTrace("EVSEPresentVoltage.Multiplier " + String(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier));
@@ -579,6 +580,7 @@ void stateFunctionWaitForPreChargeResponse(void) {
           /* use the voltage which is reported by the charger to decide about the end of PreCharge */
           //s = "Using EVSEPresentVoltage=" + String(u);
           //addToTrace(s);
+          u = EVSEPresentVoltage;
         #else
           /* use the physically measured inlet voltage to decide about end of PreCharge */
           u = hardwareInterface_getInletVoltage()
@@ -641,7 +643,6 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
 }
 
 void stateFunctionWaitForCurrentDemandResponse(void) {
-  uint16_t u;
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
     addToTrace("In state WaitForCurrentDemandRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
@@ -673,7 +674,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
             #if 0
               u = hardwareInterface_getInletVoltage();
             #else
-              u = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
+              EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
                        dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
             #endif
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");

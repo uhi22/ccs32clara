@@ -118,6 +118,7 @@ void evaluateTcpPacket(void) {
 
 void tcp_connect(void) {
   addToTrace("[TCP] Checkpoint301: connecting");
+  checkpointNumber = 301;
   TcpTransmitPacket[20] = 0x02; /* options: 12 bytes, just copied from the Win10 notebook trace */
   TcpTransmitPacket[21] = 0x04;
   TcpTransmitPacket[22] = 0x05;

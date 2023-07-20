@@ -6,6 +6,7 @@
 
 extern uint8_t evseMac[6];
 extern uint8_t numberOfSoftwareVersionResponses;
+extern uint16_t checkpointNumber;
 
 /* Global Functions */
 

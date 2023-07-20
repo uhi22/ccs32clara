@@ -18,6 +18,7 @@
 #include "qca7000.h"
 #include "tcp.h"
 #include "udpChecksum.h"
+#include "canbus.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

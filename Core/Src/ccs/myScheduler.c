@@ -26,6 +26,7 @@ void task30ms(void) {
   runSdpStateMachine();
   tcp_Mainfunction();
   pevStateMachine_Mainfunction();
+
   //cyclicLcdUpdate();
   sanityCheck("cyclic30ms");
 }
@@ -62,6 +63,7 @@ void task1s(void) {
   if (blStop) {
 	  while (1) { }
   }
+  canbus_Mainfunction();
 }
 
 void initMyScheduler(void) {

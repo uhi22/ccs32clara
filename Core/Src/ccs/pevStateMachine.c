@@ -275,6 +275,7 @@ void stateFunctionConnected(void) {
   // We have a freshly established TCP channel. We start the V2GTP/EXI communication now.
   // We just use the initial request message from the Ioniq. It contains one entry: DIN.
   addToTrace("Checkpoint400: Sending the initial SupportedApplicationProtocolReq");
+  checkpointNumber = 400;
   addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
   hardwareInterface_resetSimulation();
   pev_enterState(PEV_STATE_WaitForSupportedApplicationProtocolResponse);
@@ -298,6 +299,7 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
         addToTrace(strTmp);
         publishStatus("Schema negotiated", "");
         addToTrace("Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
+        checkpointNumber = 403;
         projectExiConnector_prepare_DinExiDocument();
         dinDocEnc.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
         init_dinSessionSetupReqType(&dinDocEnc.V2G_Message.Body.SessionSetupReq);
@@ -343,6 +345,7 @@ void stateFunctionWaitForSessionSetupResponse(void) {
       memcpy(sessionId, dinDocDec.V2G_Message.Header.SessionID.bytes, SESSIONID_LEN);
       sessionIdLen = dinDocDec.V2G_Message.Header.SessionID.bytesLen; /* store the received SessionID, we will need it later. */
       addToTrace("Checkpoint506: The Evse decided for SessionId");
+      checkpointNumber = 506;
       showAsHex(sessionId, sessionIdLen, "");
       publishStatus("Session established", "");
       addToTrace("Will send ServiceDiscoveryReq");
@@ -394,6 +397,7 @@ void stateFunctionWaitForServicePaymentSelectionResponse(void) {
     if (dinDocDec.V2G_Message.Body.ServicePaymentSelectionRes_isUsed) {
       publishStatus("ServPaySel done", "");
       addToTrace("Checkpoint530: Will send ContractAuthenticationReq");
+      checkpointNumber = 530;
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
       init_dinContractAuthenticationReqType(&dinDocEnc.V2G_Message.Body.ContractAuthenticationReq);
@@ -425,6 +429,7 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
         if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished) {             
             publishStatus("Auth finished", "");
             addToTrace("Checkpoint538: Auth is Finished. Will send ChargeParameterDiscoveryReq");
+            checkpointNumber = 538;
             pev_sendChargeParameterDiscoveryReq();
             pev_numberOfChargeParameterDiscoveryReq = 1; // first message
             pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
@@ -468,6 +473,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
         if (dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("ChargeParams discovered", "");
             addToTrace("Checkpoint550: It is Finished. Will change to state C and send CableCheckReq.");
+            checkpointNumber = 550;
             // pull the CP line to state C here:
             hardwareInterface_setStateC();
             pev_sendCableCheckReq();
@@ -614,6 +620,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
         if (pev_wasPowerDeliveryRequestedOn) {
             publishStatus("PwrDelvy ON success", "");
             addToTrace("Checkpoint700: Starting the charging loop with CurrentDemandReq");
+            checkpointNumber = 700;
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
         } else {

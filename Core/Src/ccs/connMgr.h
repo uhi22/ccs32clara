@@ -21,5 +21,5 @@ extern void connMgr_ModemFinderOk(uint8_t numberOfFoundModems);
 extern void connMgr_SlacOk(void);
 extern void connMgr_SdpOk(void);
 extern void connMgr_TcpOk(void);
-extern void connMgr_ApplOk(void);
+extern void connMgr_ApplOk(uint8_t timeout_in_seconds);
 

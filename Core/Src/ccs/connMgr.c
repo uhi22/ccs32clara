@@ -25,6 +25,7 @@ uint16_t connMgr_ConnectionLevel;
 uint16_t connMgr_ConnectionLevelOld;
 uint16_t connMgr_cycles;
 
+#define CONNMGR_CYCLES_PER_SECOND 33 /* 33 cycles per second, because 30ms cycle time */
 #define CONNMGR_TIMER_MAX (5*33) /* 5 seconds until an OkReport is forgotten. */
 #define CONNMGR_TIMER_MAX_10s (10*33) /* 10 seconds until an OkReport is forgotten. */
 #define CONNMGR_TIMER_MAX_15s (15*33) /* 15 seconds until an OkReport is forgotten. */
@@ -110,8 +111,8 @@ void connMgr_TcpOk(void) {
     connMgr_timerTCP = CONNMGR_TIMER_MAX;
 }
 
-void connMgr_ApplOk(void) {
-    connMgr_timerAppl = CONNMGR_TIMER_MAX;
+void connMgr_ApplOk(uint8_t timeout_in_seconds) {
+    connMgr_timerAppl = timeout_in_seconds * CONNMGR_CYCLES_PER_SECOND;
 }
 
 

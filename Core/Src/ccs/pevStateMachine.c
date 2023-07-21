@@ -13,14 +13,20 @@
 #define PEV_STATE_WaitForServicePaymentSelectionResponse 6
 #define PEV_STATE_WaitForContractAuthenticationResponse 7
 #define PEV_STATE_WaitForChargeParameterDiscoveryResponse 8
-#define PEV_STATE_WaitForCableCheckResponse 9
-#define PEV_STATE_WaitForPreChargeResponse 10
-#define PEV_STATE_WaitForPowerDeliveryResponse 11
-#define PEV_STATE_WaitForCurrentDemandResponse 12
-#define PEV_STATE_WaitForWeldingDetectionResponse 13
-#define PEV_STATE_WaitForSessionStopResponse 14
-#define PEV_STATE_ChargingFinished 15
+#define PEV_STATE_WaitForConnectorLock 9
+#define PEV_STATE_WaitForCableCheckResponse 10
+#define PEV_STATE_WaitForPreChargeResponse 11
+#define PEV_STATE_WaitForContactorsClosed 12
+#define PEV_STATE_WaitForPowerDeliveryResponse 13
+#define PEV_STATE_WaitForCurrentDemandResponse 14
+#define PEV_STATE_WaitForWeldingDetectionResponse 15
+#define PEV_STATE_WaitForSessionStopResponse 16
+#define PEV_STATE_ChargingFinished 17
+#define PEV_STATE_UnrecoverableError 88
 #define PEV_STATE_SequenceTimeout 99
+#define PEV_STATE_SafeShutDownWaitForChargerShutdown 111
+#define PEV_STATE_SafeShutDownWaitForContactorsOpen 222
+#define PEV_STATE_End 1000
 
 #define LEN_OF_EVCCID 6 /* The EVCCID is the MAC according to spec. Ioniq uses exactly these 6 byte. */
 
@@ -30,7 +36,7 @@ const uint8_t exiDemoSupportedApplicationProtocolRequestIoniq[]={0x80, 0x00, 0xd
 
 uint16_t pev_cyclesInState;
 uint8_t pev_DelayCycles;
-uint8_t pev_state=PEV_STATE_NotYetInitialized;
+uint16_t pev_state=PEV_STATE_NotYetInitialized;
 uint8_t pev_isUserStopRequest=0;
 uint16_t pev_numberOfContractAuthenticationReq;
 uint16_t pev_numberOfChargeParameterDiscoveryReq;
@@ -43,7 +49,7 @@ uint16_t EVSEPresentVoltage;
 /***local function prototypes *****************************************/
 
 uint8_t pev_isTooLong(void);
-void pev_enterState(uint8_t n);
+void pev_enterState(uint16_t n);
 
 /*** functions ********************************************************/
 
@@ -105,7 +111,7 @@ void routeDecoderInputData(void) {
   #endif
   /* We have something to decode, this is a good sign that the connection is fine.
      Inform the ConnectionManager that everything is fine. */
-  connMgr_ApplOk();
+  connMgr_ApplOk(10);
 }
 
 /********* EXI creation functions ************************/
@@ -167,6 +173,11 @@ void pev_sendCableCheckReq(void) {
       st.EVRESSSOC = hardwareInterface_getSoc(); /* Scaling is 1%. */
     #undef st
     encodeAndTransmit();
+    /* Since the response to the CableCheckRequest may need longer, inform the connection manager to be patient.
+       This makes sure, that the timeout of the state machine comes before the timeout of the connectionManager, so
+       that we enter the safe shutdown sequence as intended.
+       (This is a takeover from https://github.com/uhi22/pyPLC/commit/08af8306c60d57c4c33221a0dbb25919371197f9 ) */
+    connMgr_ApplOk(31);
 }
 
 void pev_sendPreChargeReq(void) {
@@ -475,17 +486,18 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
         // (B) The charger finished to tell the charge parameters.
         if (dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("ChargeParams discovered", "");
-            addToTrace("Checkpoint550: It is Finished. Will change to state C and send CableCheckReq.");
+            addToTrace("Checkpoint550: ChargeParams are discovered.. Will change to state C.");
             checkpointNumber = 550;
             // pull the CP line to state C here:
             hardwareInterface_setStateC();
-            checkpointNumber = 560;
-            pev_sendCableCheckReq();
-            pev_numberOfCableCheckReq = 1; // This is the first request.
-            pev_enterState(PEV_STATE_WaitForCableCheckResponse);
+            addToTrace("Checkpoint555: Locking the connector.");
+            hardwareInterface_triggerConnectorLocking();
+            pev_enterState(PEV_STATE_WaitForConnectorLock);
         } else {
             // Not (yet) finished.
-            if (pev_numberOfChargeParameterDiscoveryReq>=20) { // approx 20 seconds, should be sufficient for the charger to find its parameters...
+            if (pev_numberOfChargeParameterDiscoveryReq>=60) { /* approx 60 seconds, should be sufficient for the charger to find its parameters.
+                ... The ISO allows up to 55s reaction time and 60s timeout for "ongoing". Taken over from
+                    https://github.com/uhi22/pyPLC/commit/01c7c069fd4e7b500aba544ae4cfce6774f7344a */
                 //addToTrace("ChargeParameterDiscovery lasted too long. " + String(pev_numberOfChargeParameterDiscoveryReq) + " Giving up.");
                 addToTrace("ChargeParameterDiscovery lasted too long. Giving up.");
                 pev_enterState(PEV_STATE_SequenceTimeout);
@@ -501,6 +513,19 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
             }
         }
     }
+  }
+  if (pev_isTooLong()) {
+    pev_enterState(PEV_STATE_SequenceTimeout);
+  }
+}
+
+void stateFunctionWaitForConnectorLock(void) {
+  if (hardwareInterface_isConnectorLocked()) {
+    addToTrace("Checkpoint560: Connector Lock confirmed. Will send CableCheckReq.");
+    checkpointNumber = 560;
+    pev_sendCableCheckReq();
+    pev_numberOfCableCheckReq = 1; // This is the first request.
+    pev_enterState(PEV_STATE_WaitForCableCheckResponse);
   }
   if (pev_isTooLong()) {
     pev_enterState(PEV_STATE_SequenceTimeout);
@@ -531,9 +556,11 @@ void stateFunctionWaitForCableCheckResponse(void) {
             addToTrace("Will send PreChargeReq");
             checkpointNumber = 570;
             pev_sendPreChargeReq();
+            connMgr_ApplOk(31); /* PreChargeResponse may need longer. Inform the connection manager to be patient.
+                                (This is a takeover from https://github.com/uhi22/pyPLC/commit/08af8306c60d57c4c33221a0dbb25919371197f9 ) */
             pev_enterState(PEV_STATE_WaitForPreChargeResponse);
         } else {
-            if (pev_numberOfCableCheckReq>30) { // approx 30s should be sufficient for cable check
+            if (pev_numberOfCableCheckReq>60) { /* approx 60s should be sufficient for cable check. The ISO allows up to 55s reaction time and 60s timeout for "ongoing". Taken over from https://github.com/uhi22/pyPLC/commit/01c7c069fd4e7b500aba544ae4cfce6774f7344a */
                 //addToTrace("CableCheck lasted too long. " + String(pev_numberOfCableCheckReq) + " Giving up.");
                 addToTrace("CableCheck lasted too long. Giving up.");
                 pev_enterState(PEV_STATE_SequenceTimeout);
@@ -616,6 +643,33 @@ void stateFunctionWaitForPreChargeResponse(void) {
   }
 }
 
+void stateFunctionWaitForContactorsClosed(void) {
+  uint8_t readyForNextState=0;
+  if (pev_DelayCycles>0) {
+        pev_DelayCycles--;
+        return;
+  }
+  if (isLightBulbDemo) {
+        readyForNextState=1; /* if it's just a bulb demo, we do not wait for contactor, because it is not switched in this moment. */
+  } else {
+        readyForNextState = hardwareInterface_getPowerRelayConfirmation(); /* check if the contactor is closed */
+        if (readyForNextState) {
+            addToTrace("Contactors are confirmed to be closed.");
+            publishStatus("Contactors ON", "");
+        }
+  }
+  if (readyForNextState) {
+        addToTrace("Sending PowerDeliveryReq.");
+        pev_sendPowerDeliveryReq(1); /* 1 is ON */
+        pev_wasPowerDeliveryRequestedOn=1;
+		pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+  }
+  if (pev_isTooLong()) {
+    pev_enterState(PEV_STATE_SequenceTimeout);
+  }
+}
+
+
 void stateFunctionWaitForPowerDeliveryResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
     addToTrace("In state WaitForPowerDeliveryRes, received:");
@@ -633,6 +687,9 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
         } else {
             /* We requested "OFF". So we turn-off the Relay and continue with the Welding detection. */
             publishStatus("PwrDelvry OFF success", "");
+            checkpointNumber = 810;
+            /* set the CP line to B */
+            hardwareInterface_setStateB();
             addToTrace("Turning off the relay and starting the WeldingDetection");
             hardwareInterface_setPowerRelayOff();
             hardwareInterface_setRelay2Off();
@@ -745,7 +802,6 @@ void stateFunctionWaitForSessionStopResponse(void) {
         // Todo: close the TCP connection here.
         // Todo: Unlock the connector lock.
         publishStatus("Stopped normally", "");
-        hardwareInterface_setStateB();
         addToTrace("Charging is finished");
         pev_enterState(PEV_STATE_ChargingFinished);
     }
@@ -756,20 +812,65 @@ void stateFunctionWaitForSessionStopResponse(void) {
 }
 
 void stateFunctionChargingFinished(void) {
-  /* charging is finished. Nothing to do. Just stay here, until we get re-initialized after a new SLAC/SDP. */      
+  /* charging is finished. */
+  /* Finally unlock the connector */
+  addToTrace("Charging successfully finished. Unlocking the connector");
+  hardwareInterface_triggerConnectorUnlocking();
+  pev_enterState(PEV_STATE_End);
 }
 
 void stateFunctionSequenceTimeout(void) {
-  // Here we end, if we run into a timeout in the state machine. This is an error case, and
-  // we should re-initalize and try again to get a communication.
-  // Todo: Maybe we want even inform the pyPlcHomeplug to do a new SLAC.
-  // For the moment, we just re-establish the TCP connection.
+  /* Here we end, if we run into a timeout in the state machine. */
   publishStatus("ERROR Timeout", "");
-  pevStateMachine_ReInit();
+  /* Initiate the safe-shutdown-sequence. */
+  addToTrace("Safe-shutdown-sequence: setting state B");
+  hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
+  pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
+  pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
 }
 
+void stateFunctionUnrecoverableError(void) {
+  /* Here we end, if the EVSE reported an error code, which terminates the charging session. */
+  publishStatus("ERROR reported", "");
+  /* Initiate the safe-shutdown-sequence. */
+  addToTrace("Safe-shutdown-sequence: setting state B");
+  hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
+  pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
+  pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
+}
 
-void pev_enterState(uint8_t n) {
+void stateFunctionSafeShutDownWaitForChargerShutdown(void) {
+  /* wait state, to give the charger the time to stop the current. */
+  if (pev_DelayCycles>0) {
+      pev_DelayCycles--;
+      return;
+  }
+  /* Now the current flow is stopped by the charger. We can safely open the contactors: */
+  addToTrace("Safe-shutdown-sequence: opening contactors");
+  hardwareInterface_setPowerRelayOff();
+  hardwareInterface_setRelay2Off();
+  pev_DelayCycles = 33; /* 33*30ms=1s for opening the contactors */
+  pev_enterState(PEV_STATE_SafeShutDownWaitForContactorsOpen);
+}
+
+void stateFunctionSafeShutDownWaitForContactorsOpen(void) {
+  /* wait state, to give the contactors the time to open. */
+  if (pev_DelayCycles>0) {
+      pev_DelayCycles--;
+      return;
+  }
+  /* Finally, when we have no current and no voltage, unlock the connector */
+  addToTrace("Safe-shutdown-sequence: unlocking the connector");
+  hardwareInterface_triggerConnectorUnlocking();
+  /* This is the end of the safe-shutdown-sequence. */
+  pev_enterState(PEV_STATE_End);
+}
+
+void stateFunctionEnd(void) {
+  /* Just stay here, until we get re-initialized after a new SLAC/SDP. */
+}
+
+void pev_enterState(uint16_t n) {
   sprintf(strTmp, "[PEV] from %d entering %d", pev_state, n);
   addToTrace(strTmp);
   pev_state = n;
@@ -828,14 +929,20 @@ void pev_runFsm(void) {
     case PEV_STATE_WaitForServicePaymentSelectionResponse: stateFunctionWaitForServicePaymentSelectionResponse(); break;
     case PEV_STATE_WaitForContractAuthenticationResponse: stateFunctionWaitForContractAuthenticationResponse(); break;
     case PEV_STATE_WaitForChargeParameterDiscoveryResponse: stateFunctionWaitForChargeParameterDiscoveryResponse(); break;
+    case PEV_STATE_WaitForConnectorLock: stateFunctionWaitForConnectorLock(); break;
     case PEV_STATE_WaitForCableCheckResponse: stateFunctionWaitForCableCheckResponse(); break;
     case PEV_STATE_WaitForPreChargeResponse: stateFunctionWaitForPreChargeResponse(); break;
+    case PEV_STATE_WaitForContactorsClosed: stateFunctionWaitForContactorsClosed(); break;
     case PEV_STATE_WaitForPowerDeliveryResponse: stateFunctionWaitForPowerDeliveryResponse(); break;
     case PEV_STATE_WaitForCurrentDemandResponse: stateFunctionWaitForCurrentDemandResponse(); break;
     case PEV_STATE_WaitForWeldingDetectionResponse: stateFunctionWaitForWeldingDetectionResponse(); break;
     case PEV_STATE_WaitForSessionStopResponse: stateFunctionWaitForSessionStopResponse(); break;
     case PEV_STATE_ChargingFinished: stateFunctionChargingFinished(); break;
+    case PEV_STATE_UnrecoverableError: stateFunctionUnrecoverableError(); break;
     case PEV_STATE_SequenceTimeout: stateFunctionSequenceTimeout(); break;
+    case PEV_STATE_SafeShutDownWaitForChargerShutdown: stateFunctionSafeShutDownWaitForChargerShutdown(); break;
+    case PEV_STATE_SafeShutDownWaitForContactorsOpen: stateFunctionSafeShutDownWaitForContactorsOpen(); break;
+    case PEV_STATE_End: stateFunctionEnd(); break;
  }
 }
 

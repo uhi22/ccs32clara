@@ -84,6 +84,24 @@ void hardwareInterface_setStateC(void) {
   //digitalWrite(PIN_STATE_C, HIGH);
 }
 
+void hardwareInterface_triggerConnectorLocking(void) {
+  /* todo */
+}
+
+void hardwareInterface_triggerConnectorUnlocking(void) {
+  /* todo */
+}
+
+uint8_t hardwareInterface_isConnectorLocked(void) {
+  /* todo */
+  return 1;
+}
+
+uint8_t hardwareInterface_getPowerRelayConfirmation(void) {
+ /* todo */
+ return 1;
+}
+
 void hardwareInterface_resetSimulation(void) {
     hwIf_simulatedSoc_0p1 = 200; /* 20% */
 }

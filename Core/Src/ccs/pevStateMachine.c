@@ -300,7 +300,7 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
         addToTrace(strTmp);
         publishStatus("Schema negotiated", "");
         addToTrace("Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
-        checkpointNumber = 403;
+        checkpointNumber = 500;
         projectExiConnector_prepare_DinExiDocument();
         dinDocEnc.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
         init_dinSessionSetupReqType(&dinDocEnc.V2G_Message.Body.SessionSetupReq);
@@ -353,6 +353,7 @@ void stateFunctionWaitForSessionSetupResponse(void) {
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq_isUsed = 1u;
       init_dinServiceDiscoveryReqType(&dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq);
+      checkpointNumber = 510;
       encodeAndTransmit();
       pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
     }
@@ -379,6 +380,7 @@ void stateFunctionWaitForServiceDiscoveryResponse(void) {
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedPaymentOption = dinpaymentOptionType_ExternalPayment; /* not paying per car */
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */ 
+      checkpointNumber = 520;
       encodeAndTransmit();
       pev_enterState(PEV_STATE_WaitForServicePaymentSelectionResponse);
     }
@@ -429,8 +431,8 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
         // Or, the authorization is finished. This is shown by EVSEProcessing=Finished.
         if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished) {             
             publishStatus("Auth finished", "");
-            addToTrace("Checkpoint538: Auth is Finished. Will send ChargeParameterDiscoveryReq");
-            checkpointNumber = 538;
+            addToTrace("Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
+            checkpointNumber = 540;
             pev_sendChargeParameterDiscoveryReq();
             pev_numberOfChargeParameterDiscoveryReq = 1; // first message
             pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
@@ -477,6 +479,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
             checkpointNumber = 550;
             // pull the CP line to state C here:
             hardwareInterface_setStateC();
+            checkpointNumber = 560;
             pev_sendCableCheckReq();
             pev_numberOfCableCheckReq = 1; // This is the first request.
             pev_enterState(PEV_STATE_WaitForCableCheckResponse);
@@ -526,6 +529,7 @@ void stateFunctionWaitForCableCheckResponse(void) {
             publishStatus("CbleChck done", "");
             addToTrace("The EVSE says that the CableCheck is finished and ok.");
             addToTrace("Will send PreChargeReq");
+            checkpointNumber = 570;
             pev_sendPreChargeReq();
             pev_enterState(PEV_STATE_WaitForPreChargeResponse);
         } else {
@@ -596,6 +600,7 @@ void stateFunctionWaitForPreChargeResponse(void) {
                 hardwareInterface_setPowerRelayOn();
             }
             pev_wasPowerDeliveryRequestedOn=1;
+            checkpointNumber = 600;
             pev_sendPowerDeliveryReq(1); /* 1 is ON */
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
         } else {
@@ -632,6 +637,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
             hardwareInterface_setPowerRelayOff();
             hardwareInterface_setRelay2Off();
             pev_isBulbOn = 0;
+            checkpointNumber = 850;
             pev_sendWeldingDetectionReq();
             pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
         }
@@ -666,6 +672,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
                 addToTrace("User requested stop. Sending PowerDeliveryReq Stop.");
             }
             pev_wasPowerDeliveryRequestedOn=0;
+            checkpointNumber = 800;
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
         } else {
@@ -678,6 +685,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
                        dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
             #endif
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
+            checkpointNumber = 710;
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
         }
@@ -715,6 +723,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void) {
         dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
         init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
         /* no other fields are manatory */      
+        checkpointNumber = 900;
         encodeAndTransmit();
         pev_enterState(PEV_STATE_WaitForSessionStopResponse);
     }

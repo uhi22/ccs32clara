@@ -270,6 +270,7 @@ void evaluateAttenCharInd(void) {
             //addToTrace("[PEVSLAC] number of sounds reported by the EVSE (should be 10): " + str(AttenCharIndNumberOfSounds)) 
             composeAttenCharRsp();
             addToTrace("[PEVSLAC] transmitting ATTEN_CHAR.RSP...");
+            checkpointNumber = 140;
             myEthTransmit();               
             pevSequenceState=STATE_ATTEN_CHAR_IND_RECEIVED; // enter next state. Will be handled in the cyclic runSlacSequencer
 		    }
@@ -661,6 +662,7 @@ void runSlacSequencer(void) {
                 remainingNumberOfSounds-=1;
                 composeNmbcSoundInd();
                 addToTrace("[PEVSLAC] transmitting MNBC_SOUND.IND..."); // original from ioniq is 40ms after the last START_ATTEN_CHAR.IND
+                checkpointNumber = 104;
                 myEthTransmit();
                 if (remainingNumberOfSounds==0) {
                     slac_enterState(STATE_WAIT_FOR_ATTEN_CHAR_IND); // move fast to the next state, so that a fast response is catched in the correct state

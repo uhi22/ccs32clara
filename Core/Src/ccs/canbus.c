@@ -88,7 +88,7 @@ void canbus_Init(void) {
 	HAL_CAN_Start(&hcan);
 }
 
-void canbus_Mainfunction(void) {
+void canbus_Mainfunction200ms(void) {
     canbus_demoTransmit();
     canbus_demoTransmit568();
 }

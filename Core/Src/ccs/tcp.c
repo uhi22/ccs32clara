@@ -85,6 +85,7 @@ void evaluateTcpPacket(void) {
     if (tcpState == TCP_STATE_SYN_SENT) {
       TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
       TcpAckNr = remoteSeqNr+1; /* The ACK number of our next transmit packet is one more than the received seq number. */
+      checkpointNumber = 303;
       tcpState = TCP_STATE_ESTABLISHED;
       tcp_sendFirstAck();
       connMgr_TcpOk();

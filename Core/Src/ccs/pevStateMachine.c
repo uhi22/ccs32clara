@@ -824,6 +824,7 @@ void stateFunctionSequenceTimeout(void) {
   publishStatus("ERROR Timeout", "");
   /* Initiate the safe-shutdown-sequence. */
   addToTrace("Safe-shutdown-sequence: setting state B");
+  checkpointNumber = 1100;
   hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
   pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
   pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
@@ -834,6 +835,7 @@ void stateFunctionUnrecoverableError(void) {
   publishStatus("ERROR reported", "");
   /* Initiate the safe-shutdown-sequence. */
   addToTrace("Safe-shutdown-sequence: setting state B");
+  checkpointNumber = 1200;
   hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
   pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
   pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
@@ -847,6 +849,7 @@ void stateFunctionSafeShutDownWaitForChargerShutdown(void) {
   }
   /* Now the current flow is stopped by the charger. We can safely open the contactors: */
   addToTrace("Safe-shutdown-sequence: opening contactors");
+  checkpointNumber = 1300;
   hardwareInterface_setPowerRelayOff();
   hardwareInterface_setRelay2Off();
   pev_DelayCycles = 33; /* 33*30ms=1s for opening the contactors */
@@ -860,6 +863,7 @@ void stateFunctionSafeShutDownWaitForContactorsOpen(void) {
       return;
   }
   /* Finally, when we have no current and no voltage, unlock the connector */
+  checkpointNumber = 1400;
   addToTrace("Safe-shutdown-sequence: unlocking the connector");
   hardwareInterface_triggerConnectorUnlocking();
   /* This is the end of the safe-shutdown-sequence. */

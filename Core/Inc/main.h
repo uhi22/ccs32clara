@@ -57,6 +57,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ADC_U_HVDC_Pin GPIO_PIN_3
+#define ADC_U_HVDC_GPIO_Port GPIOC
+#define OUT_STATE_C_CONTROL_Pin GPIO_PIN_4
+#define OUT_STATE_C_CONTROL_GPIO_Port GPIOB
+#define OUT_CONTACTOR_CONTROL1_Pin GPIO_PIN_5
+#define OUT_CONTACTOR_CONTROL1_GPIO_Port GPIOB
+#define OUT_CONTACTOR_CONTROL2_Pin GPIO_PIN_6
+#define OUT_CONTACTOR_CONTROL2_GPIO_Port GPIOB
+#define OUT_LED_ALIVE_Pin GPIO_PIN_7
+#define OUT_LED_ALIVE_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

@@ -54,34 +54,27 @@ uint8_t hardwareInterface_getIsAccuFull(void) {
 }
 
 void hardwareInterface_setPowerRelayOn(void) {
-  //digitalWrite(PIN_POWER_RELAIS, LOW); /* relais is low-active */
-	/*
-		    for (i=0; i<5; i++) {
-		     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 1);
-		     HAL_Delay(100);
-		     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 0);
-		     HAL_Delay(100);
-		    }
-	*/
-
+	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL1_GPIO_Port, OUT_CONTACTOR_CONTROL1_Pin, 1);
 }
 
 void hardwareInterface_setPowerRelayOff(void) {
-  //digitalWrite(PIN_POWER_RELAIS, HIGH); /* relais is low-active */
+	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL1_GPIO_Port, OUT_CONTACTOR_CONTROL1_Pin, 0);
 }
 
 void hardwareInterface_setRelay2On(void) {
+	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL2_GPIO_Port, OUT_CONTACTOR_CONTROL2_Pin, 1);
 }
 
 void hardwareInterface_setRelay2Off(void) {
+	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL2_GPIO_Port, OUT_CONTACTOR_CONTROL2_Pin, 0);
 }
 
 void hardwareInterface_setStateB(void) {
-  //digitalWrite(PIN_STATE_C, LOW);
+	HAL_GPIO_WritePin(OUT_STATE_C_CONTROL_GPIO_Port, OUT_STATE_C_CONTROL_Pin, 0);
 }
 
 void hardwareInterface_setStateC(void) {
-  //digitalWrite(PIN_STATE_C, HIGH);
+	HAL_GPIO_WritePin(OUT_STATE_C_CONTROL_GPIO_Port, OUT_STATE_C_CONTROL_Pin, 1);
 }
 
 void hardwareInterface_triggerConnectorLocking(void) {

@@ -26,4 +26,6 @@ extern int16_t hardwareInterface_getAccuVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetCurrent(void);
 
+extern void hardwareInterface_cyclic(void);
+
 

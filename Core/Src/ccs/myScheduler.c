@@ -29,6 +29,7 @@ void task30ms(void) {
   pevStateMachine_Mainfunction();
 
   //cyclicLcdUpdate();
+  hardwareInterface_cyclic();
   sanityCheck("cyclic30ms");
 }
 

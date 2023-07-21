@@ -77,8 +77,8 @@ void canbus_demoTransmit568(void) {
    sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
    addToTrace(strTmp);
   } else {
-   sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
-   addToTrace(strTmp);
+   //sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
+   //addToTrace(strTmp);
   }
 
 }

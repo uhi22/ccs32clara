@@ -68,7 +68,9 @@
 /* other derivates may have other parameters (e.g. 0.7V) */
 
 float fCpuTemperature = 0.0;
+int16_t uCcsInlet_V = 0;
 uint16_t rawAdValues[MYADC_NUMBER_OF_CHANNELS];
+uint8_t myadc_cycleDivider;
 
 void myAdc_SelectChannel_6(void) {
   /** Configure Regular Channel
@@ -162,6 +164,32 @@ void myAdc_measureTemperature(void) {
   fCpuTemperature = (((3.3*myAdValue)/4095 - V25)/Avg_Slope)+25;
 }
 
+
+void myAdc_calculateDcVoltage(void) {
+	int32_t tmp;
+	/* In idle case (0V input), the muehlpower board provides 1.390V.
+	 * This is divided by 47k and 22k, which results in
+	 * 1.390V * 22k / (22k+47k) = 0.443V
+	 * With a reference voltage of 3.3V and 12 bit resolution, the AD value
+	 * for this case is 4096 * 0.443V / 3.3V = 550.
+	 * With the NUCLEO F303 board we measure ~495.
+	 *
+	 * In https://openinverter.org/forum/viewtopic.php?p=24613#p24613 we find
+	 *   1.42V for 0V HV
+	 *   4.8V for 500V HV
+	 * This would be a scaling factor of 3.38V/500V. After dividing with 47k and 22k, we
+	 * get 1,077V/500V, and with the ADC with 3.3V and 12 bit this is
+	 * 1338 digits / 500V. This is 373mV per digit.
+	 */
+    #define DC_LSB_FOR_ZERO_DC_INPUT 495
+    #define DC_MILLIVOLT_PER_LSB 373
+	tmp = rawAdValues[3];
+	tmp -= DC_LSB_FOR_ZERO_DC_INPUT; /* The ADC value for U_HV=0V */
+    tmp *= DC_MILLIVOLT_PER_LSB;
+    tmp /= 1000; /* millivolt to volt */
+    uCcsInlet_V = tmp;
+}
+
 void myAdc_cyclic(void) {
   /* read all AD channels and store the result in global variables */
   uint8_t i;
@@ -169,6 +197,20 @@ void myAdc_cyclic(void) {
     rawAdValues[i] = myAdc_analogRead(i);
   }
   myAdc_measureTemperature();
+  myAdc_calculateDcVoltage();
+  myadc_cycleDivider++;
+  if (myadc_cycleDivider>=33) {
+	  myadc_cycleDivider = 0;
+	  sprintf(strTmp, "raw AD %d %d %d %d %d, uInlet %d V",
+				rawAdValues[0],
+				rawAdValues[1],
+				rawAdValues[2],
+				rawAdValues[3],
+				rawAdValues[4],
+				uCcsInlet_V
+				);
+	  addToTrace(strTmp);
+  }
 }
 
 void myAdc_demo(void) {

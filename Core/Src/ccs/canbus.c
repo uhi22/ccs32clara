@@ -45,11 +45,11 @@ void canbus_demoTransmit(void) {
   if (rc != HAL_OK)
   {
    // Transmit did not work -> Error_Handler();
-   sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
-   addToTrace(strTmp);
+   //sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
+   //addToTrace(strTmp);
   } else {
-   sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
-   addToTrace(strTmp);
+   //sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
+   //addToTrace(strTmp);
   }
 
 }
@@ -63,8 +63,8 @@ void canbus_demoTransmit568(void) {
 
   TxData[0] = (uint8_t)(EVSEPresentVoltage>>8);
   TxData[1] = (uint8_t)(EVSEPresentVoltage);
-  TxData[2] = 0;
-  TxData[3] = 0;
+  TxData[2] = (uint8_t)(uCcsInlet_V>>8);
+  TxData[3] = (uint8_t)(uCcsInlet_V);
   TxData[4] = 0;
   TxData[5] = 0;
   TxData[6] = 0;
@@ -74,8 +74,8 @@ void canbus_demoTransmit568(void) {
   if (rc != HAL_OK)
   {
    // Transmit did not work -> Error_Handler();
-   sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
-   addToTrace(strTmp);
+   //sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
+   //addToTrace(strTmp);
   } else {
    //sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
    //addToTrace(strTmp);

@@ -11,6 +11,7 @@ extern ADC_ChannelConfTypeDef sConfig; /* The ADC config structure, used by the 
 
 extern uint16_t rawAdValues[MYADC_NUMBER_OF_CHANNELS];
 extern float fCpuTemperature;
+extern int16_t uCcsInlet_V;
 
 /* Global Functions */
 

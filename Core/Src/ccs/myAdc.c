@@ -68,7 +68,7 @@
 /* other derivates may have other parameters (e.g. 0.7V) */
 
 float fCpuTemperature = 0.0;
-uint16_t rawAdValues[5];
+uint16_t rawAdValues[MYADC_NUMBER_OF_CHANNELS];
 
 void myAdc_SelectChannel_6(void) {
   /** Configure Regular Channel
@@ -160,6 +160,15 @@ void myAdc_measureTemperature(void) {
   HAL_ADC_Stop(&hadc1);
 
   fCpuTemperature = (((3.3*myAdValue)/4095 - V25)/Avg_Slope)+25;
+}
+
+void myAdc_cyclic(void) {
+  /* read all AD channels and store the result in global variables */
+  uint8_t i;
+  for (i=0; i<5; i++) {
+    rawAdValues[i] = myAdc_analogRead(i);
+  }
+  myAdc_measureTemperature();
 }
 
 void myAdc_demo(void) {

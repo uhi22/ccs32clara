@@ -19,8 +19,7 @@
 #include "tcp.h"
 #include "udpChecksum.h"
 #include "canbus.h"
-
-extern volatile uint16_t adc_dma_result[8];
+#include "myAdc.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

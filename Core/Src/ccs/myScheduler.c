@@ -30,6 +30,7 @@ void task30ms(void) {
 
   //cyclicLcdUpdate();
   hardwareInterface_cyclic();
+  myAdc_demo();
   sanityCheck("cyclic30ms");
 }
 

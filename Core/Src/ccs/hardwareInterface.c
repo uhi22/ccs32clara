@@ -101,7 +101,7 @@ void hardwareInterface_resetSimulation(void) {
 
 
 void hardwareInterface_cyclic(void) {
-	snprintf(strTmp, 100, "CH_1: %d, CH_2: %d, CH_3: %d, CH_4: %d, CH_5: %d",
-			adc_dma_result[0], adc_dma_result[1], adc_dma_result[2], adc_dma_result[3], adc_dma_result[4]);
-	addToTrace(strTmp);
+	//snprintf(strTmp, 100, "CH_1: %d, CH_2: %d, CH_3: %d, CH_4: %d, CH_5: %d",
+	//		adc_dma_result[0], adc_dma_result[1], adc_dma_result[2], adc_dma_result[3], adc_dma_result[4]);
+	//addToTrace(strTmp);
 }

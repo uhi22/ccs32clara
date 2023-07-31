@@ -1,7 +1,9 @@
 # Eclipse
 .metadata
 .settings
-[Rr]elease
-[Dd]ebug
 *.launch
 *.bak
+*.cyclo
+*.d
+*.o
+*.su

@@ -17,6 +17,7 @@ extern int16_t uCcsInlet_V;
 
 extern uint16_t myAdc_analogRead(uint8_t channel);
 extern void myAdc_demo(void);
+extern void myAdc_calibrate(void);
 extern void myAdc_cyclic(void);
 
 

@@ -22,6 +22,7 @@ PA11 = CAN_RX = MCP2551.4
 CAN_TxHeaderTypeDef   TxHeader;
 uint8_t               TxData[8];
 uint32_t              TxMailbox;
+uint8_t canbus_divider200ms_to_1s;
 
 void canbus_demoTransmit(void) {
   long int rc;
@@ -37,9 +38,9 @@ void canbus_demoTransmit(void) {
   TxData[2] = (uint8_t)(uptime_s);
   TxData[3] = (uint8_t)(checkpointNumber>>8);
   TxData[4] = (uint8_t)(checkpointNumber);
-  TxData[5] = 5;
-  TxData[6] = 0xAF;
-  TxData[7] = 0xFE;
+  TxData[5] = 0xFF;
+  TxData[6] = 0xFF;
+  TxData[7] = 0xFF;
   
   rc = HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
   if (rc != HAL_OK)
@@ -84,6 +85,37 @@ void canbus_demoTransmit568(void) {
 }
 
 
+void canbus_demoTransmit569(void) {
+  /* Temperature signals */
+  long int rc;
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.StdId = 0x569;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+
+  TxData[0] = temperatureCpu_M40;
+  TxData[1] = temperatureChannel_1_M40;
+  TxData[2] = temperatureChannel_2_M40;
+  TxData[3] = temperatureChannel_3_M40;
+  TxData[4] = 0;
+  TxData[5] = 0;
+  TxData[6] = 0;
+  TxData[7] = 0;
+
+  rc = HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
+  if (rc != HAL_OK)
+  {
+   // Transmit did not work -> Error_Handler();
+   //sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
+   //addToTrace(strTmp);
+  } else {
+   //sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
+   //addToTrace(strTmp);
+  }
+
+}
+
+
 void canbus_Init(void) {
 	HAL_CAN_Start(&hcan);
 }
@@ -91,4 +123,9 @@ void canbus_Init(void) {
 void canbus_Mainfunction200ms(void) {
     canbus_demoTransmit();
     canbus_demoTransmit568();
+    canbus_divider200ms_to_1s++;
+    if (canbus_divider200ms_to_1s >= 5) {
+    	canbus_divider200ms_to_1s=0;
+        canbus_demoTransmit569(); /* send temperatures in the slow 1s interval */
+    }
 }

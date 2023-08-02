@@ -63,7 +63,7 @@ main-build: ccs32claraF103.elf secondary-outputs
 
 # Tool invocations
 ccs32claraF103.elf ccs32claraF103.map: $(OBJS) $(USER_OBJS) C:\UwesTechnik\ccs32clara\board_STM32F103\STM32F103RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ccs32claraF103.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\UwesTechnik\ccs32clara\board_STM32F103\STM32F103RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ccs32claraF103.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "ccs32claraF103.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\UwesTechnik\ccs32clara\board_STM32F103\STM32F103RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ccs32claraF103.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

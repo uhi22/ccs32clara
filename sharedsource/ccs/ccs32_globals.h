@@ -20,6 +20,7 @@
 #include "udpChecksum.h"
 #include "canbus.h"
 #include "myAdc.h"
+#include "temperatures.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

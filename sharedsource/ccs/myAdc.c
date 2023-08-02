@@ -48,6 +48,7 @@
       a lot of code for such a simple thing.
       Runtime measured: 138µs for 5 channels, means 28µs per channel.
          With prescaler ADC_CLOCK_SYNC_PCLK_DIV4 and sampling time ADC_SAMPLETIME_7CYCLES_5.
+         (later changed to ADC_SAMPLETIME_71CYCLES_5)
       Running a higher clock or shorter sampling seems to make the measurements wrong.
 
       Reference for the concept: https://www.youtube.com/watch?v=5l-b6lsubBE
@@ -63,11 +64,19 @@
  * AvgSlope 4.0 to 4.6 mV/K
  * V25 1.34V to 1.52V at 25°C
  */
-  #define Avg_Slope 0.0043 /* volts per Kelvin */
-  #define V25 1.43 /* volts at 25°C */
+  //#define Avg_Slope 0.0043 /* volts per Kelvin */
+  //#define V25 1.43 /* volts at 25°C */
 /* other derivates may have other parameters (e.g. 0.7V) */
+#ifdef CONTROLLER_TYPE_STM32F103
+  /* https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+   * https://www.st.com/resource/en/datasheet/stm32f103RE.pdf
+   */
+  #define Avg_Slope 4300 /* microvolts per Kelvin */
+  #define V25 1430 /* millivolts at 25°C */
+  #include "stm32f1xx_ll_adc.h"
+#endif
 
-float fCpuTemperature = 0.0;
+
 int16_t uCcsInlet_V = 0;
 uint16_t rawAdValues[MYADC_NUMBER_OF_CHANNELS];
 uint8_t myadc_cycleDivider;
@@ -79,14 +88,14 @@ void myAdc_SelectChannel_Temp1(void) {
   sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_71CYCLES_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
 #else
   /* The F103 has other attributes of the ADC and other channel mapping */
   sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_71CYCLES_5;
 #endif
 
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -173,7 +182,7 @@ uint16_t myAdc_analogRead(uint8_t channel) {
   return myAdValue;
 }
 
-void myAdc_measureTemperature(void) {
+void myAdc_measureCpuTemperature(void) {
   uint16_t myAdValue;
   myAdc_SelectChannel_TEMP(); /* The own function to select a channel */
   HAL_ADC_Start(&hadc1);
@@ -181,18 +190,27 @@ void myAdc_measureTemperature(void) {
   myAdValue = HAL_ADC_GetValue(&hadc1);
   HAL_ADC_Stop(&hadc1);
 
-  fCpuTemperature = (((3.3*myAdValue)/4095 - V25)/Avg_Slope)+25;
+  //fCpuTemperature = (((3.3*myAdValue)/4095 - V25)/Avg_Slope)+25;
+  #ifdef CONTROLLER_TYPE_STM32F103
+  fCpuTemperature_Celsius = __LL_ADC_CALC_TEMPERATURE_TYP_PARAMS(
+		  Avg_Slope,
+		  V25,
+		  25,
+		  3300 /* mV reference voltage */,
+		  myAdValue,
+		  LL_ADC_RESOLUTION_12B);
+  #endif
 }
 
 
 void myAdc_calculateDcVoltage(void) {
 	int32_t tmp;
-	/* In idle case (0V input), the muehlpower board provides 1.390V.
+	/* In idle case (0V input), the muehlpower board provides 1.403V.
 	 * This is divided by 47k and 22k, which results in
-	 * 1.390V * 22k / (22k+47k) = 0.443V
-	 * With a reference voltage of 3.3V and 12 bit resolution, the AD value
-	 * for this case is 4096 * 0.443V / 3.3V = 550.
-	 * With the NUCLEO F303 board we measure ~495.
+	 * 1.403V * 22k / (22k+47k) = 0.447V
+	 * With a reference voltage of 3.31V and 12 bit resolution, the AD value
+	 * for this case is 4096 * 0.447V / 3.31V = 553 digits.
+	 * With the foccci board we measure ~551.
 	 *
 	 * In https://openinverter.org/forum/viewtopic.php?p=24613#p24613 we find
 	 *   1.42V for 0V HV
@@ -201,7 +219,7 @@ void myAdc_calculateDcVoltage(void) {
 	 * get 1,077V/500V, and with the ADC with 3.3V and 12 bit this is
 	 * 1338 digits / 500V. This is 373mV per digit.
 	 */
-    #define DC_LSB_FOR_ZERO_DC_INPUT 495
+    #define DC_LSB_FOR_ZERO_DC_INPUT 552
     #define DC_MILLIVOLT_PER_LSB 373
 	tmp = rawAdValues[3];
 	tmp -= DC_LSB_FOR_ZERO_DC_INPUT; /* The ADC value for U_HV=0V */
@@ -210,24 +228,44 @@ void myAdc_calculateDcVoltage(void) {
     uCcsInlet_V = tmp;
 }
 
+void myAdc_calibrate(void) {
+	/* https://www.mikrocontroller.net/topic/390110
+	 * The calibration must be called BEFORE HAL_ADC_Start() or after _Stop.
+	 * Since we start and stop the ADC with each sample, this is fulfilled
+	 * by calling the calibration once during startup.
+	 *
+	 * The
+	 *    https://community.st.com/t5/embedded-software-mcus/how-to-calibrate-the-adcs-on-stm32-using-the-hal-library/td-p/441795
+	 * refers to application note AN2834.
+	 * https://www.st.com/resource/en/application_note/an2834-how-to-get-the-best-adc-accuracy-in-stm32-microcontrollers-stmicroelectronics.pdf
+	 *
+	 */
+	HAL_ADCEx_Calibration_Start(&hadc1);
+}
+
 void myAdc_cyclic(void) {
   /* read all AD channels and store the result in global variables */
   uint8_t i;
   for (i=0; i<5; i++) {
     rawAdValues[i] = myAdc_analogRead(i);
   }
-  myAdc_measureTemperature();
+  myAdc_measureCpuTemperature();
   myAdc_calculateDcVoltage();
+  temperatures_calculateTemperatures();
   myadc_cycleDivider++;
-  if (myadc_cycleDivider>=33) {
+  if (myadc_cycleDivider>=2) {
 	  myadc_cycleDivider = 0;
-	  sprintf(strTmp, "raw AD %d %d %d %d %d, uInlet %d V",
+	  sprintf(strTmp, "raw AD %d %d %d %d %d, uInlet %d V, temps %3.0f %3.0f %3.0f celsius, CPU %3.0f celsius",
 				rawAdValues[0],
 				rawAdValues[1],
 				rawAdValues[2],
 				rawAdValues[3],
 				rawAdValues[4],
-				uCcsInlet_V
+				uCcsInlet_V,
+				temperatureChannel_1_celsius,
+				temperatureChannel_2_celsius,
+				temperatureChannel_3_celsius,
+				fCpuTemperature_Celsius
 				);
 	  addToTrace(strTmp);
   }
@@ -258,7 +296,7 @@ void myAdc_demo(void) {
 			);
     addToTrace(strTmp);
 
-    myAdc_measureTemperature();
+    myAdc_measureCpuTemperature();
     sprintf(strTmp, "CPU temperature %f", fCpuTemperature);
     addToTrace(strTmp);
 }

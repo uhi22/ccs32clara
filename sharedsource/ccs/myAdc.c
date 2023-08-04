@@ -253,7 +253,7 @@ void myAdc_cyclic(void) {
   myAdc_calculateDcVoltage();
   temperatures_calculateTemperatures();
   myadc_cycleDivider++;
-  if (myadc_cycleDivider>=2) {
+  if (myadc_cycleDivider>=33) {
 	  myadc_cycleDivider = 0;
 	  sprintf(strTmp, "raw AD %d %d %d %d %d, uInlet %d V, temps %3.0f %3.0f %3.0f celsius, CPU %3.0f celsius",
 				rawAdValues[0],

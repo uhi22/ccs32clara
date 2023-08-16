@@ -102,10 +102,30 @@ void hardwareInterface_resetSimulation(void) {
 }
 
 
+void hardwareInterface_measureCpPwm(void) {
+	/* We want to measure the PWM ratio on the CP pin.
+	 * But the F103's input capture does not support capturing
+	 * both edges, only either rising or falling edge.
+	 * On https://community.st.com/t5/stm32-mcu-products/stm32f103rb-timers-input-capture-both-edges/m-p/516376/highlight/true#M188076
+	 * they say, that it is possible to configure two input capture channels
+	 * for one single pin, so we can use one for rising and one for falling edge.
+	 *
+	 * The PWM measuring feature is explained in the STM32F103 reference manual
+	 * https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+	 * in chapter 15.3.6 PWM input mode.
+	 */
+
+	/* PWM is on PA15
+	 *
+	 */
+}
+
 void hardwareInterface_cyclic(void) {
     /*Assign the new dutyCycle count to the capture compare register.*/
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, hwIf_pwmLock1_64k);
     hwIf_pwmLock1_64k+=10;
+
+    hardwareInterface_measureCpPwm();
 }
 
 void hardwareInterface_init(void) {

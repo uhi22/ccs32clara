@@ -3,6 +3,8 @@
 
 #include "ccs32_globals.h"
 
+uint16_t hwIf_pwmLock1_64k;
+
 void hardwareInterface_showOnDisplay(char* s1, char* s2, char* s3) {
 
 }
@@ -101,5 +103,19 @@ void hardwareInterface_resetSimulation(void) {
 
 
 void hardwareInterface_cyclic(void) {
+    /*Assign the new dutyCycle count to the capture compare register.*/
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, hwIf_pwmLock1_64k);
+    hwIf_pwmLock1_64k+=10;
+}
 
+void hardwareInterface_init(void) {
+	/* TIM3 configuration:
+	 *  - clocked with 64MHz
+	 *  - prescaler 8, which leads to division by 9, leads to 7.11MHz
+	 *  - 65536 counter, leads to 108Hz or 9.2ms periode time.
+	 */
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1); /* PC6 lockdriver IN1 */
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); /* PC7 lockdriver IN2 */
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3); /* PC8 contactor 1 */
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4); /* PC9 contactor 2 */
 }

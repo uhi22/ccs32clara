@@ -3,6 +3,7 @@
 /* Global Defines */
 
 /* Global Variables */
+extern TIM_HandleTypeDef htim3;
 
 /* Global Functions */
 
@@ -27,5 +28,6 @@ extern int16_t hardwareInterface_getChargingTargetVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetCurrent(void);
 
 extern void hardwareInterface_cyclic(void);
+extern void hardwareInterface_init(void);
 
 

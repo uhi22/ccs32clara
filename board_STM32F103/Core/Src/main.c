@@ -391,7 +391,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, OUT_STATE_C_CONTROL_Pin|OUT_CONTACTOR_CONTROL1_Pin|OUT_CONTACTOR_CONTROL2_Pin|OUT_LED_ALIVE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12
+                          |GPIO_PIN_13|OUT_STATE_C_CONTROL_Pin|OUT_CONTACTOR_CONTROL1_Pin|OUT_CONTACTOR_CONTROL2_Pin
+                          |OUT_LED_ALIVE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA4 */
   GPIO_InitStruct.Pin = GPIO_PIN_4;
@@ -400,11 +402,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : OUT_STATE_C_CONTROL_Pin OUT_CONTACTOR_CONTROL1_Pin OUT_CONTACTOR_CONTROL2_Pin OUT_LED_ALIVE_Pin */
-  GPIO_InitStruct.Pin = OUT_STATE_C_CONTROL_Pin|OUT_CONTACTOR_CONTROL1_Pin|OUT_CONTACTOR_CONTROL2_Pin|OUT_LED_ALIVE_Pin;
+  /*Configure GPIO pins : PB2 PB10 PB11 PB12
+                           PB13 OUT_STATE_C_CONTROL_Pin OUT_CONTACTOR_CONTROL1_Pin OUT_CONTACTOR_CONTROL2_Pin
+                           OUT_LED_ALIVE_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12
+                          |GPIO_PIN_13|OUT_STATE_C_CONTROL_Pin|OUT_CONTACTOR_CONTROL1_Pin|OUT_CONTACTOR_CONTROL2_Pin
+                          |OUT_LED_ALIVE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB14 */
+  GPIO_InitStruct.Pin = GPIO_PIN_14;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */

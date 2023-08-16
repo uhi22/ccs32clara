@@ -16,15 +16,15 @@ int hardwareInterface_sanityCheck() {
   return 0; /* 0 is OK */
 }
 
-uint16_t hwIf_simulatedSoc_0p1;
+uint16_t hwIf_simulatedSoc_0p01;
 
 void hardwareInterface_simulatePreCharge(void) {
 }
 
 void hardwareInterface_simulateCharging(void) {
-  if (hwIf_simulatedSoc_0p1<1000) {
+  if (hwIf_simulatedSoc_0p01<10000) {
     /* simulate increasing SOC */
-    hwIf_simulatedSoc_0p1++;
+    hwIf_simulatedSoc_0p01++;
   }
 }
 
@@ -46,11 +46,11 @@ int16_t hardwareInterface_getChargingTargetCurrent(void) {
 
 uint8_t hardwareInterface_getSoc(void) {
   /* SOC in percent */
-  return hwIf_simulatedSoc_0p1/10;
+  return hwIf_simulatedSoc_0p01/100;
 }
 
 uint8_t hardwareInterface_getIsAccuFull(void) {
-    return (hwIf_simulatedSoc_0p1/10)>95;
+    return (hwIf_simulatedSoc_0p01/100)>95;
 }
 
 void hardwareInterface_setPowerRelayOn(void) {
@@ -96,7 +96,7 @@ uint8_t hardwareInterface_getPowerRelayConfirmation(void) {
 }
 
 void hardwareInterface_resetSimulation(void) {
-    hwIf_simulatedSoc_0p1 = 200; /* 20% */
+    hwIf_simulatedSoc_0p01 = 2000; /* 20% */
 }
 
 

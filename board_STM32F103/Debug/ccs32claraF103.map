@@ -8980,9 +8980,9 @@ LOAD c:/st/stm32cubeide_1.12.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.ext
  .bss.connMgr_cycles
                 0x0000000020000344        0x2 ./Core/Src/sharedsource/ccs/connMgr.o
                 0x0000000020000344                connMgr_cycles
- .bss.hwIf_simulatedSoc_0p1
+ .bss.hwIf_simulatedSoc_0p01
                 0x0000000020000346        0x2 ./Core/Src/sharedsource/ccs/hardwareInterface.o
-                0x0000000020000346                hwIf_simulatedSoc_0p1
+                0x0000000020000346                hwIf_simulatedSoc_0p01
  .bss.strVersion
                 0x0000000020000348       0xc8 ./Core/Src/sharedsource/ccs/homeplug.o
                 0x0000000020000348                strVersion
@@ -10019,7 +10019,7 @@ LOAD c:/st/stm32cubeide_1.12.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.ext
  .debug_line    0x000000000002e6e7     0x1bd4 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.o
  .debug_line    0x00000000000302bb     0x2884 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.o
 
-.debug_str      0x0000000000000000    0xadd89
+.debug_str      0x0000000000000000    0xadd8a
  .debug_str     0x0000000000000000    0x97e23 ./Core/Src/main.o
                                       0x98395 (size before relaxing)
  .debug_str     0x0000000000097e23       0xfa ./Core/Src/stm32f1xx_hal_msp.o
@@ -10036,77 +10036,77 @@ LOAD c:/st/stm32cubeide_1.12.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.ext
                                       0x97a70 (size before relaxing)
  .debug_str     0x00000000000998fd      0x252 ./Core/Src/sharedsource/ccs/connMgr.o
                                       0x977fd (size before relaxing)
- .debug_str     0x0000000000099b4f      0x365 ./Core/Src/sharedsource/ccs/hardwareInterface.o
-                                      0x9796f (size before relaxing)
- .debug_str     0x0000000000099eb4      0x8ab ./Core/Src/sharedsource/ccs/homeplug.o
+ .debug_str     0x0000000000099b4f      0x366 ./Core/Src/sharedsource/ccs/hardwareInterface.o
+                                      0x97970 (size before relaxing)
+ .debug_str     0x0000000000099eb5      0x8ab ./Core/Src/sharedsource/ccs/homeplug.o
                                       0x97f01 (size before relaxing)
- .debug_str     0x000000000009a75f      0x28d ./Core/Src/sharedsource/ccs/ipv6.o
+ .debug_str     0x000000000009a760      0x28d ./Core/Src/sharedsource/ccs/ipv6.o
                                       0x9793c (size before relaxing)
- .debug_str     0x000000000009a9ec       0x6d ./Core/Src/sharedsource/ccs/modemFinder.o
+ .debug_str     0x000000000009a9ed       0x6d ./Core/Src/sharedsource/ccs/modemFinder.o
                                       0x97674 (size before relaxing)
- .debug_str     0x000000000009aa59     0x621d ./Core/Src/sharedsource/ccs/myAdc.o
+ .debug_str     0x000000000009aa5a     0x621d ./Core/Src/sharedsource/ccs/myAdc.o
                                       0x9dbb1 (size before relaxing)
- .debug_str     0x00000000000a0c76       0x60 ./Core/Src/sharedsource/ccs/myHelpers.o
+ .debug_str     0x00000000000a0c77       0x60 ./Core/Src/sharedsource/ccs/myHelpers.o
                                       0x97664 (size before relaxing)
- .debug_str     0x00000000000a0cd6      0x10d ./Core/Src/sharedsource/ccs/myScheduler.o
+ .debug_str     0x00000000000a0cd7      0x10d ./Core/Src/sharedsource/ccs/myScheduler.o
                                       0x97780 (size before relaxing)
- .debug_str     0x00000000000a0de3     0x5d8a ./Core/Src/sharedsource/ccs/pevStateMachine.o
+ .debug_str     0x00000000000a0de4     0x5d8a ./Core/Src/sharedsource/ccs/pevStateMachine.o
                                       0x9e366 (size before relaxing)
- .debug_str     0x00000000000a6b6d      0x1b3 ./Core/Src/sharedsource/ccs/qca7000.o
+ .debug_str     0x00000000000a6b6e      0x1b3 ./Core/Src/sharedsource/ccs/qca7000.o
                                       0x978dc (size before relaxing)
- .debug_str     0x00000000000a6d20      0x297 ./Core/Src/sharedsource/ccs/tcp.o
+ .debug_str     0x00000000000a6d21      0x297 ./Core/Src/sharedsource/ccs/tcp.o
                                       0x979e8 (size before relaxing)
- .debug_str     0x00000000000a6fb7      0x94c ./Core/Src/sharedsource/ccs/temperatures.o
+ .debug_str     0x00000000000a6fb8      0x94c ./Core/Src/sharedsource/ccs/temperatures.o
                                       0x98006 (size before relaxing)
- .debug_str     0x00000000000a7903       0xac ./Core/Src/sharedsource/ccs/udpChecksum.o
+ .debug_str     0x00000000000a7904       0xac ./Core/Src/sharedsource/ccs/udpChecksum.o
                                       0x9767c (size before relaxing)
- .debug_str     0x00000000000a79af      0x8df ./Core/Src/sharedsource/exi/BitInputStream.o
+ .debug_str     0x00000000000a79b0      0x8df ./Core/Src/sharedsource/exi/BitInputStream.o
                                        0x883c (size before relaxing)
- .debug_str     0x00000000000a828e       0x7d ./Core/Src/sharedsource/exi/BitOutputStream.o
+ .debug_str     0x00000000000a828f       0x7d ./Core/Src/sharedsource/exi/BitOutputStream.o
                                        0x8838 (size before relaxing)
- .debug_str     0x00000000000a830b      0x623 ./Core/Src/sharedsource/exi/DecoderChannel.o
+ .debug_str     0x00000000000a830c      0x623 ./Core/Src/sharedsource/exi/DecoderChannel.o
                                        0x8ec9 (size before relaxing)
- .debug_str     0x00000000000a892e       0x78 ./Core/Src/sharedsource/exi/EXIHeaderDecoder.o
+ .debug_str     0x00000000000a892f       0x78 ./Core/Src/sharedsource/exi/EXIHeaderDecoder.o
                                        0x8910 (size before relaxing)
- .debug_str     0x00000000000a89a6       0x8c ./Core/Src/sharedsource/exi/EXIHeaderEncoder.o
+ .debug_str     0x00000000000a89a7       0x8c ./Core/Src/sharedsource/exi/EXIHeaderEncoder.o
                                        0x800a (size before relaxing)
- .debug_str     0x00000000000a8a32      0x24b ./Core/Src/sharedsource/exi/EncoderChannel.o
+ .debug_str     0x00000000000a8a33      0x24b ./Core/Src/sharedsource/exi/EncoderChannel.o
                                        0x8e36 (size before relaxing)
- .debug_str     0x00000000000a8c7d       0x84 ./Core/Src/sharedsource/exi/MethodsBag.o
+ .debug_str     0x00000000000a8c7e       0x84 ./Core/Src/sharedsource/exi/MethodsBag.o
                                        0x480b (size before relaxing)
- .debug_str     0x00000000000a8d01       0xef ./Core/Src/sharedsource/exi/appHandEXIDatatypes.o
+ .debug_str     0x00000000000a8d02       0xef ./Core/Src/sharedsource/exi/appHandEXIDatatypes.o
                                        0x8362 (size before relaxing)
- .debug_str     0x00000000000a8df0       0xfe ./Core/Src/sharedsource/exi/appHandEXIDatatypesDecoder.o
+ .debug_str     0x00000000000a8df1       0xfe ./Core/Src/sharedsource/exi/appHandEXIDatatypesDecoder.o
                                        0x8e10 (size before relaxing)
- .debug_str     0x00000000000a8eee      0xa53 ./Core/Src/sharedsource/exi/dinEXIDatatypes.o
+ .debug_str     0x00000000000a8eef      0xa53 ./Core/Src/sharedsource/exi/dinEXIDatatypes.o
                                        0xe0fc (size before relaxing)
- .debug_str     0x00000000000a9941      0xc9d ./Core/Src/sharedsource/exi/dinEXIDatatypesDecoder.o
+ .debug_str     0x00000000000a9942      0xc9d ./Core/Src/sharedsource/exi/dinEXIDatatypesDecoder.o
                                        0xf796 (size before relaxing)
- .debug_str     0x00000000000aa5de     0x1255 ./Core/Src/sharedsource/exi/dinEXIDatatypesEncoder.o
+ .debug_str     0x00000000000aa5df     0x1255 ./Core/Src/sharedsource/exi/dinEXIDatatypesEncoder.o
                                        0xf14e (size before relaxing)
- .debug_str     0x00000000000ab833       0x53 ./Core/Src/sharedsource/exi/projectExiConnector.o
+ .debug_str     0x00000000000ab834       0x53 ./Core/Src/sharedsource/exi/projectExiConnector.o
                                        0xdb57 (size before relaxing)
- .debug_str     0x00000000000ab886       0x36 ./Core/Startup/startup_stm32f103retx.o
+ .debug_str     0x00000000000ab887       0x36 ./Core/Startup/startup_stm32f103retx.o
                                          0x66 (size before relaxing)
- .debug_str     0x00000000000ab8bc      0x687 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.o
+ .debug_str     0x00000000000ab8bd      0x687 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.o
                                       0x93c39 (size before relaxing)
- .debug_str     0x00000000000abf43      0x34d ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc.o
+ .debug_str     0x00000000000abf44      0x34d ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc.o
                                       0x93b06 (size before relaxing)
- .debug_str     0x00000000000ac290      0x2bc ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc_ex.o
+ .debug_str     0x00000000000ac291      0x2bc ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc_ex.o
                                       0x93ad6 (size before relaxing)
- .debug_str     0x00000000000ac54c      0x4fb ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_can.o
+ .debug_str     0x00000000000ac54d      0x4fb ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_can.o
                                       0x93c22 (size before relaxing)
- .debug_str     0x00000000000aca47      0x289 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_cortex.o
+ .debug_str     0x00000000000aca48      0x289 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_cortex.o
                                       0x93b85 (size before relaxing)
- .debug_str     0x00000000000accd0      0x2e6 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio.o
+ .debug_str     0x00000000000accd1      0x2e6 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio.o
                                       0x937a8 (size before relaxing)
- .debug_str     0x00000000000acfb6      0x229 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc.o
+ .debug_str     0x00000000000acfb7      0x229 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc.o
                                       0x93851 (size before relaxing)
- .debug_str     0x00000000000ad1df       0x84 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
+ .debug_str     0x00000000000ad1e0       0x84 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.o
                                       0x935df (size before relaxing)
- .debug_str     0x00000000000ad263      0x520 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.o
+ .debug_str     0x00000000000ad264      0x520 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.o
                                       0x93d54 (size before relaxing)
- .debug_str     0x00000000000ad783      0x606 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.o
+ .debug_str     0x00000000000ad784      0x606 ./Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.o
                                       0x93ec2 (size before relaxing)
 
 .comment        0x0000000000000000       0x50

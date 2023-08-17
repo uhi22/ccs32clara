@@ -4,6 +4,10 @@
 
 /* Global Variables */
 extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim2;
+
+extern volatile uint32_t cpDuty_Percent;
+extern volatile uint32_t cpFrequency_Hz;
 
 /* Global Functions */
 

@@ -38,7 +38,7 @@ void canbus_demoTransmit(void) {
   TxData[2] = (uint8_t)(uptime_s);
   TxData[3] = (uint8_t)(checkpointNumber>>8);
   TxData[4] = (uint8_t)(checkpointNumber);
-  TxData[5] = 0xFF;
+  TxData[5] = cpDuty_Percent;
   TxData[6] = 0xFF;
   TxData[7] = 0xFF;
   

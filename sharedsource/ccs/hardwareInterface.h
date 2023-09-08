@@ -17,6 +17,7 @@ extern void hardwareInterface_setRelay2Off(void);
 extern void hardwareInterface_setRelay2On(void);
 extern void hardwareInterface_setPowerRelayOff(void);
 extern void hardwareInterface_setPowerRelayOn(void);
+extern void hardwareInterface_setRGB(uint8_t rgb);
 extern void hardwareInterface_triggerConnectorLocking(void);
 extern void hardwareInterface_triggerConnectorUnlocking(void);
 extern uint8_t hardwareInterface_isConnectorLocked(void);

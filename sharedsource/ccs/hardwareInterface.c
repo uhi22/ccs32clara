@@ -3,7 +3,9 @@
 
 #include "ccs32_globals.h"
 
-uint16_t hwIf_pwmLock1_64k;
+uint16_t hwIf_pwmContactor1_64k;
+uint16_t hwIf_pwmContactor2_64k;
+
 volatile uint32_t inputCaptureValueChannel1;
 volatile uint32_t inputCaptureValueChannel2;
 volatile uint32_t cpDuty_Percent, cpFrequency_Hz;
@@ -13,6 +15,9 @@ volatile uint8_t cpDutyValidTimer;
                                      we do not see PWM interrupts anymore */
 #define APB2_TIMER_CLOCK_FREQUENCY_HZ 64000000u /* APB2 timer clock is 64 MHz */
 
+
+uint16_t hwIf_testmode;
+uint16_t hwIf_testmodeTimer;
 
 void hardwareInterface_showOnDisplay(char* s1, char* s2, char* s3) {
 
@@ -88,6 +93,33 @@ void hardwareInterface_setStateC(void) {
 	HAL_GPIO_WritePin(OUT_STATE_C_CONTROL_GPIO_Port, OUT_STATE_C_CONTROL_Pin, 1);
 }
 
+void hardwareInterface_setRGB(uint8_t rgb) {
+	/* Controls the three discrete LEDs.
+	 * bit 0: red
+	 * bit 1: green
+	 * bit 2: blue
+	 */
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, rgb & 1); /* red LED */
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, (rgb>>1) & 1); /* green LED */
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, (rgb>>2) & 1); /* blue LED */
+}
+
+void hardwareInteface_setAliveLed(uint8_t x) {
+	/* Controls the on-board alive-LED. 1=on, 0=off */
+	HAL_GPIO_WritePin(OUT_LED_ALIVE_GPIO_Port, OUT_LED_ALIVE_Pin, x);
+}
+
+void hardwareInteface_setHBridge(uint16_t out1duty_64k, uint16_t out2duty_64k) {
+	/* Controls the H-bridge */
+	/* PC6 (TIM3 ch 1) and PC7 (TIM3 ch 2) are controlling the two sides of the bridge */
+	/* out1 and out2 are the PWM ratios in range 0 to 64k */
+
+	/*Assign the new dutyCycle count to the capture compare register.*/
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, out1duty_64k);
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, out2duty_64k);
+}
+
+
 void hardwareInterface_triggerConnectorLocking(void) {
   /* todo */
 }
@@ -134,10 +166,85 @@ void hardwareInterface_measureCpPwm(void) {
 	 */
 }
 
+
+void hardwareInterface_handleOutputTestMode(void) {
+  /* This function is used to test the outputs. */
+  if (hwIf_testmodeTimer>0) {
+	  /* If the timer not yet elapsed, just decrement and do nothing more. */
+	  hwIf_testmodeTimer--;
+	  if (hwIf_testmodeTimer>5) {
+	    hardwareInteface_setAliveLed(1);
+	  } else {
+		hardwareInteface_setAliveLed(0);
+	  }
+	  return;
+  }
+  hwIf_testmodeTimer = 10; /* rewind the timer for the next phase */
+  switch (hwIf_testmode) {
+	case 0: /* no test. Do not touch the outputs */
+		break;
+	case 1:
+		hardwareInterface_setRGB(1); /* red */
+		break;
+	case 2:
+		hardwareInterface_setRGB(0); /* off */
+		break;
+	case 3:
+		hardwareInterface_setRGB(2); /* green */
+		break;
+	case 4:
+		hardwareInterface_setRGB(0); /* off */
+		break;
+	case 5:
+		hardwareInterface_setRGB(4); /* blue */
+		break;
+	case 6:
+		hardwareInterface_setRGB(0); /* off */
+		break;
+	case 7:
+		hardwareInterface_setRGB(7); /* white */
+		break;
+	case 8:
+		hardwareInterface_setRGB(0); /* off */
+		break;
+	case 9:
+		hardwareInteface_setHBridge(0, 0); /* both low */
+		break;
+	case 10:
+		hardwareInteface_setHBridge(6500, 0); /* channel 1 10% */
+		break;
+	case 11:
+		hardwareInteface_setHBridge(32768, 0); /* channel 1 50% */
+		break;
+	case 12:
+		hardwareInteface_setHBridge(65535, 0); /* channel 1 full */
+		break;
+	case 13:
+		hardwareInteface_setHBridge(0, 0); /* both low */
+		break;
+	case 14:
+		hardwareInteface_setHBridge(0, 6500); /* channel 2 10% */
+		break;
+	case 15:
+		hardwareInteface_setHBridge(0, 32768); /* channel 2 50% */
+		break;
+	case 16:
+		hardwareInteface_setHBridge(0, 65535); /* channel 2 full */
+		break;
+	case 17:
+		hardwareInteface_setHBridge(0, 0); /* both low */
+		break;
+  }
+  hwIf_testmode++;
+  if (hwIf_testmode>17) hwIf_testmode=1;
+}
+
 void hardwareInterface_cyclic(void) {
     /*Assign the new dutyCycle count to the capture compare register.*/
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, hwIf_pwmLock1_64k);
-    hwIf_pwmLock1_64k+=10;
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, hwIf_pwmContactor1_64k);
+    hwIf_pwmContactor1_64k+=10;
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, hwIf_pwmContactor2_64k);
+    hwIf_pwmContactor2_64k+=10;
 
     hardwareInterface_measureCpPwm();
 
@@ -149,6 +256,8 @@ void hardwareInterface_cyclic(void) {
         cpDuty_Percent = 0;
         cpFrequency_Hz = 0;
     }
+
+    hardwareInterface_handleOutputTestMode();
 }
 
 void hardwareInterface_init(void) {
@@ -167,6 +276,9 @@ void hardwareInterface_init(void) {
 	/* Using two channels of TIM2 to measure duty cycle */
 	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);   // main channel
 	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2);   // indirect channel
+
+	/* Test mode initialization */
+	hwIf_testmode = 1;
 }
 
 

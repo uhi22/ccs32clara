@@ -26,6 +26,8 @@
 #define publishStatus(x, y)
 #define log_v(x, ...)
 
+extern uint16_t debugvalue;
+
 
 
 

@@ -13,8 +13,6 @@ extern volatile uint32_t cpFrequency_Hz;
 
 extern void hardwareInterface_setStateB(void);
 extern void hardwareInterface_setStateC(void);
-extern void hardwareInterface_setRelay2Off(void);
-extern void hardwareInterface_setRelay2On(void);
 extern void hardwareInterface_setPowerRelayOff(void);
 extern void hardwareInterface_setPowerRelayOn(void);
 extern void hardwareInterface_setRGB(uint8_t rgb);

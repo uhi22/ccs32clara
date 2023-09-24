@@ -16,6 +16,7 @@
 "./Core/Src/sharedsource/ccs/pevStateMachine.o"
 "./Core/Src/sharedsource/ccs/qca7000.o"
 "./Core/Src/sharedsource/ccs/tcp.o"
+"./Core/Src/sharedsource/ccs/temperatures.o"
 "./Core/Src/sharedsource/ccs/udpChecksum.o"
 "./Core/Src/sharedsource/exi/BitInputStream.o"
 "./Core/Src/sharedsource/exi/BitOutputStream.o"

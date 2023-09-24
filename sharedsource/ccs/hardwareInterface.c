@@ -3,9 +3,6 @@
 
 #include "ccs32_globals.h"
 
-uint16_t hwIf_pwmContactor1_64k;
-uint16_t hwIf_pwmContactor2_64k;
-
 volatile uint32_t inputCaptureValueChannel1;
 volatile uint32_t inputCaptureValueChannel2;
 volatile uint32_t cpDuty_Percent, cpFrequency_Hz;
@@ -18,6 +15,9 @@ volatile uint8_t cpDutyValidTimer;
 
 uint16_t hwIf_testmode;
 uint16_t hwIf_testmodeTimer;
+uint16_t debugvalue;
+uint8_t hwIf_ContactorRequest;
+
 
 void hardwareInterface_showOnDisplay(char* s1, char* s2, char* s3) {
 
@@ -70,19 +70,11 @@ uint8_t hardwareInterface_getIsAccuFull(void) {
 }
 
 void hardwareInterface_setPowerRelayOn(void) {
-	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL1_GPIO_Port, OUT_CONTACTOR_CONTROL1_Pin, 1);
+	hwIf_ContactorRequest=1;
 }
 
 void hardwareInterface_setPowerRelayOff(void) {
-	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL1_GPIO_Port, OUT_CONTACTOR_CONTROL1_Pin, 0);
-}
-
-void hardwareInterface_setRelay2On(void) {
-	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL2_GPIO_Port, OUT_CONTACTOR_CONTROL2_Pin, 1);
-}
-
-void hardwareInterface_setRelay2Off(void) {
-	HAL_GPIO_WritePin(OUT_CONTACTOR_CONTROL2_GPIO_Port, OUT_CONTACTOR_CONTROL2_Pin, 0);
+	hwIf_ContactorRequest=0;
 }
 
 void hardwareInterface_setStateB(void) {
@@ -119,6 +111,11 @@ void hardwareInteface_setHBridge(uint16_t out1duty_64k, uint16_t out2duty_64k) {
 	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, out2duty_64k);
 }
 
+void hardwareInteface_setContactorPwm(uint16_t out1duty_64k, uint16_t out2duty_64k) {
+  /*Assign the new dutyCycle count to the capture compare register.*/
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, out1duty_64k);
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, out2duty_64k);
+}
 
 void hardwareInterface_triggerConnectorLocking(void) {
   /* todo */
@@ -167,6 +164,65 @@ void hardwareInterface_measureCpPwm(void) {
 }
 
 
+
+uint8_t blButtonPressedOld;
+uint16_t tButtonReleaseTime;
+uint8_t nNumberOfButtonPresses;
+uint8_t buttonSeriesCounter;
+#define PUSHBUTTON_NUMBER_OF_ENTRIES 4
+uint8_t buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES];
+uint16_t accumulatedButtonDigits;
+
+void processPushButtonSeries(void) {
+  uint8_t i;
+  uint16_t tmp16;
+  for (i=0; i<PUSHBUTTON_NUMBER_OF_ENTRIES-1; i++) {
+	  buttonSeriesEntries[i]=buttonSeriesEntries[i+1];
+  }
+  buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES-1]=nNumberOfButtonPresses;
+  tmp16 = buttonSeriesEntries[0];
+  tmp16*=10;
+  tmp16 += buttonSeriesEntries[1];
+  tmp16*=10;
+  tmp16 += buttonSeriesEntries[2];
+  tmp16*=10;
+  tmp16 += buttonSeriesEntries[3];
+  buttonSeriesCounter++;
+  if (buttonSeriesCounter==PUSHBUTTON_NUMBER_OF_ENTRIES) {
+	  accumulatedButtonDigits = tmp16;
+  }
+}
+
+void hardwareInterface_handlePushbutton(void) {
+	uint8_t blButtonPressed;
+	uint8_t i;
+	//debugvalue = rawAdValues[MY_ADC_CHANNEL_PUSHBUTTON];
+	blButtonPressed = rawAdValues[MY_ADC_CHANNEL_PUSHBUTTON]<1000;
+	if (blButtonPressed && !blButtonPressedOld) {
+		tButtonReleaseTime=0;
+		nNumberOfButtonPresses++;
+	}
+	if (!blButtonPressed) {
+		if (tButtonReleaseTime<33*60) tButtonReleaseTime++;
+		if (tButtonReleaseTime==16) {
+			/* not pressed for 0.5s -> evaluate the series */
+			//debugvalue=nNumberOfButtonPresses;
+			processPushButtonSeries();
+			nNumberOfButtonPresses=0;
+		}
+		if (tButtonReleaseTime==33*10) {
+			/* 10s not pressed -> reset the series */
+			for (i=0; i<PUSHBUTTON_NUMBER_OF_ENTRIES; i++) {
+				buttonSeriesEntries[i]=0;
+				buttonSeriesCounter=0;
+				accumulatedButtonDigits = 0;
+			}
+		}
+
+	}
+	blButtonPressedOld = blButtonPressed;
+}
+
 void hardwareInterface_handleOutputTestMode(void) {
   /* This function is used to test the outputs. */
   if (hwIf_testmodeTimer>0) {
@@ -180,9 +236,12 @@ void hardwareInterface_handleOutputTestMode(void) {
 	  return;
   }
   hwIf_testmodeTimer = 10; /* rewind the timer for the next phase */
+  if ((accumulatedButtonDigits==3411) && (hwIf_testmode==0)) {
+	  hwIf_testmode=1;
+  }
   switch (hwIf_testmode) {
-	case 0: /* no test. Do not touch the outputs */
-		break;
+	case 0: /* no test. Do not touch the outputs and do not increment the mode. */
+		return;
 	case 1:
 		hardwareInterface_setRGB(1); /* red */
 		break;
@@ -234,17 +293,89 @@ void hardwareInterface_handleOutputTestMode(void) {
 	case 17:
 		hardwareInteface_setHBridge(0, 0); /* both low */
 		break;
+	case 18:
+		hardwareInteface_setContactorPwm(0, 0); /* both off */
+		break;
+	case 19:
+		hardwareInteface_setContactorPwm(65535, 0); /* 1 on */
+		break;
+	case 20:
+		hardwareInteface_setContactorPwm(50000, 0); /* 1 half */
+		break;
+	case 21:
+		hardwareInteface_setContactorPwm(0, 65535); /* 2 on */
+		break;
+	case 22:
+		hardwareInteface_setContactorPwm(0, 50000); /* 2 half */
+		break;
+	case 23:
+		hardwareInteface_setContactorPwm(0, 0); /* both off */
+		break;
   }
   hwIf_testmode++;
-  if (hwIf_testmode>17) hwIf_testmode=1;
+  if (hwIf_testmode>23) hwIf_testmode=1;
+}
+
+uint8_t hwIf_ContactorOnTimer;
+#define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
+#define CONTACTOR_ECONO_PWM_VALUE 40000 /* max is 65535 */
+
+void hwIf_handleContactorRequests(void) {
+	if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
+
+	if (hwIf_ContactorRequest==0) {
+		/* request is "OFF" -> set PWM immediately to zero for both contactors */
+		hardwareInteface_setContactorPwm(0, 0); /* both off */
+		hwIf_ContactorOnTimer=0;
+	} else {
+		/* request is "ON". Start with 100% PWM, and later switch to economizer mode */
+		if (hwIf_ContactorOnTimer<255) hwIf_ContactorOnTimer++;
+		if (hwIf_ContactorOnTimer<CONTACTOR_CYCLES_FOR_FULL_PWM) {
+			hardwareInteface_setContactorPwm(65535, 65535); /* both full */
+		} else {
+			hardwareInteface_setContactorPwm(CONTACTOR_ECONO_PWM_VALUE, CONTACTOR_ECONO_PWM_VALUE); /* both reduced */
+		}
+	}
+}
+
+uint8_t hwIf_LedBlinkDivider;
+
+void handleApplicationRGBLeds(void) {
+  if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
+  if (checkpointNumber<150) {
+    hardwareInterface_setRGB(2); /* green */
+  }
+  if ((checkpointNumber>150) && (checkpointNumber<=530)) {
+	  if (hwIf_LedBlinkDivider & 4) {
+	    hardwareInterface_setRGB(2); /* green */
+	  } else {
+		hardwareInterface_setRGB(0); /* off */
+	  }
+  }
+  if ((checkpointNumber>=540) /* Auth finished */ && (checkpointNumber<560 /* CableCheck */)) {
+	  if (hwIf_LedBlinkDivider & 2) {
+	    hardwareInterface_setRGB(2); /* green */
+	  } else {
+		hardwareInterface_setRGB(0); /* off */
+	  }
+  }
+  if ((checkpointNumber>=560 /* CableCheck */) && (checkpointNumber<700 /* charge loop start */)) {
+	  if (hwIf_LedBlinkDivider & 2) {
+		  hardwareInterface_setRGB(4); /* blue */
+	  } else {
+		hardwareInterface_setRGB(0); /* off */
+	  }
+  }
+  if ((checkpointNumber>=700 /* charge loop */) && (checkpointNumber<800 /* charge loop */)) {
+      hardwareInterface_setRGB(4); /* blue */
+  }
+  if (checkpointNumber>1000) {
+	  hardwareInterface_setRGB(1); /* red */
+  }
+  hwIf_LedBlinkDivider++;
 }
 
 void hardwareInterface_cyclic(void) {
-    /*Assign the new dutyCycle count to the capture compare register.*/
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, hwIf_pwmContactor1_64k);
-    hwIf_pwmContactor1_64k+=10;
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, hwIf_pwmContactor2_64k);
-    hwIf_pwmContactor2_64k+=10;
 
     hardwareInterface_measureCpPwm();
 
@@ -257,6 +388,9 @@ void hardwareInterface_cyclic(void) {
         cpFrequency_Hz = 0;
     }
 
+    hardwareInterface_handlePushbutton();
+    handleApplicationRGBLeds();
+    hwIf_handleContactorRequests();
     hardwareInterface_handleOutputTestMode();
 }
 
@@ -278,7 +412,11 @@ void hardwareInterface_init(void) {
 	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2);   // indirect channel
 
 	/* Test mode initialization */
-	hwIf_testmode = 1;
+	hwIf_testmode = 0;
+
+	/* output initialization */
+	hardwareInteface_setHBridge(0, 0); /* both low */
+	hardwareInteface_setContactorPwm(0, 0); /* both off */
 }
 
 

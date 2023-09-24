@@ -692,7 +692,6 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
             hardwareInterface_setStateB();
             addToTrace("Turning off the relay and starting the WeldingDetection");
             hardwareInterface_setPowerRelayOff();
-            hardwareInterface_setRelay2Off();
             pev_isBulbOn = 0;
             checkpointNumber = 850;
             pev_sendWeldingDetectionReq();
@@ -754,8 +753,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
       } else {
           if (!pev_isBulbOn) {
               addToTrace("This is a light bulb demo. Turning-on the bulb when 2s in the main charging loop.");
-              hardwareInterface_setPowerRelayOn();   
-              hardwareInterface_setRelay2On();
+              hardwareInterface_setPowerRelayOn();
               pev_isBulbOn = 1;
           }
       }
@@ -851,7 +849,6 @@ void stateFunctionSafeShutDownWaitForChargerShutdown(void) {
   addToTrace("Safe-shutdown-sequence: opening contactors");
   checkpointNumber = 1300;
   hardwareInterface_setPowerRelayOff();
-  hardwareInterface_setRelay2Off();
   pev_DelayCycles = 33; /* 33*30ms=1s for opening the contactors */
   pev_enterState(PEV_STATE_SafeShutDownWaitForContactorsOpen);
 }
@@ -915,7 +912,6 @@ void pev_runFsm(void) {
             pev_enterState(PEV_STATE_NotYetInitialized);
             hardwareInterface_setStateB();
             hardwareInterface_setPowerRelayOff();
-            hardwareInterface_setRelay2Off();
             pev_isBulbOn = 0;
             pev_cyclesLightBulbDelay = 0;
         }
@@ -961,7 +957,6 @@ void pevStateMachine_ReInit(void) {
   tcp_Disconnect();
   hardwareInterface_setStateB();
   hardwareInterface_setPowerRelayOff();
-  hardwareInterface_setRelay2Off();
   pev_isBulbOn = 0;
   pev_cyclesLightBulbDelay = 0;
   pev_state = PEV_STATE_Connecting;

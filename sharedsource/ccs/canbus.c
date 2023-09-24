@@ -66,8 +66,8 @@ void canbus_demoTransmit568(void) {
   TxData[1] = (uint8_t)(EVSEPresentVoltage);
   TxData[2] = (uint8_t)(uCcsInlet_V>>8);
   TxData[3] = (uint8_t)(uCcsInlet_V);
-  TxData[4] = 0;
-  TxData[5] = 0;
+  TxData[4] = (uint8_t)(debugvalue>>8);
+  TxData[5] = (uint8_t)(debugvalue);
   TxData[6] = 0;
   TxData[7] = 0;
 

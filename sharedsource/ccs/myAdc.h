@@ -2,7 +2,16 @@
 
 /* Global Defines */
 
-#define MYADC_NUMBER_OF_CHANNELS 5 /* 3 temperatures, 1 U_HV, 1 CpuTemp */
+#define MYADC_NUMBER_OF_CHANNELS 8 /* 3 temperatures, 1 U_HV, 1 CpuTemp, LockFeedback, Pushbutton, PP */
+
+#define MY_ADC_CHANNEL_TEMP1 0
+#define MY_ADC_CHANNEL_TEMP2 1
+#define MY_ADC_CHANNEL_TEMP3 2
+#define MY_ADC_CHANNEL_DCVOLTAGE 3
+#define MY_ADC_CHANNEL_CPUTEMP 4
+#define MY_ADC_CHANNEL_LOCKFEEDBACK 5
+#define MY_ADC_CHANNEL_PUSHBUTTON 6
+#define MY_ADC_CHANNEL_PP 7
 
 /* Global Variables */
 extern ADC_HandleTypeDef hadc1;  /* The handle of the ADC1 */

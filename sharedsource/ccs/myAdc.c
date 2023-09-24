@@ -149,6 +149,52 @@ void myAdc_SelectChannel_DcVoltage(void) {
   }
 }
 
+void myAdc_SelectChannel_LockFeedback(void) {
+  /** Configure Regular Channel
+  */
+#ifdef CONTROLLER_TYPE_STM32F303
+  sConfig.Channel = notused;
+#else
+  sConfig.Channel = ADC_CHANNEL_15; /* PC5 */
+#endif
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+void myAdc_SelectChannel_Pushbutton(void) {
+  /** Configure Regular Channel
+  */
+#ifdef CONTROLLER_TYPE_STM32F303
+  sConfig.Channel = notused;
+#else
+  sConfig.Channel = ADC_CHANNEL_14; /* PC4 */
+#endif
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+void myAdc_SelectChannel_PP(void) {
+  /** Configure Regular Channel
+  */
+#ifdef CONTROLLER_TYPE_STM32F303
+  sConfig.Channel = notused;
+#else
+  sConfig.Channel = ADC_CHANNEL_0; /* PA 0 */
+#endif
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+
 void myAdc_SelectChannel_TEMP(void) {
   /** Configure Regular Channel
   */
@@ -163,15 +209,21 @@ void myAdc_SelectChannel_TEMP(void) {
 uint16_t myAdc_analogRead(uint8_t channel) {
   uint16_t myAdValue;
   switch (channel) {
-    case 0: myAdc_SelectChannel_Temp1(); /* The own function to select a channel */
+    case MY_ADC_CHANNEL_TEMP1: myAdc_SelectChannel_Temp1(); /* The own function to select a channel */
   	  break;
-    case 1: myAdc_SelectChannel_Temp2(); /* The own function to select a channel */
+    case MY_ADC_CHANNEL_TEMP2: myAdc_SelectChannel_Temp2(); /* The own function to select a channel */
   	  break;
-    case 2: myAdc_SelectChannel_Temp3(); /* The own function to select a channel */
+    case MY_ADC_CHANNEL_TEMP3: myAdc_SelectChannel_Temp3(); /* The own function to select a channel */
   	  break;
-    case 3: myAdc_SelectChannel_DcVoltage(); /* The own function to select a channel */
+    case MY_ADC_CHANNEL_DCVOLTAGE: myAdc_SelectChannel_DcVoltage(); /* The own function to select a channel */
   	  break;
-    case 4: myAdc_SelectChannel_TEMP(); /* The own function to select a channel */
+    case MY_ADC_CHANNEL_CPUTEMP: myAdc_SelectChannel_TEMP(); /* The own function to select a channel */
+  	  break;
+    case MY_ADC_CHANNEL_LOCKFEEDBACK: myAdc_SelectChannel_LockFeedback(); /* The own function to select a channel */
+  	  break;
+    case MY_ADC_CHANNEL_PUSHBUTTON: myAdc_SelectChannel_Pushbutton(); /* The own function to select a channel */
+  	  break;
+    case MY_ADC_CHANNEL_PP: myAdc_SelectChannel_PP(); /* The own function to select a channel */
   	  break;
   }
 
@@ -246,7 +298,7 @@ void myAdc_calibrate(void) {
 void myAdc_cyclic(void) {
   /* read all AD channels and store the result in global variables */
   uint8_t i;
-  for (i=0; i<5; i++) {
+  for (i=0; i<MYADC_NUMBER_OF_CHANNELS; i++) {
     rawAdValues[i] = myAdc_analogRead(i);
   }
   myAdc_measureCpuTemperature();

@@ -22,7 +22,8 @@ PA11 = CAN_RX = MCP2551.4
 CAN_TxHeaderTypeDef   TxHeader;
 uint8_t               TxData[8];
 uint32_t              TxMailbox;
-uint8_t canbus_divider200ms_to_1s;
+uint8_t canbus_divider100ms_to_1s;
+int16_t canDebugValue1, canDebugValue2, canDebugValue3, canDebugValue4;
 
 void canbus_demoTransmit(void) {
   long int rc;
@@ -66,8 +67,8 @@ void canbus_demoTransmit568(void) {
   TxData[1] = (uint8_t)(EVSEPresentVoltage);
   TxData[2] = (uint8_t)(uCcsInlet_V>>8);
   TxData[3] = (uint8_t)(uCcsInlet_V);
-  TxData[4] = (uint8_t)(debugvalue>>8);
-  TxData[5] = (uint8_t)(debugvalue);
+  TxData[4] = 0;
+  TxData[5] = 0;
   TxData[6] = 0;
   TxData[7] = 0;
 
@@ -115,17 +116,34 @@ void canbus_demoTransmit569(void) {
 
 }
 
+void canbus_demoTransmit56A(void) {
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.StdId = 0x56A;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+  TxData[0] = (uint8_t)(canDebugValue1>>8);
+  TxData[1] = (uint8_t)(canDebugValue1);
+  TxData[2] = (uint8_t)(canDebugValue2>>8);
+  TxData[3] = (uint8_t)(canDebugValue2);
+  TxData[4] = (uint8_t)(canDebugValue3>>8);
+  TxData[5] = (uint8_t)(canDebugValue3);
+  TxData[6] = (uint8_t)(canDebugValue4>>8);
+  TxData[7] = (uint8_t)(canDebugValue4);
+  (void)HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
+}
+
 
 void canbus_Init(void) {
 	HAL_CAN_Start(&hcan);
 }
 
-void canbus_Mainfunction200ms(void) {
-    canbus_demoTransmit();
-    canbus_demoTransmit568();
-    canbus_divider200ms_to_1s++;
-    if (canbus_divider200ms_to_1s >= 5) {
-    	canbus_divider200ms_to_1s=0;
+void canbus_Mainfunction100ms(void) {
+    if ((canbus_divider100ms_to_1s % 3)==0) { canbus_demoTransmit(); }
+    if ((canbus_divider100ms_to_1s % 3)==1) { canbus_demoTransmit568(); }
+    if ((canbus_divider100ms_to_1s % 3)==2) { canbus_demoTransmit56A(); }
+    canbus_divider100ms_to_1s++;
+    if (canbus_divider100ms_to_1s >= 10) {
+    	canbus_divider100ms_to_1s=0;
         canbus_demoTransmit569(); /* send temperatures in the slow 1s interval */
     }
 }

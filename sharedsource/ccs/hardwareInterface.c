@@ -15,7 +15,6 @@ volatile uint8_t cpDutyValidTimer;
 
 uint16_t hwIf_testmode;
 uint16_t hwIf_testmodeTimer;
-uint16_t debugvalue;
 uint8_t hwIf_ContactorRequest;
 
 
@@ -392,6 +391,11 @@ void hardwareInterface_cyclic(void) {
     handleApplicationRGBLeds();
     hwIf_handleContactorRequests();
     hardwareInterface_handleOutputTestMode();
+    
+    canDebugValue1 = rawAdValues[MY_ADC_CHANNEL_TEMP1];
+    canDebugValue2 = rawAdValues[MY_ADC_CHANNEL_DCVOLTAGE];
+    canDebugValue3 = uCcsInlet_V;
+    canDebugValue4 = -7890;
 }
 
 void hardwareInterface_init(void) {

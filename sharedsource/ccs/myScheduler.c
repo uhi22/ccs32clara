@@ -7,6 +7,7 @@ uint32_t currentTime;
 uint32_t canary2;
 uint32_t lastTime1s;
 uint32_t canary3;
+uint32_t lastTime100ms;
 uint32_t lastTime200ms;
 uint32_t lastTime30ms;
 uint32_t canary4;
@@ -34,9 +35,14 @@ void task30ms(void) {
   sanityCheck("cyclic30ms");
 }
 
+/* This task runs each 100ms. */
+void task100ms(void) {
+	canbus_Mainfunction100ms();
+}
+
 /* This task runs each 200ms. */
 void task200ms(void) {
-	canbus_Mainfunction200ms();
+
 }
 
 /* This task runs once a second. */
@@ -95,6 +101,10 @@ void runMyScheduler(void) {
     //sprintf(strTmp, "current %ld, last %ld", currentTime, lastTime30ms);
     //addToTrace(strTmp);
     task30ms();
+  }
+  if ((currentTime - lastTime100ms)>100) {
+    lastTime100ms += 100;
+    task100ms();
   }
   if ((currentTime - lastTime200ms)>200) {
     lastTime200ms += 200;

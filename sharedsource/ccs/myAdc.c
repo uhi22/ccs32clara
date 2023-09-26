@@ -273,7 +273,7 @@ void myAdc_calculateDcVoltage(void) {
 	 */
     #define DC_LSB_FOR_ZERO_DC_INPUT 552
     #define DC_MILLIVOLT_PER_LSB 373
-	tmp = rawAdValues[3];
+	tmp = rawAdValues[MY_ADC_CHANNEL_DCVOLTAGE];
 	tmp -= DC_LSB_FOR_ZERO_DC_INPUT; /* The ADC value for U_HV=0V */
     tmp *= DC_MILLIVOLT_PER_LSB;
     tmp /= 1000; /* millivolt to volt */

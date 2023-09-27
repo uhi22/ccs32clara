@@ -353,10 +353,18 @@ void hardwareInterface_cyclic(void) {
 }
 
 void hardwareInterface_init(void) {
+
+	/* output initialization */
+	hardwareInteface_setHBridge(0, 0); /* both low */
+	hardwareInteface_setContactorPwm(0, 0); /* both off */
+
 	/* TIM3 configuration:
 	 *  - clocked with 64MHz
 	 *  - prescaler 8, which leads to division by 9, leads to 7.11MHz
 	 *  - 65536 counter, leads to 108Hz or 9.2ms periode time.
+	 */
+	/* Bug: Calling these start functions is creating a single unwanted pulse of some milliseconds.
+	 *      Todo: Find a workaround to avoid this.
 	 */
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1); /* PC6 lockdriver IN1 */
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); /* PC7 lockdriver IN2 */
@@ -372,9 +380,7 @@ void hardwareInterface_init(void) {
 	/* Test mode initialization */
 	hwIf_testmode = 0;
 
-	/* output initialization */
-	hardwareInteface_setHBridge(0, 0); /* both low */
-	hardwareInteface_setContactorPwm(0, 0); /* both off */
+
 }
 
 

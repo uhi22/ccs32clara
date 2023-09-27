@@ -14,6 +14,7 @@
 "./Core/Src/sharedsource/ccs/myHelpers.o"
 "./Core/Src/sharedsource/ccs/myScheduler.o"
 "./Core/Src/sharedsource/ccs/pevStateMachine.o"
+"./Core/Src/sharedsource/ccs/pushbutton.o"
 "./Core/Src/sharedsource/ccs/qca7000.o"
 "./Core/Src/sharedsource/ccs/tcp.o"
 "./Core/Src/sharedsource/ccs/temperatures.o"

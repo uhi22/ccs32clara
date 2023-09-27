@@ -163,65 +163,6 @@ void hardwareInterface_measureCpPwm(void) {
 }
 
 
-
-uint8_t blButtonPressedOld;
-uint16_t tButtonReleaseTime;
-uint8_t nNumberOfButtonPresses;
-uint8_t buttonSeriesCounter;
-#define PUSHBUTTON_NUMBER_OF_ENTRIES 4
-uint8_t buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES];
-uint16_t accumulatedButtonDigits;
-
-void processPushButtonSeries(void) {
-  uint8_t i;
-  uint16_t tmp16;
-  for (i=0; i<PUSHBUTTON_NUMBER_OF_ENTRIES-1; i++) {
-	  buttonSeriesEntries[i]=buttonSeriesEntries[i+1];
-  }
-  buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES-1]=nNumberOfButtonPresses;
-  tmp16 = buttonSeriesEntries[0];
-  tmp16*=10;
-  tmp16 += buttonSeriesEntries[1];
-  tmp16*=10;
-  tmp16 += buttonSeriesEntries[2];
-  tmp16*=10;
-  tmp16 += buttonSeriesEntries[3];
-  buttonSeriesCounter++;
-  if (buttonSeriesCounter==PUSHBUTTON_NUMBER_OF_ENTRIES) {
-	  accumulatedButtonDigits = tmp16;
-  }
-}
-
-void hardwareInterface_handlePushbutton(void) {
-	uint8_t blButtonPressed;
-	uint8_t i;
-	//debugvalue = rawAdValues[MY_ADC_CHANNEL_PUSHBUTTON];
-	blButtonPressed = rawAdValues[MY_ADC_CHANNEL_PUSHBUTTON]<1000;
-	if (blButtonPressed && !blButtonPressedOld) {
-		tButtonReleaseTime=0;
-		nNumberOfButtonPresses++;
-	}
-	if (!blButtonPressed) {
-		if (tButtonReleaseTime<33*60) tButtonReleaseTime++;
-		if (tButtonReleaseTime==16) {
-			/* not pressed for 0.5s -> evaluate the series */
-			//debugvalue=nNumberOfButtonPresses;
-			processPushButtonSeries();
-			nNumberOfButtonPresses=0;
-		}
-		if (tButtonReleaseTime==33*10) {
-			/* 10s not pressed -> reset the series */
-			for (i=0; i<PUSHBUTTON_NUMBER_OF_ENTRIES; i++) {
-				buttonSeriesEntries[i]=0;
-				buttonSeriesCounter=0;
-				accumulatedButtonDigits = 0;
-			}
-		}
-
-	}
-	blButtonPressedOld = blButtonPressed;
-}
-
 void hardwareInterface_handleOutputTestMode(void) {
   /* This function is used to test the outputs. */
   if (hwIf_testmodeTimer>0) {
@@ -235,7 +176,7 @@ void hardwareInterface_handleOutputTestMode(void) {
 	  return;
   }
   hwIf_testmodeTimer = 10; /* rewind the timer for the next phase */
-  if ((accumulatedButtonDigits==3411) && (hwIf_testmode==0)) {
+  if ((pushbutton_accumulatedButtonDigits==3411) && (hwIf_testmode==0)) {
 	  hwIf_testmode=1;
   }
   switch (hwIf_testmode) {
@@ -368,7 +309,17 @@ void handleApplicationRGBLeds(void) {
   if ((checkpointNumber>=700 /* charge loop */) && (checkpointNumber<800 /* charge loop */)) {
       hardwareInterface_setRGB(4); /* blue */
   }
-  if (checkpointNumber>1000) {
+  if ((checkpointNumber>=800 /* charge end */) && (checkpointNumber<900 /* welding detection */)) {
+	  if (hwIf_LedBlinkDivider & 1) {
+		  hardwareInterface_setRGB(4); /* blue */
+	  } else {
+		  hardwareInterface_setRGB(2); /* green */
+	  }
+  }
+  if (checkpointNumber==900 /* session stop */) {
+	  hardwareInterface_setRGB(4+2); /* blue+green */
+  }
+  if (checkpointNumber>1000) { /* error states */
 	  hardwareInterface_setRGB(1); /* red */
   }
   hwIf_LedBlinkDivider++;
@@ -387,15 +338,18 @@ void hardwareInterface_cyclic(void) {
         cpFrequency_Hz = 0;
     }
 
-    hardwareInterface_handlePushbutton();
     handleApplicationRGBLeds();
     hwIf_handleContactorRequests();
     hardwareInterface_handleOutputTestMode();
     
-    canDebugValue1 = rawAdValues[MY_ADC_CHANNEL_TEMP1];
-    canDebugValue2 = rawAdValues[MY_ADC_CHANNEL_DCVOLTAGE];
-    canDebugValue3 = uCcsInlet_V;
-    canDebugValue4 = -7890;
+    //canDebugValue1 = rawAdValues[MY_ADC_CHANNEL_TEMP1];
+    //canDebugValue2 = rawAdValues[MY_ADC_CHANNEL_DCVOLTAGE];
+    //canDebugValue3 = temperatureChannel_1_R_NTC;
+    //canDebugValue4 = temperatureChannel_2_R_NTC;
+    canDebugValue1 = pushbutton_buttonSeriesCounter;
+    canDebugValue2 = pushbutton_nNumberOfButtonPresses;
+    canDebugValue3 = pushbutton_accumulatedButtonDigits;
+    canDebugValue4 = pushbutton_tButtonPressTime;
 }
 
 void hardwareInterface_init(void) {

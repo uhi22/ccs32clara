@@ -21,6 +21,7 @@
 #include "canbus.h"
 #include "myAdc.h"
 #include "temperatures.h"
+#include "pushbutton.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

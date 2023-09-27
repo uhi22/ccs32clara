@@ -719,6 +719,8 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.CurrentDemandRes_isUsed) {
         /* as long as the accu is not full and no stop-demand from the user, we continue charging */
+    	/* If the pushbutton is pressed longer than 0.5s, we interpret this as charge stop request. */
+    	pev_isUserStopRequest = pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
         if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequest) {
             if (hardwareInterface_getIsAccuFull()) {
                 publishStatus("Accu full", "");

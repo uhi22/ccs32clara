@@ -23,6 +23,7 @@ CAN_TxHeaderTypeDef   TxHeader;
 uint8_t               TxData[8];
 uint32_t              TxMailbox;
 uint8_t canbus_divider100ms_to_1s;
+uint8_t canbus_divider10ms_to_1s;
 int16_t canDebugValue1, canDebugValue2, canDebugValue3, canDebugValue4;
 
 void canbus_demoTransmit(void) {
@@ -56,7 +57,7 @@ void canbus_demoTransmit(void) {
 
 }
 
-void canbus_demoTransmit568(void) {
+void canbus_transmitFoccciFast01(void) {
   long int rc;
   TxHeader.IDE = CAN_ID_STD;
   TxHeader.StdId = 0x568;
@@ -76,17 +77,11 @@ void canbus_demoTransmit568(void) {
   if (rc != HAL_OK)
   {
    // Transmit did not work -> Error_Handler();
-   //sprintf(strTmp, "HAL_CAN_AddTxMessage failed %ld", rc);
-   //addToTrace(strTmp);
-  } else {
-   //sprintf(strTmp, "HAL_CAN_AddTxMessage ok for mailbox %ld", TxMailbox);
-   //addToTrace(strTmp);
   }
-
 }
 
 
-void canbus_demoTransmit569(void) {
+void canbus_demoTransmitFoccciTemperatures01_569(void) {
   /* Temperature signals */
   long int rc;
   TxHeader.IDE = CAN_ID_STD;
@@ -133,17 +128,25 @@ void canbus_demoTransmit56A(void) {
 }
 
 
+
 void canbus_Init(void) {
 	HAL_CAN_Start(&hcan);
 }
 
-void canbus_Mainfunction100ms(void) {
-    if ((canbus_divider100ms_to_1s % 3)==0) { canbus_demoTransmit(); }
-    if ((canbus_divider100ms_to_1s % 3)==1) { canbus_demoTransmit568(); }
-    if ((canbus_divider100ms_to_1s % 3)==2) { canbus_demoTransmit56A(); }
-    canbus_divider100ms_to_1s++;
-    if (canbus_divider100ms_to_1s >= 10) {
-    	canbus_divider100ms_to_1s=0;
-        canbus_demoTransmit569(); /* send temperatures in the slow 1s interval */
+void canbus_Mainfunction10ms(void) {
+    /* The canbus_divider10ms_to_1s runs from 0 to 99. */
+
+    if ((canbus_divider10ms_to_1s % 10)==0) { canbus_transmitFoccciFast01(); }
+
+    if ((canbus_divider10ms_to_1s % 50)==1) { canbus_demoTransmit(); }
+    if ((canbus_divider10ms_to_1s % 50)==3) { canbus_demoTransmit56A(); }
+    if (canbus_divider10ms_to_1s ==4) canbus_demoTransmitFoccciTemperatures01_569(); /* send temperatures in the slow 1s interval */
+
+    canbus_divider10ms_to_1s++;
+    if (canbus_divider10ms_to_1s >= 100) {
+    	canbus_divider10ms_to_1s=0;
     }
+}
+
+void canbus_Mainfunction100ms(void) {
 }

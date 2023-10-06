@@ -10,6 +10,7 @@ uint32_t canary3;
 uint32_t lastTime100ms;
 uint32_t lastTime200ms;
 uint32_t lastTime30ms;
+uint32_t lastTime10ms;
 uint32_t canary4;
 uint32_t nCycles30ms;
 uint32_t canary5;
@@ -17,6 +18,12 @@ uint32_t canary5;
 
 /**********************************************************/
 /* The tasks */
+
+/* This task runs each 10ms. */
+void task10ms(void) {
+	canbus_Mainfunction10ms();
+}
+
 
 /* This task runs each 30ms. */
 void task30ms(void) {
@@ -96,6 +103,10 @@ void runMyScheduler(void) {
 	    sprintf(strTmp, "Error: current time jumped back. current %ld, last %ld", currentTime, lastTime30ms);
 	    addToTrace(strTmp);
 	    while (1) { }
+  }
+  if ((currentTime - lastTime10ms)>10) {
+    lastTime10ms += 10;
+    task10ms();
   }
   if ((currentTime - lastTime30ms)>30) {
     lastTime30ms += 30;

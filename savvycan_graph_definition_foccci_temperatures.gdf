@@ -1,0 +1,4 @@
+Z,569,ffffffff,-15,8,N,-40,1,1,-1,26,3,63,Temp1,128,128,128,0,N,0,1,foccciTemperatures01,Temp1
+Z,569,ffffffff,-23,8,N,-40,1,1,-1,111,111,0,Temp2,128,128,128,0,N,0,0,foccciTemperatures01,Temp2
+Z,569,ffffffff,-31,8,N,-40,1,1,-1,255,170,0,Temp3,128,128,128,0,N,0,1,foccciTemperatures01,Temp3
+Z,569,ffffffff,-7,8,N,-40,1,1,-1,255,0,255,TempCPU,128,128,128,0,N,0,1,foccciTemperatures01,TempCPU

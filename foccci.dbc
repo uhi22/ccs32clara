@@ -32,15 +32,29 @@ NS_ :
     SG_MUL_VAL_
 
 BS_: 
-BU_: 
-BO_ 1383 FOCCCI01: 8 Vector__XXX
+BU_: foccci 
+BO_ 1383 FOCCCI01: 8 foccci
    SG_ foccci_uptime_s : 7|24@0+ (1,0) [0|1e+06] "s" Vector__XXX
+   SG_ foccciCheckpoint : 31|16@0+ (1,0) [0|10000] "" Vector__XXX
+
+BO_ 1384 foccciFast01: 8 foccci
+   SG_ EVSEPresentVoltage : 7|16@0+ (1,0) [0|1000] "V" Vector__XXX
+   SG_ uCcsInlet_V : 23|16@0- (1,0) [0|1000] "V" Vector__XXX
+
+BO_ 1385 foccciTemperatures01: 8 foccci
+   SG_ TempCPU : 7|8@0+ (1,-40) [-40|125] "°C" Vector__XXX
+   SG_ Temp1 : 15|8@0+ (1,-40) [-40|125] "°C" Vector__XXX
+   SG_ Temp2 : 23|8@0+ (1,-40) [-40|125] "°C" Vector__XXX
+   SG_ Temp3 : 31|8@0+ (1,-40) [-40|125] "°C" Vector__XXX
 
 BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
 BA_DEF_ BO_ "matchingcriteria" INT 0 0;
 BA_DEF_ BO_ "filterlabeling" INT 0 0;
+BA_ "GenMsgForegroundColor" BO_ 1384 "#ff5500";
+BA_ "GenMsgForegroundColor" BO_ 1385 "#55aa00";
 BA_DEF_DEF_ "GenMsgBackgroundColor" "#ffffff";
 BA_DEF_DEF_ "GenMsgForegroundColor" "#000000";
 BA_DEF_DEF_ "matchingcriteria" 0;
 BA_DEF_DEF_ "filterlabeling" 1;
+CM_ BU_ foccci "fully open CCS charge controller interface";

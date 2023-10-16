@@ -127,25 +127,92 @@ void canbus_demoTransmit56A(void) {
   (void)HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
 }
 
+#define CAN_TEXT_BUFFER_LEN 300
+char aCanTextBuffer[CAN_TEXT_BUFFER_LEN];
+int canTextBufferReadIndex;
+int canTextBufferWriteIndex;
+uint32_t canLostTextBytes;
+
+void canbus_addStringToTextTransmitBuffer(char *s) {
+	int i, L, nextWriteIndex;
+	L = strlen(s);
+	for (i=0; i<L; i++) {
+		aCanTextBuffer[canTextBufferWriteIndex]=s[i];
+		nextWriteIndex = canTextBufferWriteIndex+1;
+		if (nextWriteIndex>=CAN_TEXT_BUFFER_LEN) nextWriteIndex=0;
+		if (nextWriteIndex==canTextBufferReadIndex) {
+			/* we would hit the read index, this would mean a buffer overrun. So we just count the lost bytes. */
+			canLostTextBytes++;
+			/* we keep the writeIndex at the same position, so we will overwrite the last byte again and again. */
+		} else {
+			/* we still have space. Use the new writeIndex. */
+			canTextBufferWriteIndex = nextWriteIndex;
+		}
+	}
+}
+
+void canbus_demoTransmit56B_Text(void) {
+  int i;
+  int nFreeTxMailboxes;
+  /* todo: check whether a tx mailbox is free */
+  nFreeTxMailboxes=0;
+  if (hcan.Instance->TSR & CAN_TSR_TME0) nFreeTxMailboxes++;
+  if (hcan.Instance->TSR & CAN_TSR_TME1) nFreeTxMailboxes++;
+  if (hcan.Instance->TSR & CAN_TSR_TME2) nFreeTxMailboxes++;
+  if (nFreeTxMailboxes<2) return; /* keep at least one mailbox free for application messages. */
+  if (canTextBufferReadIndex==canTextBufferWriteIndex) {
+	  /* buffer is empty. Nothing to transmit. */
+	  return;
+  }
+  //sprintf(strTmp, "Free tx mailboxes: %d", nFreeTxMailboxes);
+  //addToTrace(strTmp);
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.StdId = 0x56B;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+  for (i=0; i<8; i++) {
+      TxData[i] = 0; /* prefill with all zero. */
+  }
+  for (i=0; i<8; i++) {
+    TxData[i] = (uint8_t)aCanTextBuffer[canTextBufferReadIndex];
+    canTextBufferReadIndex++;
+    if (canTextBufferReadIndex>=CAN_TEXT_BUFFER_LEN) canTextBufferReadIndex=0;
+    if (canTextBufferReadIndex==canTextBufferWriteIndex) {
+    	/* we reached the last byte of the buffer, it is empty now. Stop copying. */
+    	break;
+    }
+  }
+  (void)HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
+}
 
 
 void canbus_Init(void) {
 	HAL_CAN_Start(&hcan);
+	canbus_addStringToTextTransmitBuffer("Hello\n");
+	canbus_addStringToTextTransmitBuffer("World! This is a longer text. It will be splitted into several CAN messages.");
 }
 
 void canbus_Mainfunction10ms(void) {
     /* The canbus_divider10ms_to_1s runs from 0 to 99. */
 
+	/* Fast 100ms cycle: */
     if ((canbus_divider10ms_to_1s % 10)==0) { canbus_transmitFoccciFast01(); }
-
+    /* 500ms cycle: */
     if ((canbus_divider10ms_to_1s % 50)==1) { canbus_demoTransmit(); }
     if ((canbus_divider10ms_to_1s % 50)==3) { canbus_demoTransmit56A(); }
+    /* 1s cycle */
     if (canbus_divider10ms_to_1s ==4) canbus_demoTransmitFoccciTemperatures01_569(); /* send temperatures in the slow 1s interval */
 
     canbus_divider10ms_to_1s++;
     if (canbus_divider10ms_to_1s >= 100) {
     	canbus_divider10ms_to_1s=0;
     }
+    /* The text transmit shall be as fast as possible, so we call it three times, to fill
+     * the transmit mailboxes if available. */
+    canbus_demoTransmit56B_Text();
+    canbus_demoTransmit56B_Text();
+    canbus_demoTransmit56B_Text();
+
 }
 
 void canbus_Mainfunction100ms(void) {

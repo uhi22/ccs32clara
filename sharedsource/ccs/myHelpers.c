@@ -10,7 +10,8 @@ char mySerialPrintOutputBuffer[MY_SERIAL_PRINTBUFFERLEN] = {'\0'};
 
 void addToTrace(char * s) {
     sprintf(mySerialPrintOutputBuffer, "[%ld] %s\r\n", HAL_GetTick(), s);
-    mySerialPrint();
+    mySerialPrint(); /* print to the serial line */
+    canbus_addStringToTextTransmitBuffer(mySerialPrintOutputBuffer); /* print to the CAN */
 }
 
 void showAsHex(uint8_t *data, uint16_t len, char *description) {

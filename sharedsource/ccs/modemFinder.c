@@ -12,6 +12,7 @@ void modemFinder_Mainfunction(void) {
     publishStatus("Modem search", "");
     composeGetSwReq();
     myEthTransmit();
+    checkpointNumber = 6; /* "checking for local modem presence" */
     numberOfSoftwareVersionResponses = 0; /* we want to count the modems. Start from zero. */
     mofi_stateDelay = 15; /* 0.5s should be sufficient to receive the software versions from the modems */
     mofi_state = 1;

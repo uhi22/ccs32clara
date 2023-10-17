@@ -282,7 +282,14 @@ uint8_t hwIf_LedBlinkDivider;
 
 void handleApplicationRGBLeds(void) {
   if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
-  if (checkpointNumber<150) {
+  hwIf_LedBlinkDivider++;
+  if (checkpointNumber<100) {
+	  	/* modem is sleeping (or defective), or modem search ongoing */
+		hardwareInterface_setRGB(4+2+1); /* blue+green+red */
+		return;
+  }
+  if ((checkpointNumber>=100) && (checkpointNumber<150)) {
+	/* One modem detected. This is the normal "ready" case. */
     hardwareInterface_setRGB(2); /* green */
   }
   if ((checkpointNumber>150) && (checkpointNumber<=530)) {
@@ -322,7 +329,6 @@ void handleApplicationRGBLeds(void) {
   if (checkpointNumber>1000) { /* error states */
 	  hardwareInterface_setRGB(1); /* red */
   }
-  hwIf_LedBlinkDivider++;
 }
 
 void hardwareInterface_cyclic(void) {

@@ -11,6 +11,7 @@ uint32_t lastTime100ms;
 uint32_t lastTime200ms;
 uint32_t lastTime30ms;
 uint32_t lastTime10ms;
+uint32_t lastTime1ms;
 uint32_t canary4;
 uint32_t nCycles30ms;
 uint32_t canary5;
@@ -18,6 +19,11 @@ uint32_t canary5;
 
 /**********************************************************/
 /* The tasks */
+
+/* This task runs each 1ms(but may be slower if other tasks are busy). */
+void task1ms(void) {
+	canbus_Mainfunction1ms();
+}
 
 /* This task runs each 10ms. */
 void task10ms(void) {
@@ -107,6 +113,10 @@ void runMyScheduler(void) {
   if ((currentTime - lastTime10ms)>10) {
     lastTime10ms += 10;
     task10ms();
+  }
+  if ((currentTime - lastTime1ms)>1) {
+    lastTime1ms += 1;
+    task1ms();
   }
   if ((currentTime - lastTime30ms)>30) {
     lastTime30ms += 30;

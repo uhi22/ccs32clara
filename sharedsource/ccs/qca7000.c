@@ -106,7 +106,7 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
   uint8_t counterOfEthFramesInSpiFrame;
   counterOfEthFramesInSpiFrame = 0;
   p= mySpiRxBuffer;
-  while (!blDone) {  /* The SPI receive buffer may contain multiple Ethernet frames. Run trough all. */
+  while (!blDone) {  /* The SPI receive buffer may contain multiple Ethernet frames. Run through all. */
       /* the SpiRxBuffer contains more than the ethernet frame:
         4 byte length
         4 byte start of frame AA AA AA AA
@@ -139,13 +139,18 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
             //Serial.println("Its a HomePlug message.");
             sprintf(strTmp, "Its a HomePlug message.");
             addToTrace(strTmp);
+            canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             evaluateReceivedHomeplugPacket();
           } else if (etherType == 0x86dd) { /* it is an IPv6 frame */
         	sprintf(strTmp, "Its a IPv6 message.");
         	addToTrace(strTmp);
+            canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             ipv6_evaluateReceivedPacket();
           } else {
             //Serial.println("Other message.");
+            /* We do not log other messages, to avoid too much logging traffic. If needed, enable the logging,
+            by commenting-in this: canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
+            */
           }
           availbytes = availbytes - L1 - 4;
           p+= L1+4;
@@ -268,6 +273,7 @@ void myEthTransmit(void) {
   #ifdef VERBOSE_QCA7000
     showAsHex(myethtransmitbuffer, myethtransmitbufferLen, "myEthTransmit");
   #endif
+  canbus_addToBinaryLogging(0xAA55, myethtransmitbuffer, myethtransmitbufferLen);
   spiQCA7000SendEthFrame();
 }
 

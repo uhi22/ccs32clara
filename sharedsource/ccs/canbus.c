@@ -127,6 +127,75 @@ void canbus_demoTransmit56A(void) {
   (void)HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
 }
 
+
+#define CAN_BINARY_BUFFER_LEN 600
+char aCanBinaryBuffer[CAN_BINARY_BUFFER_LEN];
+int canBinaryBufferReadIndex;
+int canBinaryBufferWriteIndex;
+uint32_t canLostBinaryBytes;
+
+void canbus_addByteToBinaryLogging(uint8_t b) {
+ int nextWriteIndex;
+  aCanBinaryBuffer[canBinaryBufferWriteIndex]=b;
+  nextWriteIndex = canBinaryBufferWriteIndex+1;
+  if (nextWriteIndex>=CAN_BINARY_BUFFER_LEN) nextWriteIndex=0;
+  if (nextWriteIndex==canBinaryBufferReadIndex) {
+		/* we would hit the read index, this would mean a buffer overrun. So we just count the lost bytes. */
+		canLostBinaryBytes++;
+		/* we keep the writeIndex at the same position, so we will overwrite the last byte again and again. */
+  } else {
+		/* we still have space. Use the new writeIndex. */
+		canBinaryBufferWriteIndex = nextWriteIndex;
+  }
+}
+
+void canbus_addToBinaryLogging(uint16_t preamble, uint8_t *inbuffer, uint16_t inbufferLen) {
+	int i;
+	uint16_t trailer = 0xBBCC; /* end-of-frame marker */
+	canbus_addByteToBinaryLogging((uint8_t)(preamble >> 8));
+	canbus_addByteToBinaryLogging((uint8_t)(preamble));
+	for (i=0; i<inbufferLen; i++) {
+		canbus_addByteToBinaryLogging(inbuffer[i]);
+	}
+	canbus_addByteToBinaryLogging((uint8_t)(trailer >> 8));
+	canbus_addByteToBinaryLogging((uint8_t)(trailer));
+}
+
+void canbus_tryToTransmitBinaryBuffer56C_BinaryLog(void) {
+  int i;
+  int nFreeTxMailboxes;
+  if (canBinaryBufferReadIndex==canBinaryBufferWriteIndex) {
+	  /* buffer is empty. Nothing to transmit. */
+	  return;
+  }
+  nFreeTxMailboxes=0;
+  if (hcan.Instance->TSR & CAN_TSR_TME0) nFreeTxMailboxes++;
+  if (hcan.Instance->TSR & CAN_TSR_TME1) nFreeTxMailboxes++;
+  if (hcan.Instance->TSR & CAN_TSR_TME2) nFreeTxMailboxes++;
+  if (nFreeTxMailboxes<2) return; /* keep at least one mailbox free for application messages. */
+  //sprintf(strTmp, "Free tx mailboxes: %d", nFreeTxMailboxes);
+  //addToTrace(strTmp);
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.StdId = 0x56C;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+  for (i=0; i<8; i++) {
+      TxData[i] = 0; /* prefill with all zero. */
+  }
+  for (i=0; i<8; i++) {
+    TxData[i] = (uint8_t)aCanBinaryBuffer[canBinaryBufferReadIndex];
+    canBinaryBufferReadIndex++;
+    if (canBinaryBufferReadIndex>=CAN_BINARY_BUFFER_LEN) canBinaryBufferReadIndex=0;
+    if (canBinaryBufferReadIndex==canBinaryBufferWriteIndex) {
+    	/* we reached the last byte of the buffer, it is empty now. Stop copying. */
+    	break;
+    }
+  }
+  (void)HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox);
+}
+
+
+
 #define CAN_TEXT_BUFFER_LEN 300
 char aCanTextBuffer[CAN_TEXT_BUFFER_LEN];
 int canTextBufferReadIndex;
@@ -151,19 +220,18 @@ void canbus_addStringToTextTransmitBuffer(char *s) {
 	}
 }
 
-void canbus_demoTransmit56B_Text(void) {
+void canbus_tryToTransmit56B_TextLog(void) {
   int i;
   int nFreeTxMailboxes;
-  /* todo: check whether a tx mailbox is free */
+  if (canTextBufferReadIndex==canTextBufferWriteIndex) {
+	  /* buffer is empty. Nothing to transmit. */
+	  return;
+  }
   nFreeTxMailboxes=0;
   if (hcan.Instance->TSR & CAN_TSR_TME0) nFreeTxMailboxes++;
   if (hcan.Instance->TSR & CAN_TSR_TME1) nFreeTxMailboxes++;
   if (hcan.Instance->TSR & CAN_TSR_TME2) nFreeTxMailboxes++;
   if (nFreeTxMailboxes<2) return; /* keep at least one mailbox free for application messages. */
-  if (canTextBufferReadIndex==canTextBufferWriteIndex) {
-	  /* buffer is empty. Nothing to transmit. */
-	  return;
-  }
   //sprintf(strTmp, "Free tx mailboxes: %d", nFreeTxMailboxes);
   //addToTrace(strTmp);
   TxHeader.IDE = CAN_ID_STD;
@@ -207,12 +275,17 @@ void canbus_Mainfunction10ms(void) {
     if (canbus_divider10ms_to_1s >= 100) {
     	canbus_divider10ms_to_1s=0;
     }
-    /* The text transmit shall be as fast as possible, so we call it three times, to fill
-     * the transmit mailboxes if available. */
-    canbus_demoTransmit56B_Text();
-    canbus_demoTransmit56B_Text();
-    canbus_demoTransmit56B_Text();
+}
 
+void canbus_Mainfunction1ms(void) {
+    /* The text and binary logging transmission shall be as fast as possible, so we call it multiple times, to fill
+     * the transmit mailboxes if available. */
+    canbus_tryToTransmitBinaryBuffer56C_BinaryLog();
+    canbus_tryToTransmit56B_TextLog();
+    canbus_tryToTransmitBinaryBuffer56C_BinaryLog();
+    canbus_tryToTransmit56B_TextLog();
+    canbus_tryToTransmitBinaryBuffer56C_BinaryLog();
+    canbus_tryToTransmit56B_TextLog();
 }
 
 void canbus_Mainfunction100ms(void) {

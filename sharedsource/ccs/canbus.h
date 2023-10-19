@@ -5,6 +5,7 @@
 /* Global Variables */
 extern CAN_HandleTypeDef hcan;
 extern int16_t canDebugValue1, canDebugValue2, canDebugValue3, canDebugValue4;
+extern uint8_t canRxData[8]; /* written in irq context */
 
 /* Global Functions */
 

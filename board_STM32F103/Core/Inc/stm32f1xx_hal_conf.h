@@ -134,7 +134,7 @@
 #define  PREFETCH_ENABLE              1U
 
 #define  USE_HAL_ADC_REGISTER_CALLBACKS         0U /* ADC register callback disabled       */
-#define  USE_HAL_CAN_REGISTER_CALLBACKS         0U /* CAN register callback disabled       */
+#define  USE_HAL_CAN_REGISTER_CALLBACKS         1U /* CAN register callback enabled       */
 #define  USE_HAL_CEC_REGISTER_CALLBACKS         0U /* CEC register callback disabled       */
 #define  USE_HAL_DAC_REGISTER_CALLBACKS         0U /* DAC register callback disabled       */
 #define  USE_HAL_ETH_REGISTER_CALLBACKS         0U /* ETH register callback disabled       */

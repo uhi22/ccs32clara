@@ -25,6 +25,7 @@ uint32_t              TxMailbox;
 uint8_t canbus_divider100ms_to_1s;
 uint8_t canbus_divider10ms_to_1s;
 int16_t canDebugValue1, canDebugValue2, canDebugValue3, canDebugValue4;
+uint32_t nNumberOfReceivedCanMessages;
 
 void canbus_demoTransmit(void) {
   long int rc;
@@ -254,10 +255,73 @@ void canbus_tryToTransmit56B_TextLog(void) {
 }
 
 
+void canbus_tryToTransmitXcpResponse(void) {
+  int nFreeTxMailboxes;
+  if (!xcp_isTransmitMessageReady) {
+	  /* Nothing to transmit. */
+	  return;
+  }
+  nFreeTxMailboxes=0;
+  if (hcan.Instance->TSR & CAN_TSR_TME0) nFreeTxMailboxes++;
+  if (hcan.Instance->TSR & CAN_TSR_TME1) nFreeTxMailboxes++;
+  if (hcan.Instance->TSR & CAN_TSR_TME2) nFreeTxMailboxes++;
+  if (nFreeTxMailboxes==0) {
+      /* no free mailbox. We try it again the next time. */
+      return;
+  }
+  TxHeader.IDE = CAN_ID_STD;
+  TxHeader.StdId = 0x601;
+  TxHeader.RTR = CAN_RTR_DATA;
+  TxHeader.DLC = 8;
+  (void)HAL_CAN_AddTxMessage(&hcan, &TxHeader, xcpSlavePdu, &TxMailbox);
+  xcp_isTransmitMessageReady=0; /* message was sent out, nothing more to do. */
+}
+
+CAN_RxHeaderTypeDef canRxMsgHdr;
+uint8_t canRxData[8]; /* written in irq context */
+
+void canEvaluateReceivedMessage(void) {
+    /* This is called in interrupt context. Keep it as short as possible. */
+    if (canRxMsgHdr.StdId == 0x600) {
+        xcp_CanRxInterrupt();
+        return;
+    }
+}
+
+/* The CAN interrupt routine. */
+void can_irq(CAN_HandleTypeDef *pcan) {
+  HAL_StatusTypeDef rc;
+  rc = HAL_CAN_GetRxMessage(pcan, CAN_RX_FIFO0, &canRxMsgHdr, canRxData);
+  if (rc==HAL_OK) {
+    nNumberOfReceivedCanMessages++;
+    canEvaluateReceivedMessage();
+  }
+}
+
 void canbus_Init(void) {
-	HAL_CAN_Start(&hcan);
-	canbus_addStringToTextTransmitBuffer("Hello\n");
-	canbus_addStringToTextTransmitBuffer("World! This is a longer text. It will be splitted into several CAN messages.");
+ /*  hcan.Instance = CAN1, Prescaler, TimeSeg etc have been already set by the
+  *  generated code in main.c. Also HAL_CAN_Init() has been called there.
+  */
+  CAN_FilterTypeDef sf;
+  sf.FilterMaskIdHigh = 0x0000;
+  sf.FilterMaskIdLow = 0x0000;
+  sf.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+  sf.FilterBank = 0;
+  sf.FilterMode = CAN_FILTERMODE_IDMASK;
+  sf.FilterScale = CAN_FILTERSCALE_32BIT;
+  sf.FilterActivation = CAN_FILTER_ENABLE;
+  if (HAL_CAN_ConfigFilter(&hcan, &sf) != HAL_OK) {
+    Error_Handler();
+  }
+  if (HAL_CAN_RegisterCallback(&hcan, HAL_CAN_RX_FIFO0_MSG_PENDING_CB_ID, can_irq)) {
+    Error_Handler();
+  }
+  HAL_CAN_Start(&hcan);
+  if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+    Error_Handler();
+  }
+  canbus_addStringToTextTransmitBuffer("Hello\n");
+  canbus_addStringToTextTransmitBuffer("World! This is a longer text. It will be splitted into several CAN messages.");
 }
 
 void canbus_Mainfunction10ms(void) {
@@ -278,6 +342,7 @@ void canbus_Mainfunction10ms(void) {
 }
 
 void canbus_Mainfunction1ms(void) {
+    canbus_tryToTransmitXcpResponse(); /* first try to transmit the XCP response. */
     /* The text and binary logging transmission shall be as fast as possible, so we call it multiple times, to fill
      * the transmit mailboxes if available. */
     canbus_tryToTransmitBinaryBuffer56C_BinaryLog();

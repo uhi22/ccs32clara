@@ -28,6 +28,7 @@ void task1ms(void) {
 /* This task runs each 10ms. */
 void task10ms(void) {
 	canbus_Mainfunction10ms();
+	xcp_Mainfunction();
 }
 
 

@@ -114,6 +114,7 @@ int main(void)
   hardwareInterface_init();
   initMyScheduler();
   canbus_Init();
+  xcp_Init();
   myAdc_calibrate();
   /* USER CODE END 2 */
 

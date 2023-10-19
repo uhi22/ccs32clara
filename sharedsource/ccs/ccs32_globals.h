@@ -22,6 +22,7 @@
 #include "myAdc.h"
 #include "temperatures.h"
 #include "pushbutton.h"
+#include "xcp.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

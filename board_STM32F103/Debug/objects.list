@@ -19,6 +19,7 @@
 "./Core/Src/sharedsource/ccs/tcp.o"
 "./Core/Src/sharedsource/ccs/temperatures.o"
 "./Core/Src/sharedsource/ccs/udpChecksum.o"
+"./Core/Src/sharedsource/ccs/xcp.o"
 "./Core/Src/sharedsource/exi/BitInputStream.o"
 "./Core/Src/sharedsource/exi/BitOutputStream.o"
 "./Core/Src/sharedsource/exi/ByteStream.o"

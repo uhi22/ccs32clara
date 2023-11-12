@@ -91,6 +91,7 @@ static void Ms30Task()
 
    //cyclicLcdUpdate();
    hardwareInterface_cyclic();
+   pushbutton_handlePushbutton();
 }
 
 //sample 10 ms task
@@ -114,7 +115,7 @@ void Param::Change(Param::PARAM_NUM paramNum)
 
 //Whichever timer(s) you use for the scheduler, you have to
 //implement their ISRs here and call into the respective scheduler
-extern "C" void tim2_isr(void)
+extern "C" void tim4_isr(void)
 {
    scheduler->Run();
 }
@@ -130,17 +131,20 @@ extern "C" int main(void)
    AnaIn::Start(); //Starts background ADC conversion via DMA
    write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
 
+   gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP);
+
    tim_setup(); //Sample init of a timer
    nvic_setup(); //Set up some interrupts
    parm_load(); //Load stored parameters
    qca7000setup();
 
-   Stm32Scheduler s(TIM2); //We never exit main so it's ok to put it on stack
+   Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
    scheduler = &s;
    //Initialize CAN1, including interrupts. Clock must be enabled in clock_setup()
    Stm32Can c(CAN1, (CanHardware::baudrates)Param::GetInt(Param::canspeed));
    CanMap cm(&c);
    CanSdo sdo(&c, &cm);
+   sdo.SetNodeId(22);
    //store a pointer for easier access
    can = &c;
    canMap = &cm;

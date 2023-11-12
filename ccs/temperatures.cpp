@@ -74,16 +74,19 @@ void temperatures_calculateTemperatures(void) {
     temperatureChannel_1_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
     temperatureChannel_1_celsius = ohmToCelsius(temperatureChannel_1_R_NTC);
     temperatureChannel_1_M40 = temperatures_convertFloatToM40(temperatureChannel_1_celsius);
+    Param::SetFloat(Param::temp1, temperatureChannel_1_celsius);
 
     tmp32 = AnaIn::temp2.Get();
     temperatureChannel_2_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
     temperatureChannel_2_celsius = ohmToCelsius(temperatureChannel_2_R_NTC);
     temperatureChannel_2_M40 = temperatures_convertFloatToM40(temperatureChannel_2_celsius);
+    Param::SetFloat(Param::temp2, temperatureChannel_2_celsius);
 
     tmp32 = AnaIn::temp3.Get();
     temperatureChannel_3_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
     temperatureChannel_3_celsius = ohmToCelsius(temperatureChannel_3_R_NTC);
     temperatureChannel_3_M40 = temperatures_convertFloatToM40(temperatureChannel_3_celsius);
+    Param::SetFloat(Param::temp3, temperatureChannel_3_celsius);
 
     //temperatureCpu_M40 =  temperatures_convertFloatToM40(fCpuTemperature_Celsius);
 

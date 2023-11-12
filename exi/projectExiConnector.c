@@ -27,10 +27,12 @@ void addToTrace_chararray(char *s);
 #endif
 
 void debugAddStringAndInt(char *s, int i) {
-	//char sTmp[1000];
-	//sprintf(sTmp, "%s%d", s, i);
+#if 0
+	char sTmp[1000];
+	sprintf(sTmp, "%s%d", s, i);
     /* todo: before appending, check the size. Otherwise we get overflow! */
-	//strcat(gDebugString, sTmp);
+	strcat(gDebugString, sTmp);
+#endif // 0
 }
 
 void projectExiConnector_decode_appHandExiDocument(void) {

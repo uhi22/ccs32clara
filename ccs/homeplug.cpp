@@ -90,7 +90,7 @@ void slac_enterState(int n);
 void composeSetKey(void);
 
 /*********************************************************************************/
-void callbackReadyForTcp(uint8_t x) {
+void callbackReadyForTcp(uint8_t) {
   pevStateMachine_ReInit(); /* let the PEV state machine start the TCP stuff */
 }
 

@@ -28,6 +28,7 @@
 #include "my_math.h"
 #include "anain.h"
 #include "digio.h"
+#include "params.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

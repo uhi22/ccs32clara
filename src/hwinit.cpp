@@ -51,14 +51,16 @@ void clock_setup(void)
    rcc_periph_clock_enable(RCC_GPIOC);
    rcc_periph_clock_enable(RCC_GPIOD);
    rcc_periph_clock_enable(RCC_UART4);
-   rcc_periph_clock_enable(RCC_TIM2); //Scheduler
-   rcc_periph_clock_enable(RCC_TIM4); //Overcurrent / AUX PWM
-   rcc_periph_clock_enable(RCC_DMA1);  //ADC, Encoder and UART receive
+   rcc_periph_clock_enable(RCC_TIM1); //Don't know
+   rcc_periph_clock_enable(RCC_TIM2); //CP measurement
+   rcc_periph_clock_enable(RCC_TIM3); //Contactor and lock driver
+   rcc_periph_clock_enable(RCC_TIM4); //Scheduler
+   rcc_periph_clock_enable(RCC_DMA1);
    rcc_periph_clock_enable(RCC_ADC1);
    rcc_periph_clock_enable(RCC_CRC);
    rcc_periph_clock_enable(RCC_AFIO); //CAN
    rcc_periph_clock_enable(RCC_CAN1); //CAN
-   rcc_periph_clock_enable(RCC_SPI1); //CAN
+   rcc_periph_clock_enable(RCC_SPI1); //QCA comms
 }
 
 /* Some pins should never be left floating at any time
@@ -159,7 +161,24 @@ void tim_setup()
    timer_set_period(CONTACT_LOCK_TIMER, 65535);
    timer_enable_counter(CONTACT_LOCK_TIMER);
 
+   timer_set_prescaler(CP_TIMER, 71); //run at 1 MHz
+   timer_set_period(CP_TIMER, 65535);
+   timer_direction_up(CP_TIMER);
+   timer_slave_set_mode(CP_TIMER, TIM_SMCR_SMS_RM);
+   timer_slave_set_polarity(CP_TIMER, TIM_ET_FALLING);
+   timer_slave_set_trigger(CP_TIMER, TIM_SMCR_TS_TI1FP1);
+   timer_ic_set_filter(CP_TIMER, TIM_IC1, TIM_IC_DTF_DIV_32_N_8);
+   timer_ic_set_filter(CP_TIMER, TIM_IC2, TIM_IC_DTF_DIV_32_N_8);
+   timer_ic_set_input(CP_TIMER, TIM_IC1, TIM_IC_IN_TI1);//measures frequency
+   timer_ic_set_input(CP_TIMER, TIM_IC2, TIM_IC_IN_TI1);//measure duty cycle
+   timer_set_oc_polarity_high(CP_TIMER, TIM_OC1);
+   timer_set_oc_polarity_low(CP_TIMER, TIM_OC2);
+   timer_ic_enable(CP_TIMER, TIM_IC1);
+   timer_ic_enable(CP_TIMER, TIM_IC2);
+   timer_generate_event(CP_TIMER, TIM_EGR_UG);
+   timer_enable_counter(CP_TIMER);
+
    /** setup gpio */
-   gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO5 | GPIO6);
+   gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6 | GPIO7 | GPIO8 | GPIO9);
 }
 

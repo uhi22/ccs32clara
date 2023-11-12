@@ -6,8 +6,11 @@
 
 #define RCC_CLOCK_SETUP()   rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ])
 #define CONTACT_LOCK_TIMER  TIM3
+#define LOCK1_CHAN          TIM_OC1
+#define LOCK2_CHAN          TIM_OC2
 #define CONTACT1_CHAN       TIM_OC3
 #define CONTACT2_CHAN       TIM_OC4
+#define CP_TIMER            TIM2
 
 //Address of parameter block in flash
 #define FLASH_PAGE_SIZE 1024

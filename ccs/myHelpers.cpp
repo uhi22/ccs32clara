@@ -11,7 +11,6 @@ void addToTrace(const char * s) {
 }
 
 void showAsHex(uint8_t *data, uint16_t len, const char *description) {
-   char strHex[5];
    int i;
    printf("%s (%d bytes): ", description, len);
    for (i=0; i<len; i++) {

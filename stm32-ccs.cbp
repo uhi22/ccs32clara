@@ -31,71 +31,39 @@
 			</Target>
 		</Build>
 		<Unit filename="Makefile" />
-		<Unit filename="ccs/canbus.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="ccs/canbus.h" />
 		<Unit filename="ccs/ccs32_globals.h" />
 		<Unit filename="ccs/configuration.h" />
-		<Unit filename="ccs/connMgr.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/connMgr.cpp" />
 		<Unit filename="ccs/connMgr.h" />
-		<Unit filename="ccs/hardwareInterface.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/hardwareInterface.cpp" />
 		<Unit filename="ccs/hardwareInterface.h" />
-		<Unit filename="ccs/homeplug.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/homeplug.cpp" />
 		<Unit filename="ccs/homeplug.h" />
-		<Unit filename="ccs/ipv6.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/ipv6.cpp" />
 		<Unit filename="ccs/ipv6.h" />
-		<Unit filename="ccs/modemFinder.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/modemFinder.cpp" />
 		<Unit filename="ccs/modemFinder.h" />
-		<Unit filename="ccs/myAdc.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="ccs/myAdc.h" />
-		<Unit filename="ccs/myHelpers.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/myHelpers.cpp" />
 		<Unit filename="ccs/myHelpers.h" />
 		<Unit filename="ccs/myScheduler.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="ccs/myScheduler.h" />
-		<Unit filename="ccs/pevStateMachine.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/pevStateMachine.cpp" />
 		<Unit filename="ccs/pevStateMachine.h" />
-		<Unit filename="ccs/pushbutton.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/pushbutton.cpp" />
 		<Unit filename="ccs/pushbutton.h" />
-		<Unit filename="ccs/qca7000.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/qca7000.cpp" />
 		<Unit filename="ccs/qca7000.h" />
-		<Unit filename="ccs/tcp.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/tcp.cpp" />
 		<Unit filename="ccs/tcp.h" />
-		<Unit filename="ccs/temperatures.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/temperatures.cpp" />
 		<Unit filename="ccs/temperatures.h" />
-		<Unit filename="ccs/udpChecksum.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/udpChecksum.cpp" />
 		<Unit filename="ccs/udpChecksum.h" />
-		<Unit filename="ccs/xcp.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="ccs/xcp.cpp" />
 		<Unit filename="ccs/xcp.h" />
 		<Unit filename="exi/BitInputStream.c">
 			<Option compilerVar="CC" />
@@ -166,10 +134,55 @@
 		<Unit filename="include/errormessage_prj.h" />
 		<Unit filename="include/hwdefs.h" />
 		<Unit filename="include/hwinit.h" />
+		<Unit filename="include/main.h" />
 		<Unit filename="include/param_prj.h" />
+		<Unit filename="libopencm3/tests/gadget-zero/delay.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/delay_efm32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-efm32hg309-generic.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32f072disco.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32f103-generic.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32f3-disco.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32f429i-disco.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32f4disco.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32l053disco.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-stm32l1-generic.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/main-tilm4f120xl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/gadget-zero/usb-gadget0.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/shared/trace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopencm3/tests/shared/trace_stdio.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="libopeninv/include/anain.h" />
 		<Unit filename="libopeninv/include/canhardware.h" />
 		<Unit filename="libopeninv/include/canmap.h" />
+		<Unit filename="libopeninv/include/canobd2.h" />
+		<Unit filename="libopeninv/include/cansdo.h" />
 		<Unit filename="libopeninv/include/crc8.h" />
 		<Unit filename="libopeninv/include/delay.h" />
 		<Unit filename="libopeninv/include/digio.h" />
@@ -193,6 +206,8 @@
 		<Unit filename="libopeninv/src/anain.cpp" />
 		<Unit filename="libopeninv/src/canhardware.cpp" />
 		<Unit filename="libopeninv/src/canmap.cpp" />
+		<Unit filename="libopeninv/src/canobd2.cpp" />
+		<Unit filename="libopeninv/src/cansdo.cpp" />
 		<Unit filename="libopeninv/src/crc8.cpp" />
 		<Unit filename="libopeninv/src/digio.cpp" />
 		<Unit filename="libopeninv/src/errormessage.cpp" />

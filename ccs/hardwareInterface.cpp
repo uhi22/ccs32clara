@@ -117,9 +117,8 @@ void hardwareInteface_setHBridge(uint16_t out1duty_64k, uint16_t out2duty_64k) {
 	/* out1 and out2 are the PWM ratios in range 0 to 64k */
 
 	/*Assign the new dutyCycle count to the capture compare register.*/
-	//This doesn't seem to be implemented on the board yet
-	//__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, out1duty_64k);
-	//__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, out2duty_64k);
+  timer_set_oc_value(CONTACT_LOCK_TIMER, LOCK1_CHAN, out1duty_64k);
+  timer_set_oc_value(CONTACT_LOCK_TIMER, LOCK2_CHAN, out2duty_64k);
 }
 
 void hardwareInteface_setContactorPwm(uint16_t out1duty_64k, uint16_t out2duty_64k) {
@@ -355,6 +354,7 @@ void hardwareInterface_cyclic(void) {
         cpDuty_Percent = 0;
         cpFrequency_Hz = 0;
     }
+    cpDuty_Percent = timer_get_ic_value(TIM3, TIM_IC2) / 10;
 
     handleApplicationRGBLeds();
     hwIf_handleContactorRequests();
@@ -375,50 +375,6 @@ void hardwareInterface_init(void) {
 	/* output initialization */
 	hardwareInteface_setHBridge(0, 0); /* both low */
 	hardwareInteface_setContactorPwm(0, 0); /* both off */
-#if 0
-	/* TIM3 configuration:
-	 *  - clocked with 64MHz
-	 *  - prescaler 8, which leads to division by 9, leads to 7.11MHz
-	 *  - 65536 counter, leads to 108Hz or 9.2ms periode time.
-	 */
-	/* Bug: Calling these start functions is creating a single unwanted pulse of some milliseconds.
-	 *      Todo: Find a workaround to avoid this.
-	 */
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1); /* PC6 lockdriver IN1 */
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); /* PC7 lockdriver IN2 */
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3); /* PC8 contactor 1 */
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4); /* PC9 contactor 2 */
-
-	/* The CP PWM measurement */
-	/* https://controllerstech.com/pwm-input-in-stm32/ */
-	/* Using two channels of TIM2 to measure duty cycle */
-	HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);   // main channel
-	HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2);   // indirect channel
-
-	/* Test mode initialization */
-	hwIf_testmode = 0;
-
-#endif // 0
 }
 
-#if 0
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
-{
-	inputCaptureInterruptCounter++;
-	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)  // If the interrupt is triggered by channel 1
-	{
-		// Read the IC value
-		inputCaptureValueChannel1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-		inputCaptureValueChannel2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
-		if (inputCaptureValueChannel1 != 0)
-		{
-			// calculate the Duty Cycle
-			cpDuty_Percent = (inputCaptureValueChannel2 *100)/inputCaptureValueChannel1;
 
-			cpFrequency_Hz = APB2_TIMER_CLOCK_FREQUENCY_HZ/inputCaptureValueChannel1;
-			cpDutyValidTimer = CP_DUTY_VALID_TIMER_MAX;
-
-		}
-	}
-}
-#endif

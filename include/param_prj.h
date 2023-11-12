@@ -56,8 +56,10 @@
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
     VALUE_ENTRY(version,     VERSTR,  2001 ) \
     VALUE_ENTRY(lasterr,     errorListString,  2002 ) \
-    VALUE_ENTRY(testain,     "dig",   2003 ) \
-    VALUE_ENTRY(cpuload,     "%",     2004 )
+    VALUE_ENTRY(temp1,       "°C",   2003 ) \
+    VALUE_ENTRY(temp2,       "°C",   2004 ) \
+    VALUE_ENTRY(temp3,       "°C",   2005 ) \
+    VALUE_ENTRY(cpuload,     "%",    2094 )
 
 
 /***** Enum String definitions *****/

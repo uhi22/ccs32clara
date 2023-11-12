@@ -18,7 +18,7 @@ uint16_t hwIf_testmodeTimer;
 uint8_t hwIf_ContactorRequest;
 
 
-void hardwareInterface_showOnDisplay(char* s1, char* s2, char* s3) {
+void hardwareInterface_showOnDisplay(char*, char*, char*) {
 
 }
 
@@ -77,11 +77,11 @@ void hardwareInterface_setPowerRelayOff(void) {
 }
 
 void hardwareInterface_setStateB(void) {
-	//HAL_GPIO_WritePin(OUT_STATE_C_CONTROL_GPIO_Port, OUT_STATE_C_CONTROL_Pin, 0);
+	DigIo::statec_out.Clear();
 }
 
 void hardwareInterface_setStateC(void) {
-	//HAL_GPIO_WritePin(OUT_STATE_C_CONTROL_GPIO_Port, OUT_STATE_C_CONTROL_Pin, 1);
+   DigIo::statec_out.Set();
 }
 
 void hardwareInterface_setRGB(uint8_t rgb) {
@@ -90,9 +90,20 @@ void hardwareInterface_setRGB(uint8_t rgb) {
 	 * bit 1: green
 	 * bit 2: blue
 	 */
-	//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, rgb & 1); /* red LED */
-	//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, (rgb>>1) & 1); /* green LED */
-	//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, (rgb>>2) & 1); /* blue LED */
+   if (rgb & 1)
+      DigIo::red_out.Set();
+   else
+      DigIo::red_out.Clear();
+
+   if (rgb & 2)
+      DigIo::green_out.Set();
+   else
+      DigIo::green_out.Clear();
+
+   if (rgb & 4)
+      DigIo::blue_out.Set();
+   else
+      DigIo::blue_out.Clear();
 }
 
 void hardwareInteface_setAliveLed(uint8_t x) {
@@ -106,14 +117,15 @@ void hardwareInteface_setHBridge(uint16_t out1duty_64k, uint16_t out2duty_64k) {
 	/* out1 and out2 are the PWM ratios in range 0 to 64k */
 
 	/*Assign the new dutyCycle count to the capture compare register.*/
+	//This doesn't seem to be implemented on the board yet
 	//__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, out1duty_64k);
 	//__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, out2duty_64k);
 }
 
 void hardwareInteface_setContactorPwm(uint16_t out1duty_64k, uint16_t out2duty_64k) {
   /*Assign the new dutyCycle count to the capture compare register.*/
-  //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, out1duty_64k);
-  //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, out2duty_64k);
+  timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT1_CHAN, out1duty_64k);
+  timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT2_CHAN, out2duty_64k);
 }
 
 void hardwareInterface_triggerConnectorLocking(void) {

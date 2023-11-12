@@ -61,20 +61,6 @@ void clock_setup(void)
    rcc_periph_clock_enable(RCC_SPI1); //CAN
 }
 
-void spi_setup()
-{
-   //gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_SPI1_REMAP);
-
-   spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_16, SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
-                  SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
-
-   spi_enable_software_slave_management(SPI1);
-   spi_set_nss_high(SPI1);
-   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO5 | GPIO7);
-   gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6);
-   spi_enable(SPI1);
-}
-
 /* Some pins should never be left floating at any time
  * Since the bootloader delays firmware startup by a few 100ms
  * We need to tell it which pins we want to initialize right
@@ -145,35 +131,35 @@ void rtc_setup()
 void tim_setup()
 {
    /*** Setup over/undercurrent and PWM output timer */
-   timer_disable_counter(OVER_CUR_TIMER);
+   timer_disable_counter(CONTACT_LOCK_TIMER);
    //edge aligned PWM
-   timer_set_alignment(OVER_CUR_TIMER, TIM_CR1_CMS_EDGE);
-   timer_enable_preload(OVER_CUR_TIMER);
+   timer_set_alignment(CONTACT_LOCK_TIMER, TIM_CR1_CMS_EDGE);
+   timer_enable_preload(CONTACT_LOCK_TIMER);
    /* PWM mode 1 and preload enable */
-   timer_set_oc_mode(OVER_CUR_TIMER, TIM_OC1, TIM_OCM_PWM1);
-   timer_set_oc_mode(OVER_CUR_TIMER, TIM_OC2, TIM_OCM_PWM1);
-   timer_set_oc_mode(OVER_CUR_TIMER, TIM_OC3, TIM_OCM_PWM1);
-   timer_set_oc_mode(OVER_CUR_TIMER, TIM_OC4, TIM_OCM_PWM1);
-   timer_enable_oc_preload(OVER_CUR_TIMER, TIM_OC1);
-   timer_enable_oc_preload(OVER_CUR_TIMER, TIM_OC2);
-   timer_enable_oc_preload(OVER_CUR_TIMER, TIM_OC3);
-   timer_enable_oc_preload(OVER_CUR_TIMER, TIM_OC4);
+   timer_set_oc_mode(CONTACT_LOCK_TIMER, TIM_OC1, TIM_OCM_PWM1);
+   timer_set_oc_mode(CONTACT_LOCK_TIMER, TIM_OC2, TIM_OCM_PWM1);
+   timer_set_oc_mode(CONTACT_LOCK_TIMER, TIM_OC3, TIM_OCM_PWM1);
+   timer_set_oc_mode(CONTACT_LOCK_TIMER, TIM_OC4, TIM_OCM_PWM1);
+   timer_enable_oc_preload(CONTACT_LOCK_TIMER, TIM_OC1);
+   timer_enable_oc_preload(CONTACT_LOCK_TIMER, TIM_OC2);
+   timer_enable_oc_preload(CONTACT_LOCK_TIMER, TIM_OC3);
+   timer_enable_oc_preload(CONTACT_LOCK_TIMER, TIM_OC4);
 
-   timer_set_oc_polarity_high(OVER_CUR_TIMER, TIM_OC1);
-   timer_set_oc_polarity_high(OVER_CUR_TIMER, TIM_OC2);
-   timer_set_oc_polarity_high(OVER_CUR_TIMER, TIM_OC3);
-   timer_set_oc_polarity_high(OVER_CUR_TIMER, TIM_OC4);
-   timer_enable_oc_output(OVER_CUR_TIMER, TIM_OC1);
-   timer_enable_oc_output(OVER_CUR_TIMER, TIM_OC2);
-   timer_enable_oc_output(OVER_CUR_TIMER, TIM_OC3);
-   timer_enable_oc_output(OVER_CUR_TIMER, TIM_OC4);
-   timer_generate_event(OVER_CUR_TIMER, TIM_EGR_UG);
-   timer_set_prescaler(OVER_CUR_TIMER, 0);
+   timer_set_oc_polarity_high(CONTACT_LOCK_TIMER, TIM_OC1);
+   timer_set_oc_polarity_high(CONTACT_LOCK_TIMER, TIM_OC2);
+   timer_set_oc_polarity_high(CONTACT_LOCK_TIMER, TIM_OC3);
+   timer_set_oc_polarity_high(CONTACT_LOCK_TIMER, TIM_OC4);
+   timer_enable_oc_output(CONTACT_LOCK_TIMER, TIM_OC1);
+   timer_enable_oc_output(CONTACT_LOCK_TIMER, TIM_OC2);
+   timer_enable_oc_output(CONTACT_LOCK_TIMER, TIM_OC3);
+   timer_enable_oc_output(CONTACT_LOCK_TIMER, TIM_OC4);
+   timer_generate_event(CONTACT_LOCK_TIMER, TIM_EGR_UG);
+   timer_set_prescaler(CONTACT_LOCK_TIMER, 8);
    /* PWM frequency */
-   timer_set_period(OVER_CUR_TIMER, OCURMAX);
-   timer_enable_counter(OVER_CUR_TIMER);
+   timer_set_period(CONTACT_LOCK_TIMER, 65535);
+   timer_enable_counter(CONTACT_LOCK_TIMER);
 
    /** setup gpio */
-   gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO7 | GPIO8 | GPIO9);
+   gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO5 | GPIO6);
 }
 

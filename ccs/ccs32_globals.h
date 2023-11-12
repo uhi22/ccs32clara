@@ -8,6 +8,7 @@
 
 #include <libopencm3/stm32/rtc.h>
 #include <libopencm3/stm32/spi.h>
+#include <libopencm3/stm32/timer.h>
 #include "configuration.h"
 #include "printf.h"
 #include "connMgr.h"
@@ -26,6 +27,7 @@
 #include "xcp.h"
 #include "my_math.h"
 #include "anain.h"
+#include "digio.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

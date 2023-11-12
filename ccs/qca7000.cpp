@@ -28,14 +28,23 @@ uint16_t debugCounter_cutted_myethreceivebufferLen;
 
 void mySpiTransmitReceive()
 {
+   DigIo::spics.Clear();
    for (uint32_t i = 0; i < mySpiDataSize; i++) {
       mySpiRxBuffer[i] = spi_xfer(SPI1, mySpiTxBuffer[i]);
    }
+   DigIo::spics.Set();
 }
 
 void qca7000setup() {
-  /* nothing to do here. The SPI interface setup is done in the main.c in the
-  generated code of the Device Configuration Tool */
+   spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_16, SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
+                  SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
+
+   spi_enable_software_slave_management(SPI1);
+   spi_set_nss_high(SPI1);
+   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO5 | GPIO7);
+   gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6);
+   spi_enable(SPI1);
+   DigIo::spics.Set();
 }
 
 void spiQCA7000DemoReadSignature(void) {
@@ -144,7 +153,7 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
             //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             evaluateReceivedHomeplugPacket();
           } else if (etherType == 0x86dd) { /* it is an IPv6 frame */
-        	addToTrace("Its a IPv6 message.");
+           addToTrace("Its a IPv6 message.");
             //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             ipv6_evaluateReceivedPacket();
           } else {
@@ -190,7 +199,7 @@ void spiQCA7000checkForReceivedData(void) {
   i=0;
   availBytes = spiQCA7000DemoReadRDBUF_BYTE_AVA();
   if (availBytes==0) {
-	  return; /* nothing to do */
+     return; /* nothing to do */
   }
   printf("avail rx bytes: %d\r\n", availBytes);
   if (availBytes<4000) {
@@ -223,7 +232,7 @@ void spiQCA7000checkForReceivedData(void) {
     mySpiTransmitReceive();
     /* discard the first two bytes, they do not belong to the data */
     for (i=0; i<availBytes; i++) {
-    	mySpiRxBuffer[i] = mySpiRxBuffer[i+2];
+       mySpiRxBuffer[i] = mySpiRxBuffer[i+2];
     }
     QCA7000checkRxDataAndDistribute(availBytes); /* Takes the data from the SPI rx buffer, splits it into ethernet frames and distributes them. */
   }

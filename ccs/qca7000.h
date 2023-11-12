@@ -27,6 +27,7 @@ extern uint16_t nTcpPacketsReceived;
 
 /* Global Functions */
 
+void qca7000setup();
 extern void mySpiTransmitReceive(void);
 extern void demoQCA7000(void);
 extern void spiQCA7000checkForReceivedData(void);

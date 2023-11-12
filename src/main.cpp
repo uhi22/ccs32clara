@@ -133,6 +133,7 @@ extern "C" int main(void)
    tim_setup(); //Sample init of a timer
    nvic_setup(); //Set up some interrupts
    parm_load(); //Load stored parameters
+   qca7000setup();
 
    Stm32Scheduler s(TIM2); //We never exit main so it's ok to put it on stack
    scheduler = &s;

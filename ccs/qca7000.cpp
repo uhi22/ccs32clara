@@ -7,7 +7,7 @@
    generates the configuration code into the main.c.
    Here in the driver, we use the SPI via the interface function mySpiTransmitReceive(), which
    is provided by the main.c.
-   
+
    */
 
 
@@ -26,7 +26,12 @@ uint16_t myethreceivebufferLen;
 
 uint16_t debugCounter_cutted_myethreceivebufferLen;
 
-
+void mySpiTransmitReceive()
+{
+   for (uint32_t i = 0; i < mySpiDataSize; i++) {
+      mySpiRxBuffer[i] = spi_xfer(SPI1, mySpiTxBuffer[i]);
+   }
+}
 
 void qca7000setup() {
   /* nothing to do here. The SPI interface setup is done in the main.c in the
@@ -47,8 +52,7 @@ void spiQCA7000DemoReadSignature(void) {
   sig = mySpiRxBuffer[2];
   sig <<= 8;
   sig += mySpiRxBuffer[3];
-  sprintf(mySerialPrintOutputBuffer, "Hello, sig is %x\r\n", sig); /* should be AA 55  */
-  mySerialPrint();
+  printf("Hello, sig is %x\r\n", sig); /* should be AA 55  */
 }
 
 
@@ -63,8 +67,7 @@ void spiQCA7000DemoReadWRBUF_SPC_AVA(void) {
   mySpiDataSize = i;
   mySpiTransmitReceive();
 
-  sprintf(mySerialPrintOutputBuffer, "RBUF_SPC_AVA is %x %x\r\n", mySpiRxBuffer[2], mySpiRxBuffer[3]);
-  mySerialPrint();
+  printf("RBUF_SPC_AVA is %x %x\r\n", mySpiRxBuffer[2], mySpiRxBuffer[3]);
 }
 
 void spiQCA7000DemoWriteBFR_SIZE(uint16_t n) {
@@ -93,7 +96,7 @@ uint16_t spiQCA7000DemoReadRDBUF_BYTE_AVA(void) {
   mySpiTransmitReceive();
 
   n = mySpiRxBuffer[2]; /* upper byte of the size */
-  n<<=8;  
+  n<<=8;
   n+=mySpiRxBuffer[3]; /* lower byte of the size */
   return n;
 }
@@ -102,7 +105,7 @@ uint16_t spiQCA7000DemoReadRDBUF_BYTE_AVA(void) {
 void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
   uint16_t  L1, L2;
   uint8_t *p;
-  uint8_t  blDone = 0; 
+  uint8_t  blDone = 0;
   uint8_t counterOfEthFramesInSpiFrame;
   counterOfEthFramesInSpiFrame = 0;
   p= mySpiRxBuffer;
@@ -115,16 +118,16 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
         payload
         2 byte End of frame, 55 55 */
       /* The higher 2 bytes of the len are assumed to be 0. */
-      /* The lower two bytes of the "outer" len, big endian: */       
+      /* The lower two bytes of the "outer" len, big endian: */
       L1 = p[2]; L1<<=8; L1+=p[3];
       /* The "inner" len, little endian. */
       L2 = p[9]; L2<<=8; L2+=p[8];
-      if ((p[4]=0xAA) && (p[5]=0xAA) && (p[6]=0xAA) && (p[7]=0xAA) 
+      if ((p[4]=0xAA) && (p[5]=0xAA) && (p[6]=0xAA) && (p[7]=0xAA)
             && (L2+10==L1)) {
           counterOfEthFramesInSpiFrame++;
           /* The start of frame and the two length informations are plausible. Copy the payload to the eth receive buffer. */
           myethreceivebufferLen = L2;
-          /* but limit the length, to avoid buffer overflow */       
+          /* but limit the length, to avoid buffer overflow */
           if (myethreceivebufferLen > MY_ETH_RECEIVE_BUFFER_LEN) {
               myethreceivebufferLen = MY_ETH_RECEIVE_BUFFER_LEN;
               debugCounter_cutted_myethreceivebufferLen++;
@@ -137,14 +140,12 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
           #endif
           if (etherType == 0x88E1) { /* it is a HomePlug message */
             //Serial.println("Its a HomePlug message.");
-            sprintf(strTmp, "Its a HomePlug message.");
-            addToTrace(strTmp);
-            canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
+            addToTrace("Its a HomePlug message.");
+            //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             evaluateReceivedHomeplugPacket();
           } else if (etherType == 0x86dd) { /* it is an IPv6 frame */
-        	sprintf(strTmp, "Its a IPv6 message.");
-        	addToTrace(strTmp);
-            canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
+        	addToTrace("Its a IPv6 message.");
+            //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             ipv6_evaluateReceivedPacket();
           } else {
             //Serial.println("Other message.");
@@ -156,7 +157,7 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
           p+= L1+4;
           //Serial.println("Avail after first run:" + String(availbytes));
           if (availbytes>10) { /*
-            Serial.println("There is more data."); 
+            Serial.println("There is more data.");
             Serial.print(String(p[0], HEX) + " ");
             Serial.print(String(p[1], HEX) + " ");
             Serial.print(String(p[2], HEX) + " ");
@@ -173,8 +174,8 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
           }
     } else {
         /* no valid header -> end */
-        blDone=1;      
-    }         
+        blDone=1;
+    }
   }
   #ifdef VERBOSE_QCA7000
     Serial.println("QCA7000: The SPI frame contained " + String(counterOfEthFramesInSpiFrame) + " ETH frames.");
@@ -191,8 +192,7 @@ void spiQCA7000checkForReceivedData(void) {
   if (availBytes==0) {
 	  return; /* nothing to do */
   }
-  sprintf(mySerialPrintOutputBuffer, "avail rx bytes: %d\r\n", availBytes);
-  mySerialPrint();
+  printf("avail rx bytes: %d\r\n", availBytes);
   if (availBytes<4000) {
       /* in case we would see more then 4000 bytes, this is most likely an error in SPI transmission. We ignore this and in the next
         loop maybe we read a better value */
@@ -203,7 +203,7 @@ void spiQCA7000checkForReceivedData(void) {
     is necessary to get the data (according to https://chargebyte.com/assets/Downloads/an4_rev5.pdf)
        - write the BFR SIZE, this sets the length of data to be read via external read
        - start an external read and receive as much data as set in SPI REG BFR SIZE before */
-       
+
     /* For the case that the QCA contains more data than we could hold in our SPI buffer, we limit
     the size here. This may/will cause data loss, which could be handled by the following strategies:
       - The next data will be read on the next call. Make sure that data of ONE ethernet frame which
@@ -237,13 +237,13 @@ void spiQCA7000SendEthFrame(void) {
   The SlacParamReq has 60 "bytes on wire" (in the Ethernet terminology).
   The   BFR_SIZE is set to 0x46 (command 41 00 00 46). This is 70 decimal.
   The transmit command on SPI is
-  00 00  
+  00 00
   AA AA AA AA
   3C 00 00 00    (where 3C is 60, matches the "bytes on wire")
   <60 bytes payload>
   55 55 After the footer, the frame is finished according to the qca linux driver implementation.
   xx yy But the Hyundai CCM sends two bytes more, either 00 00 or FE 80 or E1 FF or other. Most likely not relevant.
-  Protocol explanation from https://chargebyte.com/assets/Downloads/an4_rev5.pdf 
+  Protocol explanation from https://chargebyte.com/assets/Downloads/an4_rev5.pdf
 */
   /* Todo:
     1. Check whether the available transmit buffer size is big enough to get the intended frame.
@@ -273,14 +273,14 @@ void myEthTransmit(void) {
   #ifdef VERBOSE_QCA7000
     showAsHex(myethtransmitbuffer, myethtransmitbufferLen, "myEthTransmit");
   #endif
-  canbus_addToBinaryLogging(0xAA55, myethtransmitbuffer, myethtransmitbufferLen);
+  //canbus_addToBinaryLogging(0xAA55, myethtransmitbuffer, myethtransmitbufferLen);
   spiQCA7000SendEthFrame();
 }
 
 
 void demoQCA7000SendSoftwareVersionRequest(void) {
   composeGetSwReq();
-  spiQCA7000SendEthFrame(); 
+  spiQCA7000SendEthFrame();
 }
 
 

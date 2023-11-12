@@ -16,9 +16,9 @@
 
 /* Parameters for temperature calculation */
 /* resistance at 25 degrees C */
-#define THERMISTORNOMINAL 10000      
+#define THERMISTORNOMINAL 10000
 /* temperature for nominal resistance (almost always 25 C) */
-#define TEMPERATURENOMINAL 25   
+#define TEMPERATURENOMINAL 25
 /* The beta coefficient of the thermistor (usually 3000-4000) */
 /* Value was experimentally evaluated, so that the calculated temperature fits
    to the table in the data sheet. Deviation is <0.5K in the range -10°C to 60°C */
@@ -30,11 +30,11 @@
 #define MAX_ADC_VALUE 4095 /* we have 12 bit ADC resolution */
 
 float temperatureChannel_1_R_NTC;
-float temperatureChannel_1_celsius; 
+float temperatureChannel_1_celsius;
 uint8_t temperatureChannel_1_M40;
 
 float temperatureChannel_2_R_NTC;
-float temperatureChannel_2_celsius; 
+float temperatureChannel_2_celsius;
 uint8_t temperatureChannel_2_M40;
 
 float temperatureChannel_3_R_NTC;
@@ -70,22 +70,22 @@ uint8_t temperatures_convertFloatToM40(float t_celsius) {
 
 void temperatures_calculateTemperatures(void) {
     uint32_t tmp32;
-    tmp32 = rawAdValues[0];
+    tmp32 = AnaIn::temp1.Get();
     temperatureChannel_1_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
     temperatureChannel_1_celsius = ohmToCelsius(temperatureChannel_1_R_NTC);
     temperatureChannel_1_M40 = temperatures_convertFloatToM40(temperatureChannel_1_celsius);
 
-    tmp32 = rawAdValues[1];
+    tmp32 = AnaIn::temp2.Get();
     temperatureChannel_2_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
     temperatureChannel_2_celsius = ohmToCelsius(temperatureChannel_2_R_NTC);
     temperatureChannel_2_M40 = temperatures_convertFloatToM40(temperatureChannel_2_celsius);
 
-    tmp32 = rawAdValues[2];
+    tmp32 = AnaIn::temp3.Get();
     temperatureChannel_3_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
     temperatureChannel_3_celsius = ohmToCelsius(temperatureChannel_3_R_NTC);
     temperatureChannel_3_M40 = temperatures_convertFloatToM40(temperatureChannel_3_celsius);
 
-    temperatureCpu_M40 =  temperatures_convertFloatToM40(fCpuTemperature_Celsius);
+    //temperatureCpu_M40 =  temperatures_convertFloatToM40(fCpuTemperature_Celsius);
 
 #ifdef TRACE_THE_TEMPERATURES
     sprintf(strTmp, "NTC1 %4.1f ohm %4.1f celsius", temperatureChannel_1_R_NTC, temperatureChannel_1_celsius);

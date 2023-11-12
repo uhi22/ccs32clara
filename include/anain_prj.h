@@ -14,6 +14,13 @@
 
 //Here you specify a list of analog inputs, see main.cpp on how to use them
 #define ANA_IN_LIST \
-   ANA_IN_ENTRY(test, GPIOC, 1) \
+   ANA_IN_ENTRY(pp,    GPIOA, 0) \
+   ANA_IN_ENTRY(tempi, GPIOB, 2) /*internal temp sensor*/ \
+   ANA_IN_ENTRY(temp1, GPIOB, 1) \
+   ANA_IN_ENTRY(temp2, GPIOC, 1) \
+   ANA_IN_ENTRY(temp3, GPIOC, 2) \
+   ANA_IN_ENTRY(udc,   GPIOC, 3) \
+   ANA_IN_ENTRY(button,GPIOC, 4) \
+   ANA_IN_ENTRY(lockfb,GPIOC, 5) \
 
 #endif // ANAIN_PRJ_H_INCLUDED

@@ -71,7 +71,7 @@ void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBufferLen) {
   tcpPayload[0] = 0x01; // version
   tcpPayload[1] = 0xfe; // version inverted
   tcpPayload[2] = 0x80; // payload type. 0x8001 means "EXI data"
-  tcpPayload[3] = 0x01; // 
+  tcpPayload[3] = 0x01; //
   tcpPayload[4] = (uint8_t)(exiBufferLen >> 24); // length 4 byte.
   tcpPayload[5] = (uint8_t)(exiBufferLen >> 16);
   tcpPayload[6] = (uint8_t)(exiBufferLen >> 8);
@@ -124,24 +124,24 @@ void pev_sendChargeParameterDiscoveryReq(void) {
     cp = &dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter;
     cp->DC_EVStatus.EVReady = 0;  /* What ever this means. The Ioniq sends 0 here in the ChargeParameterDiscoveryReq message. */
     //cp->DC_EVStatus.EVCabinConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
-    //cp->DC_EVStatus.RESSConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */    
+    //cp->DC_EVStatus.RESSConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
     cp->DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc(); /* Todo: Take the SOC from the BMS. Scaling is 1%. */
     cp->EVMaximumCurrentLimit.Value = 100;
     cp->EVMaximumCurrentLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
     cp->EVMaximumCurrentLimit.Unit_isUsed = 1;
     cp->EVMaximumCurrentLimit.Unit = dinunitSymbolType_A;
-    
+
     cp->EVMaximumPowerLimit_isUsed = 1; /* The Ioniq sends 1 here. */
     cp->EVMaximumPowerLimit.Value = 9800; /* Ioniq: 9800 */
     cp->EVMaximumPowerLimit.Multiplier = 1; /* 10^1 */
-    cp->EVMaximumPowerLimit.Unit_isUsed = 1; 
+    cp->EVMaximumPowerLimit.Unit_isUsed = 1;
     cp->EVMaximumPowerLimit.Unit = dinunitSymbolType_W; /* Watt */
-    
+
     cp->EVMaximumVoltageLimit.Value = 398;
     cp->EVMaximumVoltageLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
     cp->EVMaximumVoltageLimit.Unit_isUsed = 1;
     cp->EVMaximumVoltageLimit.Unit = dinunitSymbolType_V;
-    
+
     cp->EVEnergyCapacity_isUsed = 1;
     cp->EVEnergyCapacity.Value = 28000; /* 28kWh from Ioniq */
     cp->EVEnergyCapacity.Multiplier = 0;
@@ -158,11 +158,11 @@ void pev_sendChargeParameterDiscoveryReq(void) {
     cp->FullSOC = 100;
     cp->BulkSOC_isUsed = 1;
     cp->BulkSOC = 80;
-    
+
     dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter_isUsed = 1;
     encodeAndTransmit();
 }
-        
+
 void pev_sendCableCheckReq(void) {
     projectExiConnector_prepare_DinExiDocument();
     dinDocEnc.V2G_Message.Body.CableCheckReq_isUsed = 1u;
@@ -236,7 +236,7 @@ void pev_sendCurrentDemandReq(void) {
     st.EVReady = 1; /* 1 means true. We are ready. */
     st.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
     st.EVRESSSOC = hardwareInterface_getSoc();
-  #undef st	
+  #undef st
   // EVTargetVoltage
   #define tvolt dinDocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetVoltage
     tvolt.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
@@ -266,7 +266,7 @@ void pev_sendCurrentDemandReq(void) {
   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit = dinunitSymbolType_s;
   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit_isUsed = 1;
   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Value = 600; /* seconds */
-  encodeAndTransmit();    
+  encodeAndTransmit();
 }
 
 void pev_sendWeldingDetectionReq(void) {
@@ -277,8 +277,8 @@ void pev_sendWeldingDetectionReq(void) {
     st.EVReady = 1; /* 1 means true. We are ready. */
     st.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
     st.EVRESSSOC = hardwareInterface_getSoc();
-  #undef st	
-  encodeAndTransmit();  
+  #undef st
+  encodeAndTransmit();
 }
 
 /**** State functions ***************/
@@ -304,11 +304,10 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
     if (aphsDoc.supportedAppProtocolRes_isUsed) {
         /* it is the correct response */
         addToTrace("supportedAppProtocolRes");
-        sprintf(strTmp, "ResponseCode %d, SchemaID_isUsed %d, SchemaID %d",
+        printf("ResponseCode %d, SchemaID_isUsed %d, SchemaID %d",
                       aphsDoc.supportedAppProtocolRes.ResponseCode,
                       aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                       aphsDoc.supportedAppProtocolRes.SchemaID);
-        addToTrace(strTmp);
         publishStatus("Schema negotiated", "");
         addToTrace("Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
         checkpointNumber = 500;
@@ -390,7 +389,7 @@ void stateFunctionWaitForServiceDiscoveryResponse(void) {
       /* the mandatory fields in ISO are SelectedPaymentOption and SelectedServiceList. Same in DIN. */
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedPaymentOption = dinpaymentOptionType_ExternalPayment; /* not paying per car */
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
-      dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */ 
+      dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */
       checkpointNumber = 520;
       encodeAndTransmit();
       pev_enterState(PEV_STATE_WaitForServicePaymentSelectionResponse);
@@ -415,7 +414,7 @@ void stateFunctionWaitForServicePaymentSelectionResponse(void) {
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
       init_dinContractAuthenticationReqType(&dinDocEnc.V2G_Message.Body.ContractAuthenticationReq);
-      /* no other fields are manatory */      
+      /* no other fields are manatory */
       encodeAndTransmit();
       pev_numberOfContractAuthenticationReq = 1; // This is the first request.
       pev_enterState(PEV_STATE_WaitForContractAuthenticationResponse);
@@ -440,7 +439,7 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
         // In normal case, we can have two results here: either the Authentication is needed (the user
         // needs to authorize by RFID card or app, or something like this.
         // Or, the authorization is finished. This is shown by EVSEProcessing=Finished.
-        if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished) {             
+        if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("Auth finished", "");
             addToTrace("Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
             checkpointNumber = 540;
@@ -509,7 +508,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
                 addToTrace("Not (yet) finished. Will again send ChargeParameterDiscoveryReq");
                 pev_sendChargeParameterDiscoveryReq();
                 // we stay in the same state
-                pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse); 
+                pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
             }
         }
     }
@@ -564,7 +563,7 @@ void stateFunctionWaitForCableCheckResponse(void) {
                 //addToTrace("CableCheck lasted too long. " + String(pev_numberOfCableCheckReq) + " Giving up.");
                 addToTrace("CableCheck lasted too long. Giving up.");
                 pev_enterState(PEV_STATE_SequenceTimeout);
-            } else {    
+            } else {
                 // cable check not yet finished or finished with bad result -> try again
                 pev_numberOfCableCheckReq += 1;
                 #if 0 /* todo: use config item to decide whether we have inlet voltage measurement or not */
@@ -616,7 +615,7 @@ void stateFunctionWaitForPreChargeResponse(void) {
           /* use the physically measured inlet voltage to decide about end of PreCharge */
           u = hardwareInterface_getInletVoltage()
         #endif
-        if (abs(u-hardwareInterface_getAccuVoltage()) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) {
+        if (ABS(u-hardwareInterface_getAccuVoltage()) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) {
             addToTrace("Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");
             publishStatus("PreCharge done", "");
             if (isLightBulbDemo) {
@@ -709,12 +708,10 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
     addToTrace("In state WaitForCurrentDemandRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
-    sprintf(strTmp, "step1 %d", tcp_rxdataLen);
-    addToTrace(strTmp);
+    printf("[%ld] step1 %d", rtc_get_counter_val(), tcp_rxdataLen);
     projectExiConnector_decode_DinExiDocument();
 
-    sprintf(strTmp, "step2 %d %d", g_errn, global_streamDecPos);
-    addToTrace(strTmp);
+    printf("[%ld] step2 %d %d", rtc_get_counter_val(), g_errn, global_streamDecPos);
 
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.CurrentDemandRes_isUsed) {
@@ -779,7 +776,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void) {
         projectExiConnector_prepare_DinExiDocument();
         dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
         init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
-        /* no other fields are manatory */      
+        /* no other fields are manatory */
         checkpointNumber = 900;
         encodeAndTransmit();
         pev_enterState(PEV_STATE_WaitForSessionStopResponse);
@@ -874,8 +871,7 @@ void stateFunctionEnd(void) {
 }
 
 void pev_enterState(uint16_t n) {
-  sprintf(strTmp, "[PEV] from %d entering %d", pev_state, n);
-  addToTrace(strTmp);
+  printf("[%ld] [PEV] from %d entering %d", rtc_get_counter_val(), pev_state, n);
   pev_state = n;
   pev_cyclesInState = 0;
 }
@@ -921,7 +917,7 @@ void pev_runFsm(void) {
  }
  if (connMgr_getConnectionLevel()==CONNLEVEL_80_TCP_RUNNING) {
         /* We have a TCP connection. This is the trigger for us. */
-        if (pev_state==PEV_STATE_NotYetInitialized) pev_enterState(PEV_STATE_Connected);   
+        if (pev_state==PEV_STATE_NotYetInitialized) pev_enterState(PEV_STATE_Connected);
  }
  switch (pev_state) {
     case PEV_STATE_Connected: stateFunctionConnected();  break;

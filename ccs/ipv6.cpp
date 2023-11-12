@@ -52,7 +52,7 @@ void evaluateUdpPayload(void) {
   uint8_t i;
   if ((destinationport == 15118) || (sourceport == 15118)) { // port for the SECC
     if ((udpPayload[0]==0x01) && (udpPayload[1]==0xFE)) { //# protocol version 1 and inverted
-                //# it is a V2GTP message                
+                //# it is a V2GTP message
                 //showAsHex(udpPayload, "V2GTP ")
                 v2gptPayloadType = udpPayload[2] * 256 + udpPayload[3];
                 //# 0x8001 EXI encoded V2G message (Will NOT come with UDP. Will come with TCP.)
@@ -61,7 +61,7 @@ void evaluateUdpPayload(void) {
                 if (v2gptPayloadType == 0x9001) {
                     //# it is a SDP response from the charger to the car
                     //addToTrace("it is a SDP response from the charger to the car");
-                    v2gptPayloadLen = (((uint32_t)udpPayload[4])<<24)  + 
+                    v2gptPayloadLen = (((uint32_t)udpPayload[4])<<24)  +
                                       (((uint32_t)udpPayload[5])<<16) +
                                       (((uint32_t)udpPayload[6])<<8) +
                                       udpPayload[7];
@@ -88,18 +88,17 @@ void evaluateUdpPayload(void) {
                             connMgr_SdpOk();
                     }
                 } else {
-                  sprintf(strTmp, "v2gptPayloadType %x not supported", v2gptPayloadType);
-                  addToTrace(strTmp);
-                }                  
+                  printf("v2gptPayloadType %x not supported", v2gptPayloadType);
+                }
     }
-  }                
+  }
 }
 
 void ipv6_evaluateReceivedPacket(void) {
   //# The evaluation function for received ipv6 packages.
-  uint16_t nextheader; 
+  uint16_t nextheader;
   uint16_t i;
-  uint8_t icmpv6type; 
+  uint8_t icmpv6type;
   if (myethreceivebufferLen>60) {
       //# extract the source ipv6 address
       memcpy(sourceIp, &myethreceivebuffer[22], 16);
@@ -124,7 +123,7 @@ void ipv6_evaluateReceivedPacket(void) {
                     sanityCheck("before evaluateUdpPayload");
                     evaluateUdpPayload();
                     sanityCheck("after evaluateUdpPayload");
-          }                      
+          }
       }
       if (nextheader == 0x06) { // # it is an TCP frame
         addToTrace("TCP received");
@@ -163,7 +162,7 @@ void ipv6_initiateSdpRequest(void) {
   v2gtpFrame[8] = 0x10; // # payload
   v2gtpFrame[9] = 0x00; // # payload
   //# Second step: pack this into an UDP frame.
-  ipv6_packRequestIntoUdp();            
+  ipv6_packRequestIntoUdp();
 }
 
 void ipv6_packRequestIntoUdp(void) {
@@ -181,7 +180,7 @@ void ipv6_packRequestIntoUdp(void) {
         UdpRequest[1] = evccPort  & 0xFF;
         UdpRequest[2] = 15118 >> 8;
         UdpRequest[3] = 15118 & 0xFF;
-        
+
         lenInclChecksum = UdpRequestLen;
         UdpRequest[4] = lenInclChecksum >> 8;
         UdpRequest[5] = lenInclChecksum & 0xFF;
@@ -192,7 +191,7 @@ void ipv6_packRequestIntoUdp(void) {
             UdpRequest[8+i] = v2gtpFrame[i];
         }
         // The content of buffer is ready. We can calculate the checksum. see https://en.wikipedia.org/wiki/User_Datagram_Protocol
-        checksum = calculateUdpAndTcpChecksumForIPv6(UdpRequest, UdpRequestLen, EvccIp, broadcastIPv6, NEXT_UDP); 
+        checksum = calculateUdpAndTcpChecksumForIPv6(UdpRequest, UdpRequestLen, EvccIp, broadcastIPv6, NEXT_UDP);
         UdpRequest[6] = checksum >> 8;
         UdpRequest[7] = checksum & 0xFF;
         #ifdef VERBOSE_UDP
@@ -200,7 +199,7 @@ void ipv6_packRequestIntoUdp(void) {
         #endif
         ipv6_packRequestIntoIp();
 }
-        
+
 void ipv6_packRequestIntoIp(void) {
   // # embeds the (SDP) request into the lower-layer-protocol: IP, Ethernet
   uint8_t i;
@@ -211,7 +210,7 @@ void ipv6_packRequestIntoIp(void) {
                                               //  #   2 bytes length (incl checksum)
                                               //  #   2 bytes checksum
   IpRequest[0] = 0x60; // # traffic class, flow
-  IpRequest[1] = 0; 
+  IpRequest[1] = 0;
   IpRequest[2] = 0;
   IpRequest[3] = 0;
   plen = UdpRequestLen; // length of the payload. Without headers.
@@ -222,19 +221,19 @@ void ipv6_packRequestIntoIp(void) {
   // We are the PEV. So the EvccIp is our own link-local IP address.
   for (i=0; i<16; i++) {
     IpRequest[8+i] = EvccIp[i]; // source IP address
-  }            
+  }
   for (i=0; i<16; i++) {
     IpRequest[24+i] = broadcastIPv6[i]; // destination IP address
   }
   for (i=0; i<UdpRequestLen; i++) {
     IpRequest[40+i] = UdpRequest[i];
-  }            
+  }
   ipv6_packRequestIntoEthernet();
 }
 
 void ipv6_packRequestIntoEthernet(void) {
   //# packs the IP packet into an ethernet packet
-  uint8_t i;        
+  uint8_t i;
   myethtransmitbufferLen = IpRequestLen + 6 + 6 + 2; // # Ethernet header needs 14 bytes:
                                                   // #  6 bytes destination MAC
                                                   // #  6 bytes source MAC
@@ -269,7 +268,7 @@ void evaluateNeighborSolicitation(void) {
      - For the chargers IPv6, there are two possible cases:
          (A) The charger made the SDP without NeighborDiscovery. This works, if
              we use the pyPlc.py as charger. It does not care for NeighborDiscovery,
-             because the SDP is implemented independent of the address resolution of 
+             because the SDP is implemented independent of the address resolution of
              the operating system.
              In this case, we know the chargers IP already from the SDP.
          (B) The charger insists of doing NeighborSolitcitation in the middle of
@@ -280,19 +279,19 @@ void evaluateNeighborSolicitation(void) {
              3. car sends NeighborAdvertisement
              4. charger sends SDP response
              In this case, we need to extract the chargers IP from the NeighborSolicitation,
-             otherwise we have to chance to send the correct NeighborAdvertisement. 
+             otherwise we have to chance to send the correct NeighborAdvertisement.
              We can do this always, because this does not hurt for case A, address
              is (hopefully) not changing. */
   /* More general approach: In the network there may be more participants than only the charger,
      e.g. a notebook for sniffing. Eeach of it may send a NeighborSolicitation, and we should NOT use the addresses from the
      NeighborSolicitation as addresses of the charger. The chargers address is only determined
      by the SDP. */
-     
+
   /* save the requesters IP. The requesters IP is the source IP on IPv6 level, at byte 22. */
   memcpy(NeighborsIp, &myethreceivebuffer[22], 16);
   /* save the requesters MAC. The requesters MAC is the source MAC on Eth level, at byte 6. */
   memcpy(NeighborsMac, &myethreceivebuffer[6], 6);
-  
+
   /* send a NeighborAdvertisement as response. */
   // destination MAC = neighbors MAC
   fillDestinationMac(NeighborsMac, 0); // bytes 0 to 5 are the destination MAC
@@ -302,7 +301,7 @@ void evaluateNeighborSolicitation(void) {
   myethtransmitbuffer[12] = 0x86; // # 86dd is IPv6
   myethtransmitbuffer[13] = 0xdd;
   myethtransmitbuffer[14] = 0x60; // # traffic class, flow
-  myethtransmitbuffer[15] = 0; 
+  myethtransmitbuffer[15] = 0;
   myethtransmitbuffer[16] = 0;
   myethtransmitbuffer[17] = 0;
   // plen
@@ -314,18 +313,18 @@ void evaluateNeighborSolicitation(void) {
   // We are the PEV. So the EvccIp is our own link-local IP address.
   for (i=0; i<16; i++) {
       myethtransmitbuffer[22+i] = EvccIp[i]; // source IP address
-  }            
+  }
   for (i=0; i<16; i++) {
       myethtransmitbuffer[38+i] = NeighborsIp[i]; // destination IP address
   }
   /* here starts the ICMPv6 */
   myethtransmitbuffer[54] = 0x88; /* Neighbor Advertisement */
-  myethtransmitbuffer[55] = 0;	
-  myethtransmitbuffer[56] = 0; /* checksum (filled later) */	
-  myethtransmitbuffer[57] = 0;	
+  myethtransmitbuffer[55] = 0;
+  myethtransmitbuffer[56] = 0; /* checksum (filled later) */
+  myethtransmitbuffer[57] = 0;
 
   /* Flags */
-  myethtransmitbuffer[58] = 0x60; /* Solicited, override */	
+  myethtransmitbuffer[58] = 0x60; /* Solicited, override */
   myethtransmitbuffer[59] = 0;
   myethtransmitbuffer[60] = 0;
   myethtransmitbuffer[61] = 0;

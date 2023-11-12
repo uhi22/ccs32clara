@@ -24,6 +24,7 @@
 #include <libopencm3/stm32/iwdg.h>
 #include "stm32_can.h"
 #include "canmap.h"
+#include "cansdo.h"
 #include "terminal.h"
 #include "params.h"
 #include "hwdefs.h"
@@ -49,8 +50,6 @@
 #include "qca7000.h"
 #include "tcp.h"
 #include "udpChecksum.h"
-#include "canbus.h"
-#include "myAdc.h"
 #include "temperatures.h"
 #include "pushbutton.h"
 
@@ -140,6 +139,7 @@ extern "C" int main(void)
    //Initialize CAN1, including interrupts. Clock must be enabled in clock_setup()
    Stm32Can c(CAN1, (CanHardware::baudrates)Param::GetInt(Param::canspeed));
    CanMap cm(&c);
+   CanSdo sdo(&c, &cm);
    //store a pointer for easier access
    can = &c;
    canMap = &cm;
@@ -169,10 +169,9 @@ extern "C" int main(void)
    {
       char c = 0;
       //t.Run();
-      if (canMap->GetPrintRequest() == PRINT_JSON)
+      if (sdo.GetPrintRequest() == PRINT_JSON)
       {
-         TerminalCommands::PrintParamsJson(canMap, &c);
-         canMap->SignalPrintComplete();
+         TerminalCommands::PrintParamsJson(&sdo, &c);
       }
    }
 

@@ -2,11 +2,14 @@
 /* global include file, which includes all other include files */
 //#include "controllertype.h"
 #include <string.h> /* memcpy */
-#include <stdio.h>
-#include <stdlib.h> /* abs */
+//#include <stdio.h>
+//#include <stdlib.h> /* abs */
 //#include "main.h"
 
+#include <libopencm3/stm32/rtc.h>
+#include <libopencm3/stm32/spi.h>
 #include "configuration.h"
+#include "printf.h"
 #include "connMgr.h"
 #include "hardwareInterface.h"
 #include "homeplug.h"
@@ -18,11 +21,11 @@
 #include "qca7000.h"
 #include "tcp.h"
 #include "udpChecksum.h"
-#include "canbus.h"
-#include "myAdc.h"
 #include "temperatures.h"
 #include "pushbutton.h"
 #include "xcp.h"
+#include "my_math.h"
+#include "anain.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

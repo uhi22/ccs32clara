@@ -42,7 +42,7 @@ void pushbutton_handlePushbutton(void) {
 	uint8_t blButtonPressed;
 	uint8_t i;
 	//debugvalue = rawAdValues[MY_ADC_CHANNEL_PUSHBUTTON];
-	blButtonPressed = rawAdValues[MY_ADC_CHANNEL_PUSHBUTTON]<1000;
+	blButtonPressed = AnaIn::button.Get()<1000;
 	if (blButtonPressed) {
 		if (!blButtonPressedOld) {
 			pushbutton_tButtonReleaseTime=0;

@@ -104,13 +104,13 @@ uint16_t getEtherType(uint8_t *messagebufferbytearray) {
 void fillSourceMac(const uint8_t *mac, uint8_t offset) {
  /* at offset 6 in the ethernet frame, we have the source MAC.
     we can give a different offset, to re-use the MAC also in the data area */
-  memcpy(&myethtransmitbuffer[offset], mac, 6); 
+  memcpy(&myethtransmitbuffer[offset], mac, 6);
 }
 
 void fillDestinationMac(const uint8_t *mac, uint8_t offset) {
  /* at offset 0 in the ethernet frame, we have the destination MAC.
     we can give a different offset, to re-use the MAC also in the data area */
-  memcpy(&myethtransmitbuffer[offset], mac, 6); 
+  memcpy(&myethtransmitbuffer[offset], mac, 6);
 }
 
 void cleanTransmitBuffer(void) {
@@ -155,10 +155,10 @@ void composeGetSwReq(void) {
     myethtransmitbuffer[13]=0xE1; //
     myethtransmitbuffer[14]=0x00; // version
     myethtransmitbuffer[15]=0x00; // GET_SW.REQ
-    myethtransmitbuffer[16]=0xA0; // 
+    myethtransmitbuffer[16]=0xA0; //
     myethtransmitbuffer[17]=0x00; // Vendor OUI
-    myethtransmitbuffer[18]=0xB0; // 
-    myethtransmitbuffer[19]=0x52; //  
+    myethtransmitbuffer[18]=0xB0; //
+    myethtransmitbuffer[19]=0x52; //
 }
 
 void composeSlacParamReq(void) {
@@ -174,14 +174,14 @@ void composeSlacParamReq(void) {
     myethtransmitbuffer[13]=0xE1; //
     myethtransmitbuffer[14]=0x01; // version
     myethtransmitbuffer[15]=0x64; // SLAC_PARAM.REQ
-    myethtransmitbuffer[16]=0x60; // 
+    myethtransmitbuffer[16]=0x60; //
     myethtransmitbuffer[17]=0x00; // 2 bytes fragmentation information. 0000 means: unfragmented.
-    myethtransmitbuffer[18]=0x00; // 
-    myethtransmitbuffer[19]=0x00; // 
+    myethtransmitbuffer[18]=0x00; //
+    myethtransmitbuffer[19]=0x00; //
     myethtransmitbuffer[20]=0x00; //
     fillSourceMac(myMAC, 21); // 21 to 28: 8 bytes runid. The Ioniq uses the PEV mac plus 00 00.
-    myethtransmitbuffer[27]=0x00; // 
-    myethtransmitbuffer[28]=0x00; // 
+    myethtransmitbuffer[27]=0x00; //
+    myethtransmitbuffer[28]=0x00; //
     // rest is 00
 }
 
@@ -194,7 +194,7 @@ void evaluateSlacParamCnf(void) {
       pevSequenceDelayCycles = 4; // original Ioniq is waiting 200ms
       slac_enterState(STATE_SLAC_PARAM_CNF_RECEIVED); // enter next state. Will be handled in the cyclic runSlacSequencer
 		}
-	}		
+	}
 }
 
 void composeStartAttenCharInd(void) {
@@ -210,16 +210,16 @@ void composeStartAttenCharInd(void) {
     myethtransmitbuffer[13]=0xE1; //
     myethtransmitbuffer[14]=0x01; // version
     myethtransmitbuffer[15]=0x6A; // START_ATTEN_CHAR.IND
-    myethtransmitbuffer[16]=0x60; // 
+    myethtransmitbuffer[16]=0x60; //
     myethtransmitbuffer[17]=0x00; // 2 bytes fragmentation information. 0000 means: unfragmented.
-    myethtransmitbuffer[18]=0x00; // 
+    myethtransmitbuffer[18]=0x00; //
     myethtransmitbuffer[19]=0x00; // apptype
     myethtransmitbuffer[20]=0x00; // sectype
     myethtransmitbuffer[21]=0x0a; // number of sounds: 10
     myethtransmitbuffer[22]=6; // timeout N*100ms. Normally 6, means in 600ms all sounds must have been tranmitted.
                             // Todo: As long we are a little bit slow, lets give 1000ms instead of 600, so that the
                             // charger is able to catch it all.
-    myethtransmitbuffer[23]=0x01; // response type 
+    myethtransmitbuffer[23]=0x01; // response type
     fillSourceMac(myMAC, 24); // 24 to 29: sound_forwarding_sta, MAC of the PEV
     fillSourceMac(myMAC, 30); // 30 to 37: runid, filled with MAC of PEV and two bytes 00 00
     // rest is 00
@@ -239,9 +239,9 @@ void composeNmbcSoundInd(void) {
     myethtransmitbuffer[13]=0xE1; //
     myethtransmitbuffer[14]=0x01; // version
     myethtransmitbuffer[15]=0x76; // NMBC_SOUND.IND
-    myethtransmitbuffer[16]=0x60; //  
+    myethtransmitbuffer[16]=0x60; //
     myethtransmitbuffer[17]=0x00; // 2 bytes fragmentation information. 0000 means: unfragmented.
-    myethtransmitbuffer[18]=0x00; // 
+    myethtransmitbuffer[18]=0x00; //
     myethtransmitbuffer[19]=0x00; // apptype
     myethtransmitbuffer[20]=0x00; // sectype
     myethtransmitbuffer[21]=0x00; // 21 to 37 sender ID, all 00
@@ -255,7 +255,7 @@ void composeNmbcSoundInd(void) {
 }
 
 void evaluateAttenCharInd(void) {
-  uint8_t i;  
+  uint8_t i;
   addToTrace("[PEVSLAC] received ATTEN_CHAR.IND");
   if (iAmPev==1) {
         //addToTrace("[PEVSLAC] received AttenCharInd in state " + str(pevSequenceState))
@@ -267,11 +267,11 @@ void evaluateAttenCharInd(void) {
                 evseMac[i] = myethreceivebuffer[6+i]; // source MAC starts at offset 6
             }
             AttenCharIndNumberOfSounds = myethreceivebuffer[69];
-            //addToTrace("[PEVSLAC] number of sounds reported by the EVSE (should be 10): " + str(AttenCharIndNumberOfSounds)) 
+            //addToTrace("[PEVSLAC] number of sounds reported by the EVSE (should be 10): " + str(AttenCharIndNumberOfSounds))
             composeAttenCharRsp();
             addToTrace("[PEVSLAC] transmitting ATTEN_CHAR.RSP...");
             checkpointNumber = 140;
-            myEthTransmit();               
+            myEthTransmit();
             pevSequenceState=STATE_ATTEN_CHAR_IND_RECEIVED; // enter next state. Will be handled in the cyclic runSlacSequencer
 		    }
 	}
@@ -290,9 +290,9 @@ void composeAttenCharRsp(void) {
     myethtransmitbuffer[13]=0xE1; //
     myethtransmitbuffer[14]=0x01; // version
     myethtransmitbuffer[15]=0x6F; // ATTEN_CHAR.RSP
-    myethtransmitbuffer[16]=0x60; // 
+    myethtransmitbuffer[16]=0x60; //
     myethtransmitbuffer[17]=0x00; // 2 bytes fragmentation information. 0000 means: unfragmented.
-    myethtransmitbuffer[18]=0x00; // 
+    myethtransmitbuffer[18]=0x00; //
     myethtransmitbuffer[19]=0x00; // apptype
     myethtransmitbuffer[20]=0x00; // sectype
     fillSourceMac(myMAC, 21); // 21 to 26: source MAC
@@ -301,7 +301,7 @@ void composeAttenCharRsp(void) {
     // 52 to 68: resp_id, all 00
     // 69: result. 0 is ok
 }
-		
+
 void composeSlacMatchReq(void) {
     /* reference: see wireshark interpreted frame from Ioniq */
     myethtransmitbufferLen = 85;
@@ -315,19 +315,19 @@ void composeSlacMatchReq(void) {
     myethtransmitbuffer[13]=0xE1; //
     myethtransmitbuffer[14]=0x01; // version
     myethtransmitbuffer[15]=0x7C; // SLAC_MATCH.REQ
-    myethtransmitbuffer[16]=0x60; // 
+    myethtransmitbuffer[16]=0x60; //
     myethtransmitbuffer[17]=0x00; // 2 bytes fragmentation information. 0000 means: unfragmented.
-    myethtransmitbuffer[18]=0x00; // 
+    myethtransmitbuffer[18]=0x00; //
     myethtransmitbuffer[19]=0x00; // apptype
     myethtransmitbuffer[20]=0x00; // sectype
     myethtransmitbuffer[21]=0x3E; // 21 to 22: length
-    myethtransmitbuffer[22]=0x00; // 
+    myethtransmitbuffer[22]=0x00; //
     // 23 to 39: pev_id, all 00
     fillSourceMac(myMAC, 40); // 40 to 45: PEV MAC
     // 46 to 62: evse_id, all 00
     fillDestinationMac(evseMac, 63); // 63 to 68: EVSE MAC
     fillSourceMac(myMAC, 69); // 69 to 76: runid. The PEV mac, plus 00 00.
-    // 77 to 84: reserved, all 00        
+    // 77 to 84: reserved, all 00
 }
 
 void evaluateSlacMatchCnf(void) {
@@ -339,7 +339,7 @@ void evaluateSlacMatchCnf(void) {
     if (iAmEvse==1) {
             // If we are EVSE, nothing to do. We have sent the match.CNF by our own.
             // The SET_KEY was already done at startup.
-    } else {      
+    } else {
             addToTrace("[PEVSLAC] received SLAC_MATCH.CNF");
             for (i=0; i<7; i++) { // NID has 7 bytes
                 NID[i] = myethreceivebuffer[85+i];
@@ -375,7 +375,7 @@ void composeSetKey(void) {
   myethtransmitbuffer[13]=0xE1; //
   myethtransmitbuffer[14]=0x01; // version
   myethtransmitbuffer[15]=0x08; // CM_SET_KEY.REQ
-  myethtransmitbuffer[16]=0x60; // 
+  myethtransmitbuffer[16]=0x60; //
   myethtransmitbuffer[17]=0x00; // frag_index
   myethtransmitbuffer[18]=0x00; // frag_seqnum
   myethtransmitbuffer[19]=0x01; // 0 key info type
@@ -389,9 +389,9 @@ void composeSetKey(void) {
   myethtransmitbuffer[25]=0x00; // 6
   myethtransmitbuffer[26]=0x00; // 7
   myethtransmitbuffer[27]=0x00; // 8
-        
+
   myethtransmitbuffer[28]=0x04; // 9 nw info pid
-        
+
   myethtransmitbuffer[29]=0x00; // 10 info prn
   myethtransmitbuffer[30]=0x00; // 11
   myethtransmitbuffer[31]=0x00; // 12 pmn
@@ -402,7 +402,7 @@ void composeSetKey(void) {
                 //          two MSBs shall be set to 0b00.
   myethtransmitbuffer[40]=0x01; // 21 peks (payload encryption key select) Table 11-83. 01 is NMK. We had 02 here, why???
                                // with 0x0F we could choose "no key, payload is sent in the clear"
-  setNmkAt(41); 
+  setNmkAt(41);
   #define variation 0
   myethtransmitbuffer[41]+=variation; // to try different NMKs
   // and three remaining zeros
@@ -418,11 +418,10 @@ void evaluateSetKeyCnf(void) {
     if (result == 0) {
         addToTrace("[PEVSLAC] SetKeyCnf says 0, this would be a bad sign for local modem, but normal for remote.");
     } else {
-    	sprintf(strTmp,"[PEVSLAC] SetKeyCnf says %d, this is formally 'rejected', but indeed ok." , result);
-        addToTrace(strTmp);
-        publishStatus("modem is", "restarting");
-        connMgr_SlacOk();
-	  }
+     	 printf("[%ld] [PEVSLAC] SetKeyCnf says %d, this is formally 'rejected', but indeed ok." , rtc_get_counter_val(), result);
+       publishStatus("modem is", "restarting");
+       connMgr_SlacOk();
+  }
 }
 
 void composeGetKey(void) {
@@ -440,21 +439,21 @@ void composeGetKey(void) {
     myethtransmitbuffer[13]=0xE1;
     myethtransmitbuffer[14]=0x01; // version
     myethtransmitbuffer[15]=0x0C; // CM_GET_KEY.REQ https://github.com/uhi22/plctool2/blob/master/plc_homeplug.h
-    myethtransmitbuffer[16]=0x60; // 
+    myethtransmitbuffer[16]=0x60; //
     myethtransmitbuffer[17]=0x00; // 2 bytes fragmentation information. 0000 means: unfragmented.
-    myethtransmitbuffer[18]=0x00; //        
+    myethtransmitbuffer[18]=0x00; //
     myethtransmitbuffer[19]=0x00; // 0 Request Type 0=direct
     myethtransmitbuffer[20]=0x01; // 1 RequestedKeyType only "NMK" is permitted over the H1 interface.
                                //           value see HomeplugAV2.1 spec table 11-89. 1 means AES-128.
-                                       
+
     setNidAt(21); // NID starts here (table 11-91 Homeplug spec is wrong. Verified by accepted command.)
     myethtransmitbuffer[28]=0xaa; // 10-13 mynonce. The position at 28 is verified by the response of the devolo.
-    myethtransmitbuffer[29]=0xaa; // 
-    myethtransmitbuffer[30]=0xaa; // 
-    myethtransmitbuffer[31]=0xaa; // 
+    myethtransmitbuffer[29]=0xaa; //
+    myethtransmitbuffer[30]=0xaa; //
+    myethtransmitbuffer[31]=0xaa; //
     myethtransmitbuffer[32]=0x04; // 14 PID. According to  ISO15118-3 fix value 4, "HLE protocol"
     myethtransmitbuffer[33]=0x00; // 15-16 PRN Protocol run number
-    myethtransmitbuffer[34]=0x00; // 
+    myethtransmitbuffer[34]=0x00; //
     myethtransmitbuffer[35]=0x00; // 17 PMN Protocol message number
 }
 
@@ -471,7 +470,7 @@ void evaluateGetKeyCnf(void) {
     for (i=0; i<6; i++) {
         sourceMac[i] = myethreceivebuffer[6+i];
     }
-    strMac = String(sourceMac[0], HEX) + ":" + String(sourceMac[1], HEX) + ":" + String(sourceMac[2], HEX) + ":" 
+    strMac = String(sourceMac[0], HEX) + ":" + String(sourceMac[1], HEX) + ":" + String(sourceMac[2], HEX) + ":"
      + String(sourceMac[3], HEX) + ":" + String(sourceMac[4], HEX) + ":" + String(sourceMac[5], HEX);
     result = myethreceivebuffer[19]; // 0 in case of success
     if (result==0) {
@@ -483,7 +482,7 @@ void evaluateGetKeyCnf(void) {
 	  if (numberOfFoundModems>1) {
 		  addToTrace("Info: NOK is normal for remote modems.");
 	  }
-            
+
     //    We observed the following cases:
     //    (A) Result=1 (NOK), NID all 00, key all 00: We requested the key with the wrong NID.
     //    (B) Result=0 (OK), NID all 00, key non-zero: We used the correct NID for the request.
@@ -504,7 +503,7 @@ void evaluateGetKeyCnf(void) {
       //    addToTrace("This is the developer NMK.")
       //    isDeveloperLocalKey = 1
       //else:
-      //    addToTrace("This is NOT the developer NMK.")            
+      //    addToTrace("This is NOT the developer NMK.")
       localModemFound=1;
 	  }
     strNID = "";
@@ -517,7 +516,7 @@ void evaluateGetKeyCnf(void) {
     for (i=0; i<7; i++) { // NID has 7 bytes
         NID[i] = myethreceivebuffer[29+i];
         strNID=strNID+String(NID[i], HEX)+ " ";
-    }            
+    }
     addToTrace("From GetKeyCnf, got network ID (NID) " + strNID);
 #endif
 }
@@ -530,7 +529,7 @@ void sendTestFrame(void) {
 void evaluateGetSwCnf(void) {
     /* The GET_SW confirmation. This contains the software version of the homeplug modem.
        Reference: see wireshark interpreted frame from TPlink, Ioniq and Alpitronic charger */
-    uint8_t i, x;  
+    uint8_t i, x;
     //char strMac[20];
     addToTrace("[PEVSLAC] received GET_SW.CNF");
     numberOfSoftwareVersionResponses+=1;
@@ -538,7 +537,7 @@ void evaluateGetSwCnf(void) {
         sourceMac[i] = myethreceivebuffer[6+i];
     }
 #if 0
-    strMac = String(sourceMac[0], HEX) + ":" + String(sourceMac[1], HEX) + ":" + String(sourceMac[2], HEX) + ":" 
+    strMac = String(sourceMac[0], HEX) + ":" + String(sourceMac[1], HEX) + ":" + String(sourceMac[2], HEX) + ":"
      + String(sourceMac[3], HEX) + ":" + String(sourceMac[4], HEX) + ":" + String(sourceMac[5], HEX);
 #endif
     verLen = myethreceivebuffer[22];
@@ -548,15 +547,14 @@ void evaluateGetSwCnf(void) {
             if (x<0x20) { x=0x20; } /* make unprintable character to space. */
             strVersion[i]=x;
       }
-      strVersion[i] = 0; 
+      strVersion[i] = 0;
       //addToTrace(strMac);
-      sprintf(mySerialPrintOutputBuffer, "software version %s\r\n", strVersion);
-      mySerialPrint();
+      printf("software version %s\r\n", strVersion);
       //addToTrace("For " + strMac + " the software version is " + String(strVersion));
       #ifdef DEMO_SHOW_MODEM_SOFTWARE_VERSION_ON_OLED
         StringVersion = String(strVersion);
         Serial.println("For " + strMac + " the software version is " + StringVersion);
-        /* As demo, show the modems software version on the OLED display, splitted in four lines: */      
+        /* As demo, show the modems software version on the OLED display, splitted in four lines: */
         OledLine1 = StringVersion.substring(0, 11);
         OledLine2 = StringVersion.substring(11, 22);
         OledLine3 = StringVersion.substring(22, 33);
@@ -573,8 +571,7 @@ uint8_t isEvseModemFound(void) {
 }
 
 void slac_enterState(int n) {
-  sprintf(strTmp, "[PEVSLAC] from %d entering %d", pevSequenceState, n);
-  addToTrace(strTmp);
+  printf("[%ld] [PEVSLAC] from %d entering %d", rtc_get_counter_val(), pevSequenceState, n);
   pevSequenceState = n;
   pevSequenceCyclesInState = 0;
 }
@@ -601,13 +598,13 @@ void runSlacSequencer(void) {
         /* The modem is present, starting SLAC. */
         slac_enterState(STATE_READY_FOR_SLAC);
         return;
-    } 
+    }
     if (pevSequenceState==STATE_READY_FOR_SLAC) {
             publishStatus("Starting SLAC", "");
             addToTrace("[PEVSLAC] Checkpoint100: Sending SLAC_PARAM.REQ...");
             checkpointNumber = 100;
             composeSlacParamReq();
-            myEthTransmit();                
+            myEthTransmit();
             slac_enterState(STATE_WAITING_FOR_SLAC_PARAM_CNF);
             return;
 	  }
@@ -631,7 +628,7 @@ void runSlacSequencer(void) {
             slac_enterState(STATE_BEFORE_START_ATTEN_CHAR);
             return;
 	  }
-    if (pevSequenceState==STATE_BEFORE_START_ATTEN_CHAR) { // received SLAC_PARAM.CNF. Multiple transmissions of START_ATTEN_CHAR.                
+    if (pevSequenceState==STATE_BEFORE_START_ATTEN_CHAR) { // received SLAC_PARAM.CNF. Multiple transmissions of START_ATTEN_CHAR.
             if (pevSequenceDelayCycles>0) {
                 pevSequenceDelayCycles-=1;
                 return;
@@ -641,7 +638,7 @@ void runSlacSequencer(void) {
                 nRemainingStartAttenChar-=1;
                 composeStartAttenCharInd();
                 addToTrace("[PEVSLAC] transmitting START_ATTEN_CHAR.IND...");
-                myEthTransmit();      
+                myEthTransmit();
                 pevSequenceDelayCycles = 0; // original from ioniq is 20ms between the START_ATTEN_CHAR. Shall be 20ms to 50ms. So we set to 0 and the normal 30ms call cycle is perfect.
                 return;
             } else {
@@ -653,7 +650,7 @@ void runSlacSequencer(void) {
 			      }
             return;
 	  }
-    if (pevSequenceState==STATE_SOUNDING) { // Multiple transmissions of MNBC_SOUND.IND.                
+    if (pevSequenceState==STATE_SOUNDING) { // Multiple transmissions of MNBC_SOUND.IND.
             if (pevSequenceDelayCycles>0) {
                 pevSequenceDelayCycles-=1;
                 return;
@@ -669,8 +666,8 @@ void runSlacSequencer(void) {
 				        }
                 pevSequenceDelayCycles = 0; // original from ioniq is 20ms between the messages.
                                             // Shall be 20ms to 50ms. So we set to 0 and the normal 30ms call cycle is perfect.
-                return;                
-            }            
+                return;
+            }
 	  }
     if (pevSequenceState==STATE_WAIT_FOR_ATTEN_CHAR_IND) { // waiting for ATTEN_CHAR.IND
             // todo: it is possible that we receive this message from multiple chargers. We need
@@ -682,7 +679,7 @@ void runSlacSequencer(void) {
             // (the normal state transition is done in the reception handler)
 	  }
     if (pevSequenceState==STATE_ATTEN_CHAR_IND_RECEIVED) { // ATTEN_CHAR.IND was received and the
-                                                           // nearest charger decided and the 
+                                                           // nearest charger decided and the
                                                            // ATTEN_CHAR.RSP was sent.
             slac_enterState(STATE_DELAY_BEFORE_MATCH);
             pevSequenceDelayCycles = 30; // original from ioniq is 860ms to 980ms from ATTEN_CHAR.RSP to SLAC_MATCH.REQ
@@ -711,7 +708,7 @@ void runSlacSequencer(void) {
             // including the transmission of SET_KEY.REQ)
             return;
 	  }
-    if (pevSequenceState==STATE_WAITING_FOR_RESTART2) { // SLAC is finished, SET_KEY.REQ was 
+    if (pevSequenceState==STATE_WAITING_FOR_RESTART2) { // SLAC is finished, SET_KEY.REQ was
                                                         // transmitted. The homeplug modem makes
                                                         // the reset and we need to wait until it
                                                         // is up with the new key.
@@ -723,7 +720,7 @@ void runSlacSequencer(void) {
             numberOfFoundModems = 0; // reset the number, we want to count the modems newly.
             nEvseModemMissingCounter=0; // reset the retry counter
             composeGetKey();
-            myEthTransmit();                
+            myEthTransmit();
             slac_enterState(STATE_FIND_MODEMS2);
             return;
     }
@@ -755,24 +752,24 @@ void runSlacSequencer(void) {
                 /* This is the end of the SLAC. */
                 /* The AVLN is established, we have at least two modems in the network. */
                 slac_enterState(STATE_INITIAL);
-            }                
+            }
             return;
-        }        
+        }
         // invalid state is reached. As robustness measure, go to initial state.
         addToTrace("[PEVSLAC] ERROR: Invalid state reached");
-        slac_enterState(STATE_INITIAL);    
+        slac_enterState(STATE_INITIAL);
 }
 
 void runSdpStateMachine(void) {
   if (connMgr_getConnectionLevel()<15) {
     /* We have no AVLN established, and SLAC is not ongoing. It does not make sense to start SDP. */
-    sdp_state = 0; 
+    sdp_state = 0;
     return;
   }
   if (connMgr_getConnectionLevel()>20) {
     /* SDP was already successful. No need to run it again. */
     sdp_state = 0;
-    return;  
+    return;
   }
   /* The ConnectionLevel demands the SDP. */
   if (sdp_state==0) {
@@ -784,7 +781,7 @@ void runSdpStateMachine(void) {
       SdpRepetitionCounter = 50; // prepare the number of retries for the SDP. The more the better.
       sdp_state = 1;
       return;
-  }        
+  }
   if (sdp_state == 1) { // SDP request transmission and waiting for SDP response.
     /* The normal state transition in case of received SDP response is done in
        the IPv6 receive handler. This will inform the ConnectionManager, and we will stop here
@@ -793,7 +790,7 @@ void runSdpStateMachine(void) {
       // just waiting until next action
       pevSequenceDelayCycles-=1;
       return;
-    }                
+    }
     if (SdpRepetitionCounter>0) {
                 // Reference: The Ioniq waits 4.1s from the slac_match.cnf to the SDP request.
                 // Here we send the SdpRequest. Maybe too early, but we will retry if there is no response.
@@ -802,15 +799,15 @@ void runSdpStateMachine(void) {
                 pevSequenceDelayCycles = 15; // e.g. half-a-second delay until re-try of the SDP
                 return;
     }
-    // All repetitions are over, no SDP response was seen. Back to the beginning.    
+    // All repetitions are over, no SDP response was seen. Back to the beginning.
     addToTrace("[SDP] ERROR: Did not receive SDP response. Giving up.");
     sdp_state = 0;
-  }     
+  }
 }
 
 void evaluateReceivedHomeplugPacket(void) {
   switch (getManagementMessageType()) {
-    case CM_GET_KEY + MMTYPE_CNF:    evaluateGetKeyCnf();    break;   
+    case CM_GET_KEY + MMTYPE_CNF:    evaluateGetKeyCnf();    break;
     case CM_SLAC_MATCH + MMTYPE_CNF: evaluateSlacMatchCnf(); break;
     case CM_SLAC_PARAM + MMTYPE_CNF: evaluateSlacParamCnf(); break;
     case CM_ATTEN_CHAR + MMTYPE_IND: evaluateAttenCharInd(); break;
@@ -829,7 +826,7 @@ int homeplug_sanityCheck(void) {
     addToTrace("ERROR: Sanity check of the SDP state machine failed.");
     return -1;
   }
-  return 0;  
+  return 0;
 }
 
 void homeplugInit(void) {

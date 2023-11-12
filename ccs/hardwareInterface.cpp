@@ -352,10 +352,10 @@ void hardwareInterface_cyclic(void) {
     //canDebugValue2 = rawAdValues[MY_ADC_CHANNEL_DCVOLTAGE];
     //canDebugValue3 = temperatureChannel_1_R_NTC;
     //canDebugValue4 = temperatureChannel_2_R_NTC;
-    canDebugValue1 = pushbutton_buttonSeriesCounter;
-    canDebugValue2 = pushbutton_nNumberOfButtonPresses;
-    canDebugValue3 = pushbutton_accumulatedButtonDigits;
-    canDebugValue4 = pushbutton_tButtonPressTime;
+    //canDebugValue1 = pushbutton_buttonSeriesCounter;
+    //canDebugValue2 = pushbutton_nNumberOfButtonPresses;
+    //canDebugValue3 = pushbutton_accumulatedButtonDigits;
+    //canDebugValue4 = pushbutton_tButtonPressTime;
 }
 
 void hardwareInterface_init(void) {

@@ -37,10 +37,10 @@ CPPFLAGS    = -Og -g3 -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3
 LDSCRIPT	  = linker.ld
 LDFLAGS    = -Llibopencm3/lib -T$(LDSCRIPT) -march=armv7 -nostartfiles -Wl,--gc-sections,-Map,linker.map
 OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
-             my_string.o digio.o sine_core.o my_fp.o printf.o anain.o \
-             param_save.o errormessage.o stm32_can.o canhardware.o canmap.o \
+             my_string.o digio.o my_fp.o printf.o anain.o \
+             param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
              picontroller.o terminalcommands.o \
-             ipv6.o myScheduler.o tcp.o \
+             ipv6.o tcp.o \
 				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o \
 				 hardwareInterface.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \

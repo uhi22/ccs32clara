@@ -25,11 +25,10 @@ void modemFinder_Mainfunction(void) {
       return;
     }
     /* waiting time is expired. Lets look how many responses we got. */
-    sprintf(strTmp, "[ModemFinder] Number of modems: %d", numberOfSoftwareVersionResponses);
-    addToTrace(strTmp);
+    printf("[ModemFinder] Number of modems: %d", numberOfSoftwareVersionResponses);
     publishStatus("Modems:", String(numberOfSoftwareVersionResponses));
     if (numberOfSoftwareVersionResponses>0) {
-      connMgr_ModemFinderOk(numberOfSoftwareVersionResponses);   
+      connMgr_ModemFinderOk(numberOfSoftwareVersionResponses);
     }
     mofi_stateDelay = 15; /* 0.5s to show the number of modems, before we start a new search if necessary */
     mofi_state=2;

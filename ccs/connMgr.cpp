@@ -5,7 +5,7 @@
    It calculates an overall ConnectionLevel.
    This ConnectionLevel is provided to the state machines, so that each state machine
    has the possiblity to decide whether it needs to do something or just stays silent.
-   
+
    The basic rule is, that a good connection on higher layer (e.g. TCP) implicitely
    confirms the good connection on lower layer (e.g. Modem presence). This means,
    the lower-layer state machine can stay silent as long as the upper layers are working
@@ -37,7 +37,7 @@ uint8_t connMgr_getConnectionLevel(void) {
 }
 
 void connMgr_printDebugInfos(void) {
-    sprintf(strTmp, "[CONNMGR] %d %d %d %d %d %d %d --> %d",
+    printf("[CONNMGR] %d %d %d %d %d %d %d --> %d",
     		connMgr_timerEthLink,
 			connMgr_timerModemLocal,
 			connMgr_timerModemRemote,
@@ -47,7 +47,6 @@ void connMgr_printDebugInfos(void) {
 			connMgr_timerAppl,
 			connMgr_ConnectionLevel
 			);
-    addToTrace(strTmp);
 }
 
 void connMgr_Mainfunction(void) {
@@ -59,7 +58,7 @@ void connMgr_Mainfunction(void) {
     if (connMgr_timerSDP>0) connMgr_timerSDP--;
     if (connMgr_timerTCP>0) connMgr_timerTCP--;
     if (connMgr_timerAppl>0) connMgr_timerAppl--;
-    
+
     /* Based on the timers, calculate the connectionLevel. */
     if      (connMgr_timerAppl>0) {        connMgr_ConnectionLevel=CONNLEVEL_100_APPL_RUNNING; }
     else if (connMgr_timerTCP>0) {         connMgr_ConnectionLevel=CONNLEVEL_80_TCP_RUNNING; }
@@ -69,12 +68,11 @@ void connMgr_Mainfunction(void) {
     else if (connMgr_timerModemLocal>0) {  connMgr_ConnectionLevel=CONNLEVEL_10_ONE_MODEM_FOUND; }
     else if (connMgr_timerEthLink>0)       connMgr_ConnectionLevel=CONNLEVEL_5_ETH_LINK_PRESENT;
     else {connMgr_ConnectionLevel=0;}
-    
+
     connMgr_timerEthLink = CONNMGR_TIMER_MAX; /* we have SPI, so just say ETH is up */
 
     if (connMgr_ConnectionLevelOld!=connMgr_ConnectionLevel) {
-      sprintf(strTmp,"[CONNMGR] ConnectionLevel changed from %d to %d.", connMgr_ConnectionLevelOld, connMgr_ConnectionLevel);
-      addToTrace(strTmp);
+      printf("[CONNMGR] ConnectionLevel changed from %d to %d.", connMgr_ConnectionLevelOld, connMgr_ConnectionLevel);
       connMgr_ConnectionLevelOld = connMgr_ConnectionLevel;
     }
     if ((connMgr_cycles % 33)==0) {

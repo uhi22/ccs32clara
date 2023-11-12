@@ -10,8 +10,8 @@ struct dinEXIDocument dinDocDec;
 struct appHandEXIDocument aphsDoc;
 bitstream_t global_streamEnc;
 bitstream_t global_streamDec;
-size_t global_streamEncPos;
-size_t global_streamDecPos;
+uint32_t global_streamEncPos;
+uint32_t global_streamDecPos;
 int g_errn;
 uint8_t sessionId[SESSIONID_LEN];
 uint8_t sessionIdLen;
@@ -37,7 +37,7 @@ void projectExiConnector_decode_appHandExiDocument(void) {
   /* precondition: The global_streamDec.size and global_streamDec.data have been set to the byte array with EXI data. */
 
   global_streamDec.pos = &global_streamDecPos;
-  *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */	
+  *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */
   g_errn = decode_appHandExiDocument(&global_streamDec, &aphsDoc);
 }
 
@@ -81,10 +81,10 @@ void projectExiConnector_prepare_DinExiDocument(void) {
 }
 
 void projectExiConnector_encode_DinExiDocument(void) {
-  /* precondition: dinDocEnc structure is filled. Output: global_stream.data and global_stream.pos. */  
+  /* precondition: dinDocEnc structure is filled. Output: global_stream.data and global_stream.pos. */
 	global_streamEnc.size = EXI_TRANSMIT_BUFFER_SIZE;
 	global_streamEnc.data = exiTransmitBuffer;
-	global_streamEnc.pos = &global_streamEncPos;	
+	global_streamEnc.pos = &global_streamEncPos;
 	*(global_streamEnc.pos) = 0; /* start adding data at position 0 */
 	g_errn = encode_dinExiDocument(&global_streamEnc, &dinDocEnc);
 
@@ -99,8 +99,8 @@ int projectExiConnector_test(int a) {
   global_streamDec.size = mytestbufferLen;
   global_streamDec.data = mytestbuffer;
   global_streamDec.pos = &global_streamDecPos;
-  *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */	
-  
+  *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */
+
   for (i=0; i<1000; i++) { /* for runtime measuremement, run the decoder n times. */
     g_errn = decode_dinExiDocument(&global_streamDec, &dinDocDec);
   }
@@ -111,7 +111,7 @@ int projectExiConnector_test(int a) {
 	sprintf(s2, "%hx ", dinDocDec.V2G_Message.Header.SessionID.bytes[i]);
 	strcat(s, s2);
   }
-  addToTrace_chararray(s);  
+  addToTrace_chararray(s);
   //g_errn = encode_dinExiDocument(&global_streamEnc, &dinDocEnc);
  return 2*a;
 }

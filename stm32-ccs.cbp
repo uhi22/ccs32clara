@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="stm32-ccs" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="armelfgcc" />
+		<MakeCommands>
+			<Build command="make" />
+			<CompileFile command="$make -f $makefile $file" />
+			<Clean command="$make -f $makefile clean" />
+			<DistClean command="$make -f $makefile distclean$target" />
+			<AskRebuildNeeded command="$make -q -f $makefile $target" />
+			<SilentBuild command="$make -s -f $makefile $target" />
+		</MakeCommands>
+		<Build>
+			<Target title="Release">
+				<Option output="stm32_ccs" prefix_auto="0" extension_auto="0" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="armelfgcc" />
+				<MakeCommands>
+					<Build command="CONTROL=SINE make" />
+					<CompileFile command="$make -f  $file " />
+					<Clean command="make clean " />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q" />
+					<SilentBuild command="CONTROL=SINE make &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="Makefile" />
+		<Unit filename="ccs/canbus.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/canbus.h" />
+		<Unit filename="ccs/ccs32_globals.h" />
+		<Unit filename="ccs/configuration.h" />
+		<Unit filename="ccs/connMgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/connMgr.h" />
+		<Unit filename="ccs/hardwareInterface.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/hardwareInterface.h" />
+		<Unit filename="ccs/homeplug.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/homeplug.h" />
+		<Unit filename="ccs/ipv6.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/ipv6.h" />
+		<Unit filename="ccs/modemFinder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/modemFinder.h" />
+		<Unit filename="ccs/myAdc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/myAdc.h" />
+		<Unit filename="ccs/myHelpers.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/myHelpers.h" />
+		<Unit filename="ccs/myScheduler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/myScheduler.h" />
+		<Unit filename="ccs/pevStateMachine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/pevStateMachine.h" />
+		<Unit filename="ccs/pushbutton.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/pushbutton.h" />
+		<Unit filename="ccs/qca7000.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/qca7000.h" />
+		<Unit filename="ccs/tcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/tcp.h" />
+		<Unit filename="ccs/temperatures.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/temperatures.h" />
+		<Unit filename="ccs/udpChecksum.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/udpChecksum.h" />
+		<Unit filename="ccs/xcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ccs/xcp.h" />
+		<Unit filename="exi/BitInputStream.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/BitInputStream.h" />
+		<Unit filename="exi/BitOutputStream.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/BitOutputStream.h" />
+		<Unit filename="exi/ByteStream.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/ByteStream.h" />
+		<Unit filename="exi/DecoderChannel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/DecoderChannel.h" />
+		<Unit filename="exi/EXIConfig.h" />
+		<Unit filename="exi/EXIHeaderDecoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/EXIHeaderDecoder.h" />
+		<Unit filename="exi/EXIHeaderEncoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/EXIHeaderEncoder.h" />
+		<Unit filename="exi/EXIOptions.h" />
+		<Unit filename="exi/EXITypes.h" />
+		<Unit filename="exi/EncoderChannel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/EncoderChannel.h" />
+		<Unit filename="exi/ErrorCodes.h" />
+		<Unit filename="exi/MethodsBag.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/MethodsBag.h" />
+		<Unit filename="exi/appHandEXIDatatypes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/appHandEXIDatatypes.h" />
+		<Unit filename="exi/appHandEXIDatatypesDecoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/appHandEXIDatatypesDecoder.h" />
+		<Unit filename="exi/appHandEXIDatatypesEncoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/appHandEXIDatatypesEncoder.h" />
+		<Unit filename="exi/dinEXIDatatypes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/dinEXIDatatypes.h" />
+		<Unit filename="exi/dinEXIDatatypesDecoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/dinEXIDatatypesDecoder.h" />
+		<Unit filename="exi/dinEXIDatatypesEncoder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/dinEXIDatatypesEncoder.h" />
+		<Unit filename="exi/projectExiConnector.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="exi/projectExiConnector.h" />
+		<Unit filename="include/anain_prj.h" />
+		<Unit filename="include/digio_prj.h" />
+		<Unit filename="include/errormessage_prj.h" />
+		<Unit filename="include/hwdefs.h" />
+		<Unit filename="include/hwinit.h" />
+		<Unit filename="include/param_prj.h" />
+		<Unit filename="libopeninv/include/anain.h" />
+		<Unit filename="libopeninv/include/canhardware.h" />
+		<Unit filename="libopeninv/include/canmap.h" />
+		<Unit filename="libopeninv/include/crc8.h" />
+		<Unit filename="libopeninv/include/delay.h" />
+		<Unit filename="libopeninv/include/digio.h" />
+		<Unit filename="libopeninv/include/errormessage.h" />
+		<Unit filename="libopeninv/include/foc.h" />
+		<Unit filename="libopeninv/include/fu.h" />
+		<Unit filename="libopeninv/include/linbus.h" />
+		<Unit filename="libopeninv/include/my_fp.h" />
+		<Unit filename="libopeninv/include/my_math.h" />
+		<Unit filename="libopeninv/include/my_string.h" />
+		<Unit filename="libopeninv/include/param_save.h" />
+		<Unit filename="libopeninv/include/params.h" />
+		<Unit filename="libopeninv/include/picontroller.h" />
+		<Unit filename="libopeninv/include/printf.h" />
+		<Unit filename="libopeninv/include/sine_core.h" />
+		<Unit filename="libopeninv/include/stm32_can.h" />
+		<Unit filename="libopeninv/include/stm32_loader.h" />
+		<Unit filename="libopeninv/include/stm32scheduler.h" />
+		<Unit filename="libopeninv/include/terminal.h" />
+		<Unit filename="libopeninv/include/terminalcommands.h" />
+		<Unit filename="libopeninv/src/anain.cpp" />
+		<Unit filename="libopeninv/src/canhardware.cpp" />
+		<Unit filename="libopeninv/src/canmap.cpp" />
+		<Unit filename="libopeninv/src/crc8.cpp" />
+		<Unit filename="libopeninv/src/digio.cpp" />
+		<Unit filename="libopeninv/src/errormessage.cpp" />
+		<Unit filename="libopeninv/src/foc.cpp" />
+		<Unit filename="libopeninv/src/fu.cpp" />
+		<Unit filename="libopeninv/src/linbus.cpp" />
+		<Unit filename="libopeninv/src/my_fp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopeninv/src/my_string.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libopeninv/src/param_save.cpp" />
+		<Unit filename="libopeninv/src/params.cpp" />
+		<Unit filename="libopeninv/src/picontroller.cpp" />
+		<Unit filename="libopeninv/src/printf.cpp" />
+		<Unit filename="libopeninv/src/sine_core.cpp" />
+		<Unit filename="libopeninv/src/stm32_can.cpp" />
+		<Unit filename="libopeninv/src/stm32scheduler.cpp" />
+		<Unit filename="libopeninv/src/terminal.cpp" />
+		<Unit filename="libopeninv/src/terminalcommands.cpp" />
+		<Unit filename="linker.ld" />
+		<Unit filename="src/hwinit.cpp" />
+		<Unit filename="src/main.cpp" />
+		<Unit filename="src/terminal_prj.cpp" />
+		<Extensions>
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot class_diagrams="1" have_dot="1" />
+				<general />
+			</DoxyBlocks>
+			<debugger>
+				<remote_debugging>
+					<options conn_type="0" ip_address="localhost" ip_port="3333" additional_cmds="load&#x0A;r" />
+				</remote_debugging>
+				<remote_debugging target="Release">
+					<options conn_type="0" ip_address="localhost" ip_port="3333" additional_cmds="load&#x0A;r" />
+				</remote_debugging>
+			</debugger>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

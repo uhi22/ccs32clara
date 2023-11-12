@@ -1,0 +1,6 @@
+[submodule "libopeninv"]
+	path = libopeninv
+	url = git@github.com:jsphuebner/libopeninv.git
+[submodule "libopencm3"]
+	path = libopencm3
+	url = git@github.com:jsphuebner/libopencm3.git

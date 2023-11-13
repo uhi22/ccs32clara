@@ -88,7 +88,7 @@ void evaluateUdpPayload(void) {
                             connMgr_SdpOk();
                     }
                 } else {
-                  printf("v2gptPayloadType %x not supported", v2gptPayloadType);
+                  printf("v2gptPayloadType %x not supported\r\n", v2gptPayloadType);
                 }
     }
   }

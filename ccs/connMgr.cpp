@@ -37,7 +37,8 @@ uint8_t connMgr_getConnectionLevel(void) {
 }
 
 void connMgr_printDebugInfos(void) {
-    printf("[CONNMGR] %d %d %d %d %d %d %d --> %d",
+    printf("[%u] [CONNMGR] %d %d %d %d %d %d %d --> %d\r\n",
+         rtc_get_counter_val(),
     		connMgr_timerEthLink,
 			connMgr_timerModemLocal,
 			connMgr_timerModemRemote,
@@ -72,7 +73,7 @@ void connMgr_Mainfunction(void) {
     connMgr_timerEthLink = CONNMGR_TIMER_MAX; /* we have SPI, so just say ETH is up */
 
     if (connMgr_ConnectionLevelOld!=connMgr_ConnectionLevel) {
-      printf("[CONNMGR] ConnectionLevel changed from %d to %d.", connMgr_ConnectionLevelOld, connMgr_ConnectionLevel);
+      printf("[%u] [CONNMGR] ConnectionLevel changed from %d to %d.\r\n", rtc_get_counter_val(), connMgr_ConnectionLevelOld, connMgr_ConnectionLevel);
       connMgr_ConnectionLevelOld = connMgr_ConnectionLevel;
     }
     if ((connMgr_cycles % 33)==0) {

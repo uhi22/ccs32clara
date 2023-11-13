@@ -25,7 +25,7 @@ void modemFinder_Mainfunction(void) {
       return;
     }
     /* waiting time is expired. Lets look how many responses we got. */
-    printf("[ModemFinder] Number of modems: %d", numberOfSoftwareVersionResponses);
+    printf("[%d] [ModemFinder] Number of modems: %d\r\n", rtc_get_counter_val(), numberOfSoftwareVersionResponses);
     publishStatus("Modems:", String(numberOfSoftwareVersionResponses));
     if (numberOfSoftwareVersionResponses>0) {
       connMgr_ModemFinderOk(numberOfSoftwareVersionResponses);

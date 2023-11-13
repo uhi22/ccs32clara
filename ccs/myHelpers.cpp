@@ -6,7 +6,7 @@
 /* Helper functions */
 
 void addToTrace(const char * s) {
-   printf("[%ld] %s\r\n", rtc_get_counter_val(), s);
+   printf("[%d] %s\r\n", rtc_get_counter_val(), s);
    // canbus_addStringToTextTransmitBuffer(mySerialPrintOutputBuffer); /* print to the CAN */
 }
 

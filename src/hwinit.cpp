@@ -56,6 +56,7 @@ void clock_setup(void)
    rcc_periph_clock_enable(RCC_TIM3); //Contactor and lock driver
    rcc_periph_clock_enable(RCC_TIM4); //Scheduler
    rcc_periph_clock_enable(RCC_DMA1);
+   rcc_periph_clock_enable(RCC_DMA2); //For UART 4
    rcc_periph_clock_enable(RCC_ADC1);
    rcc_periph_clock_enable(RCC_CRC);
    rcc_periph_clock_enable(RCC_AFIO); //CAN
@@ -114,8 +115,8 @@ void write_bootloader_pininit()
 */
 void nvic_setup(void)
 {
-   nvic_enable_irq(NVIC_TIM2_IRQ); //Scheduler
-   nvic_set_priority(NVIC_TIM2_IRQ, 0xe << 4); //second lowest priority
+   nvic_enable_irq(NVIC_TIM4_IRQ); //Scheduler
+   nvic_set_priority(NVIC_TIM4_IRQ, 0xe << 4); //second lowest priority
 }
 
 void rtc_setup()

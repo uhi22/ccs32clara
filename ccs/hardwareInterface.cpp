@@ -48,24 +48,26 @@ int16_t hardwareInterface_getInletVoltage(void) {
 }
 
 int16_t hardwareInterface_getAccuVoltage(void) {
-  return 222;
+  return Param::GetInt(Param::ubat);
 }
 
 int16_t hardwareInterface_getChargingTargetVoltage(void) {
-  return 229;
+  return Param::GetInt(Param::utarget);
 }
 
 int16_t hardwareInterface_getChargingTargetCurrent(void) {
-  return 5;
+  return Param::GetInt(Param::icharge);
 }
 
 uint8_t hardwareInterface_getSoc(void) {
   /* SOC in percent */
-  return hwIf_simulatedSoc_0p01/100;
+  //return hwIf_simulatedSoc_0p01/100;
+  return Param::GetInt(Param::soc);
 }
 
 uint8_t hardwareInterface_getIsAccuFull(void) {
-    return (hwIf_simulatedSoc_0p01/100)>95;
+    //return (hwIf_simulatedSoc_0p01/100)>95;
+  return Param::GetInt(Param::soc) > 95;
 }
 
 void hardwareInterface_setPowerRelayOn(void) {

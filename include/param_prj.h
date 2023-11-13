@@ -52,10 +52,15 @@
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_COMM,    canspeed,    CANSPEEDS, 0,      4,      2,      1   ) \
     PARAM_ENTRY(CAT_COMM,    canperiod,   CANPERIODS,0,      1,      0,      2   ) \
-    PARAM_ENTRY(CAT_TEST,    testparam,   "Hz",      -100,   1000,   0,      0   ) \
+    TESTP_ENTRY(CAT_CHARGE,  utarget,     "V",       0,      1000,   0,      3   ) \
+    TESTP_ENTRY(CAT_CHARGE,  icharge,     "A",       0,      500,    0,      4   ) \
+    TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      500,    0,      5   ) \
+    TESTP_ENTRY(CAT_CHARGE,  ubat,        "V",       0,      500,    222,    6   ) \
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
     VALUE_ENTRY(version,     VERSTR,  2001 ) \
     VALUE_ENTRY(lasterr,     errorListString,  2002 ) \
+    VALUE_ENTRY(uevse,       "V",    2006 ) \
+    VALUE_ENTRY(uinlet,      "V",    2007 ) \
     VALUE_ENTRY(temp1,       "°C",   2003 ) \
     VALUE_ENTRY(temp2,       "°C",   2004 ) \
     VALUE_ENTRY(temp3,       "°C",   2005 ) \
@@ -66,7 +71,7 @@
 #define OPMODES      "0=Off, 1=Run"
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define CANPERIODS   "0=100ms, 1=10ms"
-#define CAT_TEST     "Testing"
+#define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
 
 #define VERSTR STRINGIFY(4=VER-name)

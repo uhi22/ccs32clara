@@ -304,7 +304,7 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
     if (aphsDoc.supportedAppProtocolRes_isUsed) {
         /* it is the correct response */
         addToTrace("supportedAppProtocolRes");
-        printf("ResponseCode %d, SchemaID_isUsed %d, SchemaID %d",
+        printf("ResponseCode %d, SchemaID_isUsed %d, SchemaID %d\r\n",
                       aphsDoc.supportedAppProtocolRes.ResponseCode,
                       aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                       aphsDoc.supportedAppProtocolRes.SchemaID);
@@ -708,10 +708,10 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
     addToTrace("In state WaitForCurrentDemandRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
-    printf("[%ld] step1 %d", rtc_get_counter_val(), tcp_rxdataLen);
+    printf("[%d] step1 %d\r\n", rtc_get_counter_val(), tcp_rxdataLen);
     projectExiConnector_decode_DinExiDocument();
 
-    printf("[%ld] step2 %d %d", rtc_get_counter_val(), g_errn, global_streamDecPos);
+    printf("[%d] step2 %d %d\r\n", rtc_get_counter_val(), g_errn, global_streamDecPos);
 
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.CurrentDemandRes_isUsed) {
@@ -735,11 +735,13 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
             hardwareInterface_simulateCharging();
             #if 0
               u = hardwareInterface_getInletVoltage();
+              Param::SetInt(Param::uinlet, hardwareInterface_getInletVoltage());
             #else
               EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
                        dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
             #endif
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
+            Param::SetInt(Param::uevse, EVSEPresentVoltage);
             checkpointNumber = 710;
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
@@ -871,7 +873,7 @@ void stateFunctionEnd(void) {
 }
 
 void pev_enterState(uint16_t n) {
-  printf("[%ld] [PEV] from %d entering %d", rtc_get_counter_val(), pev_state, n);
+  printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_counter_val(), pev_state, n);
   pev_state = n;
   pev_cyclesInState = 0;
 }

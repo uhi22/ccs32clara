@@ -39,28 +39,30 @@
  */
 
  //Define a version string of your firmware here
-#define VER 1.00.R
+#define VER 0.10.B
 
 /* Entries must be ordered as follows:
    1. Saveable parameters (id != 0)
    2. Temporary parameters (id = 0)
    3. Display values
  */
-//Next param id (increase when adding new parameter!): 3
-//Next value Id: 2005
+//Next param id (increase when adding new parameter!): 7
+//Next value Id: 2011
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
-    PARAM_ENTRY(CAT_COMM,    canspeed,    CANSPEEDS, 0,      4,      2,      1   ) \
-    PARAM_ENTRY(CAT_COMM,    canperiod,   CANPERIODS,0,      1,      0,      2   ) \
-    TESTP_ENTRY(CAT_CHARGE,  utarget,     "V",       0,      1000,   0,      3   ) \
-    TESTP_ENTRY(CAT_CHARGE,  icharge,     "A",       0,      500,    0,      4   ) \
+    PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
+    TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
+    TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      500,    0,      5   ) \
-    TESTP_ENTRY(CAT_CHARGE,  ubat,        "V",       0,      500,    222,    6   ) \
+    TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      500,    222,    6   ) \
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
     VALUE_ENTRY(version,     VERSTR,  2001 ) \
     VALUE_ENTRY(lasterr,     errorListString,  2002 ) \
-    VALUE_ENTRY(uevse,       "V",    2006 ) \
-    VALUE_ENTRY(uinlet,      "V",    2007 ) \
+    VALUE_ENTRY(evsevtg,     "V",    2006 ) \
+    VALUE_ENTRY(evsecur,     "A",    2010 ) \
+    VALUE_ENTRY(inletvtg,    "V",    2007 ) \
+    VALUE_ENTRY(evsemaxcur,  "A",    2008 ) \
+    VALUE_ENTRY(evsemaxvtg,  "V",    2009 ) \
     VALUE_ENTRY(temp1,       "°C",   2003 ) \
     VALUE_ENTRY(temp2,       "°C",   2004 ) \
     VALUE_ENTRY(temp3,       "°C",   2005 ) \
@@ -68,13 +70,16 @@
 
 
 /***** Enum String definitions *****/
-#define OPMODES      "0=Off, 1=Run"
+#define OPMODES      "0=Off, 1=Connecting, 2=Connected, 3=NegotiateProtocol, 4=SessionSetup, 5=ServiceDiscovery, \
+6=PaymentSelection, 7=ContractAuthentication, 8=ParameterDiscovery, 9=ConnectorLock, 10=CableCheck, 11=Precharge \
+12=ContactorsClosed, 13=PowerDelivery, 14=CurrentDemand, 15=WeldingDetection, 16=SessionStop, 17=Finished, 18=Error"
+
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define CANPERIODS   "0=100ms, 1=10ms"
 #define CAT_CHARGE   "Charge parameters"
-#define CAT_COMM     "Communication"
+#define CAT_HARDWARE "Hardware Config"
 
-#define VERSTR STRINGIFY(4=VER-name)
+#define VERSTR STRINGIFY(4=VER)
 
 /***** enums ******/
 

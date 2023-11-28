@@ -77,6 +77,8 @@ static void Ms100Task(void)
    float cpuLoad = scheduler->GetCpuLoad();
    //This sets a fixed point value WITHOUT calling the parm_Change() function
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
+
+   canMap->SendAll();
 }
 
 static void Ms30Task()
@@ -141,7 +143,7 @@ extern "C" int main(void)
    Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
    scheduler = &s;
    //Initialize CAN1, including interrupts. Clock must be enabled in clock_setup()
-   Stm32Can c(CAN1, (CanHardware::baudrates)Param::GetInt(Param::canspeed));
+   Stm32Can c(CAN1, CanHardware::Baud500);
    CanMap cm(&c);
    CanSdo sdo(&c, &cm);
    sdo.SetNodeId(22);

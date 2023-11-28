@@ -44,19 +44,19 @@ void hardwareInterface_simulateCharging(void) {
 }
 
 int16_t hardwareInterface_getInletVoltage(void) {
-  return 219;
+  return AnaIn::udc.Get() / Param::GetFloat(Param::udcdivider);
 }
 
 int16_t hardwareInterface_getAccuVoltage(void) {
-  return Param::GetInt(Param::ubat);
+  return Param::GetInt(Param::batvtg);
 }
 
 int16_t hardwareInterface_getChargingTargetVoltage(void) {
-  return Param::GetInt(Param::utarget);
+  return Param::GetInt(Param::targetvtg);
 }
 
 int16_t hardwareInterface_getChargingTargetCurrent(void) {
-  return Param::GetInt(Param::icharge);
+  return Param::GetInt(Param::chargecur);
 }
 
 uint8_t hardwareInterface_getSoc(void) {
@@ -106,11 +106,6 @@ void hardwareInterface_setRGB(uint8_t rgb) {
       DigIo::blue_out.Set();
    else
       DigIo::blue_out.Clear();
-}
-
-void hardwareInteface_setAliveLed(uint8_t x) {
-	/* Controls the on-board alive-LED. 1=on, 0=off */
-	//HAL_GPIO_WritePin(OUT_LED_ALIVE_GPIO_Port, OUT_LED_ALIVE_Pin, x);
 }
 
 void hardwareInteface_setHBridge(uint16_t out1duty_64k, uint16_t out2duty_64k) {
@@ -178,16 +173,7 @@ void hardwareInterface_measureCpPwm(void) {
 
 void hardwareInterface_handleOutputTestMode(void) {
   /* This function is used to test the outputs. */
-  if (hwIf_testmodeTimer>0) {
-	  /* If the timer not yet elapsed, just decrement and do nothing more. */
-	  hwIf_testmodeTimer--;
-	  if (hwIf_testmodeTimer>5) {
-	    hardwareInteface_setAliveLed(1);
-	  } else {
-		hardwareInteface_setAliveLed(0);
-	  }
-	  return;
-  }
+
   hwIf_testmodeTimer = 10; /* rewind the timer for the next phase */
   if ((pushbutton_accumulatedButtonDigits==3411) && (hwIf_testmode==0)) {
 	  hwIf_testmode=1;
@@ -285,6 +271,7 @@ void hwIf_handleContactorRequests(void) {
 		if (hwIf_ContactorOnTimer<255) hwIf_ContactorOnTimer++;
 		if (hwIf_ContactorOnTimer<CONTACTOR_CYCLES_FOR_FULL_PWM) {
 			hardwareInteface_setContactorPwm(65535, 65535); /* both full */
+			addToTrace("Turning on charge port contactors");
 		} else {
 			hardwareInteface_setContactorPwm(CONTACTOR_ECONO_PWM_VALUE, CONTACTOR_ECONO_PWM_VALUE); /* both reduced */
 		}

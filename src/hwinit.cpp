@@ -128,8 +128,9 @@ void rtc_setup()
 }
 
 /**
-* Setup main PWM timer and timer for generating over current
-* reference values and external PWM
+* Setup CONTACT_LOCK_TIMER to switch the port relays (with PWM economizer)
+* and the charge port lock motor
+* Setup CP_TIMER to measure the pulse width of the CP signal
 */
 void tim_setup()
 {

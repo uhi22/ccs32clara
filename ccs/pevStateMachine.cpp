@@ -486,6 +486,14 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
         if (dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("ChargeParams discovered", "");
             addToTrace("Checkpoint550: ChargeParams are discovered.. Will change to state C.");
+            uint16_t evseMaxVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Value,
+                                                                dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Multiplier);
+            uint16_t evseMaxCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Value,
+                                                                dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Multiplier);
+
+            Param::SetInt(Param::evsemaxvtg, evseMaxVoltage);
+            Param::SetInt(Param::evsemaxcur, evseMaxCurrent);
+
             checkpointNumber = 550;
             // pull the CP line to state C here:
             hardwareInterface_setStateC();
@@ -739,9 +747,12 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
             #else
               EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
                        dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
+              uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Value,
+                       dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Multiplier);
             #endif
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
-            Param::SetInt(Param::uevse, EVSEPresentVoltage);
+            Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+            Param::SetInt(Param::evsecur, evsePresentCurrent);
             checkpointNumber = 710;
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
@@ -876,6 +887,7 @@ void pev_enterState(uint16_t n) {
   printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_counter_val(), pev_state, n);
   pev_state = n;
   pev_cyclesInState = 0;
+  Param::SetInt(Param::opmode, MIN(n, 18));
 }
 
 uint8_t pev_isTooLong(void) {

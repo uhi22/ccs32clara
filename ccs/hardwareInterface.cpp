@@ -2,21 +2,18 @@
 
 #include "ccs32_globals.h"
 
-volatile uint32_t inputCaptureValueChannel1;
-volatile uint32_t inputCaptureValueChannel2;
-volatile uint32_t cpDuty_Percent, cpFrequency_Hz;
-volatile uint32_t inputCaptureInterruptCounter;
-volatile uint8_t cpDutyValidTimer;
 #define CP_DUTY_VALID_TIMER_MAX 3 /* after 3 cycles with 30ms, we consider the CP connection lost, if
                                      we do not see PWM interrupts anymore */
-#define APB2_TIMER_CLOCK_FREQUENCY_HZ 64000000u /* APB2 timer clock is 64 MHz */
 #define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
 
 
-uint16_t hwIf_testmode;
-uint16_t hwIf_testmodeTimer;
-uint8_t hwIf_ContactorRequest;
-uint8_t hwIf_ContactorOnTimer;
+static uint32_t cpDuty_Percent, cpFrequency_Hz;
+static uint8_t cpDutyValidTimer;
+static uint16_t hwIf_testmode;
+static uint16_t hwIf_testmodeTimer;
+static uint8_t hwIf_ContactorRequest;
+static uint8_t hwIf_ContactorOnTimer;
+static uint8_t hwIf_LedBlinkDivider;
 
 
 void hardwareInterface_showOnDisplay(char*, char*, char*)
@@ -285,8 +282,6 @@ void hwIf_handleContactorRequests(void)
    }
 }
 
-uint8_t hwIf_LedBlinkDivider;
-
 void handleApplicationRGBLeds(void)
 {
    if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
@@ -363,7 +358,7 @@ void handleApplicationRGBLeds(void)
 void hardwareInterface_cyclic(void)
 {
    if (timer_get_flag(CP_TIMER, TIM_SR_CC1IF))
-      cpDutyValidTimer = 10;
+      cpDutyValidTimer = CP_DUTY_VALID_TIMER_MAX;
 
    if (cpDutyValidTimer>0)
    {

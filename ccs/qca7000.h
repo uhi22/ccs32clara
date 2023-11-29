@@ -12,11 +12,6 @@ extern "C" {
 
 /* Global Variables */
 
-extern uint16_t mySpiDataSize;
-extern uint8_t mySpiRxBuffer[MY_SPI_TX_RX_BUFFER_SIZE];
-extern uint8_t mySpiTxBuffer[MY_SPI_TX_RX_BUFFER_SIZE];
-extern uint32_t nTotalEthReceiveBytes; /* total number of bytes which has been received from the ethernet port */
-extern uint32_t nTotalTransmittedBytes;
 extern uint8_t myethtransmitbuffer[MY_ETH_TRANSMIT_BUFFER_LEN];
 extern uint16_t myethtransmitbufferLen; /* The number of used bytes in the ethernet transmit buffer */
 extern uint8_t myethreceivebuffer[MY_ETH_RECEIVE_BUFFER_LEN];

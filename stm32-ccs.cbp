@@ -21,12 +21,12 @@
 				<Option type="1" />
 				<Option compiler="armelfgcc" />
 				<MakeCommands>
-					<Build command="CONTROL=SINE make" />
+					<Build command="make" />
 					<CompileFile command="$make -f  $file " />
 					<Clean command="make clean " />
 					<DistClean command="$make -f $makefile distclean$target" />
 					<AskRebuildNeeded command="$make -q" />
-					<SilentBuild command="CONTROL=SINE make &gt; $(CMD_NULL)" />
+					<SilentBuild command="make &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 		</Build>

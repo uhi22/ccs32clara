@@ -716,10 +716,10 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
     addToTrace("In state WaitForCurrentDemandRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
-    printf("[%d] step1 %d\r\n", rtc_get_counter_val(), tcp_rxdataLen);
+    //printf("[%d] step1 %d\r\n", rtc_get_counter_val(), tcp_rxdataLen);
     projectExiConnector_decode_DinExiDocument();
 
-    printf("[%d] step2 %d %d\r\n", rtc_get_counter_val(), g_errn, global_streamDecPos);
+    //printf("[%d] step2 %d %d\r\n", rtc_get_counter_val(), g_errn, global_streamDecPos);
 
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.CurrentDemandRes_isUsed) {
@@ -884,7 +884,7 @@ void stateFunctionEnd(void) {
 }
 
 void pev_enterState(uint16_t n) {
-  printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_counter_val(), pev_state, n);
+  //printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_counter_val(), pev_state, n);
   pev_state = n;
   pev_cyclesInState = 0;
   Param::SetInt(Param::opmode, MIN(n, 18));

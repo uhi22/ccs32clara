@@ -83,6 +83,7 @@ static void Ms100Task(void)
 
 static void Ms30Task()
 {
+   DigIo::tp8_out.Set();
    spiQCA7000checkForReceivedData();
    connMgr_Mainfunction(); /* ConnectionManager */
    modemFinder_Mainfunction();
@@ -94,6 +95,7 @@ static void Ms30Task()
    //cyclicLcdUpdate();
    hardwareInterface_cyclic();
    pushbutton_handlePushbutton();
+   DigIo::tp8_out.Clear();
 }
 
 //sample 10 ms task
@@ -112,6 +114,29 @@ void Param::Change(Param::PARAM_NUM paramNum)
    default:
       //Handle general parameter changes here. Add paramNum labels for handling specific parameters
       break;
+   }
+}
+
+static void PrintTrace()
+{
+   const char states[][25] = { "Off", "Connecting", "Connected", "NegotiateProtocol", "SessionSetup", "ServiceDiscovery",
+   "PaymentSelection", "ContractAuthentication", "ParameterDiscovery", "ConnectorLock", "CableCheck",
+   "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WeldingDetection", "SessionStop",
+   "Finished", "Error" };
+
+   static uint32_t lastSttPrint = 0;
+   int state = Param::GetInt(Param::opmode);
+   const char* label = state < 18 ? states[state] : "Unknown/Error";
+
+   if ((rtc_get_counter_val() - lastSttPrint) >= 3)
+   {
+      lastSttPrint = rtc_get_counter_val();
+      printf("[%u] In state %s\r\n", rtc_get_counter_val(), label);
+      /*printf("[%u] Data received: ", rtc_get_counter_val(), label);
+      for (uint16_t i=0; i < myethreceivebufferLen; i++) {
+         printf("%02x ", myethreceivebuffer[i]);
+      }
+      printf("\r\n");*/
    }
 }
 
@@ -180,6 +205,7 @@ extern "C" int main(void)
       {
          TerminalCommands::PrintParamsJson(&sdo, &c);
       }
+      PrintTrace();
    }
 
 

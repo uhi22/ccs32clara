@@ -11,11 +11,13 @@ volatile uint8_t cpDutyValidTimer;
 #define CP_DUTY_VALID_TIMER_MAX 3 /* after 3 cycles with 30ms, we consider the CP connection lost, if
                                      we do not see PWM interrupts anymore */
 #define APB2_TIMER_CLOCK_FREQUENCY_HZ 64000000u /* APB2 timer clock is 64 MHz */
+#define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
 
 
 uint16_t hwIf_testmode;
 uint16_t hwIf_testmodeTimer;
 uint8_t hwIf_ContactorRequest;
+uint8_t hwIf_ContactorOnTimer;
 
 
 void hardwareInterface_showOnDisplay(char*, char*, char*) {
@@ -146,31 +148,6 @@ void hardwareInterface_resetSimulation(void) {
     hwIf_simulatedSoc_0p01 = 2000; /* 20% */
 }
 
-
-void hardwareInterface_measureCpPwm(void) {
-	/* We want to measure the PWM ratio on the CP pin.
-	 * But the F103's input capture does not support capturing
-	 * both edges, only either rising or falling edge.
-	 * On https://community.st.com/t5/stm32-mcu-products/stm32f103rb-timers-input-capture-both-edges/m-p/516376/highlight/true#M188076
-	 * they say, that it is possible to configure two input capture channels
-	 * for one single pin, so we can use one for rising and one for falling edge.
-	 *
-	 * The PWM measuring feature is explained in the STM32F103 reference manual
-	 * https://www.st.com/resource/en/reference_manual/rm0008-stm32f101xx-stm32f102xx-stm32f103xx-stm32f105xx-and-stm32f107xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
-	 * in chapter 15.3.6 PWM input mode.
-	 *
-	 * In
-	 *  https://controllerstech.com/pwm-input-in-stm32/
-	 * they explain the settings in the cubeIDE to have two timer channels combined to measure
-	 * both edges from one pin.
-	 */
-
-	/* PWM is on PA15
-	 *
-	 */
-}
-
-
 void hardwareInterface_handleOutputTestMode(void) {
   /* This function is used to test the outputs. */
 
@@ -255,10 +232,6 @@ void hardwareInterface_handleOutputTestMode(void) {
   if (hwIf_testmode>23) hwIf_testmode=1;
 }
 
-uint8_t hwIf_ContactorOnTimer;
-#define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
-#define CONTACTOR_ECONO_PWM_VALUE 40000 /* max is 65535 */
-
 void hwIf_handleContactorRequests(void) {
 	if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
 
@@ -273,7 +246,8 @@ void hwIf_handleContactorRequests(void) {
 			hardwareInteface_setContactorPwm(65535, 65535); /* both full */
 			addToTrace("Turning on charge port contactors");
 		} else {
-			hardwareInteface_setContactorPwm(CONTACTOR_ECONO_PWM_VALUE, CONTACTOR_ECONO_PWM_VALUE); /* both reduced */
+		   int dc = (Param::GetInt(Param::economizer) * 65535) / 100;
+			hardwareInteface_setContactorPwm(dc, dc); /* both reduced */
 		}
 	}
 }
@@ -332,31 +306,24 @@ void handleApplicationRGBLeds(void) {
 }
 
 void hardwareInterface_cyclic(void) {
-
-    hardwareInterface_measureCpPwm();
+    if (timer_get_flag(CP_TIMER, TIM_SR_CC1IF))
+       cpDutyValidTimer = 10;
 
     if (cpDutyValidTimer>0) {
     	/* we have a CP PWM interrupt seen not too long ago. Just count the timeout. */
     	cpDutyValidTimer--;
+      cpDuty_Percent = (100 * timer_get_ic_value(CP_TIMER, TIM_IC2)) / timer_get_ic_value(CP_TIMER, TIM_IC1);
     } else {
     	/* no CP PWM interrupt. The timeout expired. We set the measured PWM and duty to zero. */
         cpDuty_Percent = 0;
         cpFrequency_Hz = 0;
     }
-    cpDuty_Percent = timer_get_ic_value(TIM3, TIM_IC2) / 10;
+
+    Param::SetInt(Param::evsecp, cpDuty_Percent);
 
     handleApplicationRGBLeds();
     hwIf_handleContactorRequests();
     hardwareInterface_handleOutputTestMode();
-
-    //canDebugValue1 = rawAdValues[MY_ADC_CHANNEL_TEMP1];
-    //canDebugValue2 = rawAdValues[MY_ADC_CHANNEL_DCVOLTAGE];
-    //canDebugValue3 = temperatureChannel_1_R_NTC;
-    //canDebugValue4 = temperatureChannel_2_R_NTC;
-    //canDebugValue1 = pushbutton_buttonSeriesCounter;
-    //canDebugValue2 = pushbutton_nNumberOfButtonPresses;
-    //canDebugValue3 = pushbutton_accumulatedButtonDigits;
-    //canDebugValue4 = pushbutton_tButtonPressTime;
 }
 
 void hardwareInterface_init(void) {

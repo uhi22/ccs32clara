@@ -77,6 +77,7 @@ static void Ms100Task(void)
    float cpuLoad = scheduler->GetCpuLoad();
    //This sets a fixed point value WITHOUT calling the parm_Change() function
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
+   Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
 
    canMap->SendAll();
 }
@@ -158,7 +159,7 @@ extern "C" int main(void)
    AnaIn::Start(); //Starts background ADC conversion via DMA
    write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
 
-   gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP);
+   gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
    tim_setup(); //Sample init of a timer
    nvic_setup(); //Set up some interrupts
@@ -205,7 +206,10 @@ extern "C" int main(void)
       {
          TerminalCommands::PrintParamsJson(&sdo, &c);
       }
-      PrintTrace();
+      else
+      {
+         PrintTrace();
+      }
    }
 
 

@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.12.B
+#define VER 0.13.B
 
 /* Entries must be ordered as follows:
    1. Saveable parameters (id != 0)
@@ -52,6 +52,7 @@
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
     PARAM_ENTRY(CAT_HARDWARE,economizer,  "%",       0,      100,    100,    7   ) \
+    PARAM_ENTRY(CAT_HARDWARE,inletvtgsrc, IVSRC,     0,      2,      0,      8   ) \
     TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      500,    0,      5   ) \
@@ -77,6 +78,7 @@
 6=PaymentSelection, 7=ContractAuthentication, 8=ParameterDiscovery, 9=ConnectorLock, 10=CableCheck, 11=Precharge, \
 12=ContactorsClosed, 13=PowerDelivery, 14=CurrentDemand, 15=WeldingDetection, 16=SessionStop, 17=Finished, 18=Error"
 
+#define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_HARDWARE "Hardware Config"
 
@@ -97,6 +99,13 @@ enum _modes
    MOD_OFF = 0,
    MOD_RUN,
    MOD_LAST
+};
+
+enum _inletsources
+{
+   IVSRC_CHARGER,
+   IVSRC_ANAIN,
+   IVSRC_CAN
 };
 
 //Generated enum-string for possible errors

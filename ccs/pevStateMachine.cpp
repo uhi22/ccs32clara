@@ -553,6 +553,9 @@ void stateFunctionWaitForCableCheckResponse(void) {
     if (dinDocDec.V2G_Message.Body.CableCheckRes_isUsed) {
         rc = dinDocDec.V2G_Message.Body.CableCheckRes.ResponseCode;
         proc = dinDocDec.V2G_Message.Body.CableCheckRes.EVSEProcessing;
+        EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
+                  dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
+        Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
         //addToTrace("The CableCheck result is " + String(rc) + " " + String(proc));
         // We have two cases here:
         // 1) The charger says "cable check is finished and cable ok", by setting ResponseCode=OK and EVSEProcessing=Finished.
@@ -610,19 +613,8 @@ void stateFunctionWaitForPreChargeResponse(void) {
         addToTrace("PreCharge aknowledge received.");
         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
                   dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
-        //addToTrace("EVSEPresentVoltage.Value " + String(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value));
-        //addToTrace("EVSEPresentVoltage.Multiplier " + String(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier));
-        //s = "U_Inlet " + String(hardwareInterface.getInletVoltage()) + "V, "
-        //s= s + "U_Accu " + String(hardwareInterface.getAccuVoltage()) + "V"
-        #ifdef USE_EVSEPRESENTVOLTAGE_FOR_PRECHARGE_END
-          /* use the voltage which is reported by the charger to decide about the end of PreCharge */
-          //s = "Using EVSEPresentVoltage=" + String(u);
-          //addToTrace(s);
-          u = EVSEPresentVoltage;
-        #else
-          /* use the physically measured inlet voltage to decide about end of PreCharge */
-          u = hardwareInterface_getInletVoltage()
-        #endif
+        Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+        u = hardwareInterface_getInletVoltage();
         if (ABS(u-hardwareInterface_getAccuVoltage()) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) {
             addToTrace("Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");
             publishStatus("PreCharge done", "");
@@ -741,15 +733,10 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
         } else {
             /* continue charging loop */
             hardwareInterface_simulateCharging();
-            #if 0
-              u = hardwareInterface_getInletVoltage();
-              Param::SetInt(Param::uinlet, hardwareInterface_getInletVoltage());
-            #else
-              EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
+            EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
                        dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
-              uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Value,
+            uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Value,
                        dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Multiplier);
-            #endif
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
             Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
             Param::SetInt(Param::evsecur, evsePresentCurrent);

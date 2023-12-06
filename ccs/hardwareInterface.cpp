@@ -49,7 +49,7 @@ void hardwareInterface_simulateCharging(void)
 
 int16_t hardwareInterface_getInletVoltage(void)
 {
-   return AnaIn::udc.Get() / Param::GetFloat(Param::udcdivider);
+   return Param::GetInt(Param::inletvtg);
 }
 
 int16_t hardwareInterface_getAccuVoltage(void)

@@ -79,6 +79,20 @@ static void Ms100Task(void)
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
 
+   switch (Param::GetInt(Param::inletvtgsrc))
+   {
+      case IVSRC_CHARGER:
+         Param::SetFixed(Param::inletvtg, Param::Get(Param::evsevtg));
+         break;
+      case IVSRC_ANAIN:
+         Param::SetFloat(Param::inletvtg, AnaIn::udc.Get() / Param::GetFloat(Param::udcdivider));
+         break;
+      default:
+      case IVSRC_CAN:
+         //Do nothing, value received via CAN map
+         break;
+   }
+
    canMap->SendAll();
 }
 

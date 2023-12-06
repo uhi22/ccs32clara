@@ -25,6 +25,7 @@ extern void hardwareInterface_simulateCharging(void);
 extern void hardwareInterface_resetSimulation(void);
 extern void hardwareInterface_simulatePreCharge(void);
 extern int16_t hardwareInterface_getAccuVoltage(void);
+extern int16_t hardwareInterface_getInletVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetCurrent(void);
 

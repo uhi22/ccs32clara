@@ -63,12 +63,6 @@ static CanMap* canMap;
 //sample 100ms task
 static void Ms100Task(void)
 {
-   //The following call toggles the LED output, so every 100ms
-   //The LED changes from on to off and back.
-   //Other calls:
-   //DigIo::led_out.Set(); //turns LED on
-   //DigIo::led_out.Clear(); //turns LED off
-   //For every entry in digio_prj.h there is a member in DigIo
    DigIo::led_out.Toggle();
    //The boot loader enables the watchdog, we have to reset it
    //at least every 2s or otherwise the controller is hard reset.
@@ -118,7 +112,6 @@ static void Ms10Task(void)
 {
    //Set timestamp of error message
    ErrorMessage::SetTime(rtc_get_counter_val());
-
 }
 
 /** This function is called when the user changes a parameter */
@@ -197,11 +190,6 @@ extern "C" int main(void)
    Terminal t(UART4, termCmds);
    TerminalCommands::SetCanMap(canMap);
 
-   //Up to four tasks can be added to each timer scheduler
-   //AddTask takes a function pointer and a calling interval in milliseconds.
-   //The longest interval is 655ms due to hardware restrictions
-   //You have to enable the interrupt (int this case for TIM2) in nvic_setup()
-   //There you can also configure the priority of the scheduler over other interrupts
    s.AddTask(Ms10Task, 10);
    s.AddTask(Ms30Task, 30);
    s.AddTask(Ms100Task, 100);
@@ -227,7 +215,6 @@ extern "C" int main(void)
          PrintTrace();
       }
    }
-
 
    return 0;
 }

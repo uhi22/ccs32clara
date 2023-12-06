@@ -5,6 +5,9 @@ STM32 talks with QCA7005 homeplug modem
 
 ## News / Change History / Functional Status
 
+### 2023-12-06 Charging works on ABB triple charger and Compleo
+The liboi port has been tested inside the CCS-to-CHAdeMO adapter and successfully charged a few kWh on said chargers
+
 ### 2023-08-03 Charging works on public Alpitronic charger
 
 With the STM32F103RE on the Foccci board, the light-bulb-demo-charging on Alpitronic hypercharger worked on the first attempt.
@@ -16,7 +19,7 @@ Using the NUCLEO F303RE development board, the STM32 talks via SPI to the QCA700
 loop, and shows the charging progress on the serial console in the Cube IDE.
 
 ## Todos
-- [ ] Implement TCP retry to compensate for single lost packets
+- [x] Implement TCP retry to compensate for single lost packets
 - [ ] Takeover latest state machine updates from pyPLC
 - [x] Control the CP line and the contactor outputs
 - [x] Add CAN

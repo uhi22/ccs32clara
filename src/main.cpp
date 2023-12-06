@@ -120,6 +120,7 @@ void Param::Change(Param::PARAM_NUM paramNum)
 
 static void PrintTrace()
 {
+   static int lastState = 0;
    const char states[][25] = { "Off", "Connecting", "Connected", "NegotiateProtocol", "SessionSetup", "ServiceDiscovery",
    "PaymentSelection", "ContractAuthentication", "ParameterDiscovery", "ConnectorLock", "CableCheck",
    "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WeldingDetection", "SessionStop",
@@ -129,10 +130,11 @@ static void PrintTrace()
    int state = Param::GetInt(Param::opmode);
    const char* label = state < 18 ? states[state] : "Unknown/Error";
 
-   if ((rtc_get_counter_val() - lastSttPrint) >= 3)
+   if ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state)
    {
       lastSttPrint = rtc_get_counter_val();
       printf("[%u] In state %s\r\n", rtc_get_counter_val(), label);
+      lastState = state;
       /*printf("[%u] Data received: ", rtc_get_counter_val(), label);
       for (uint16_t i=0; i < myethreceivebufferLen; i++) {
          printf("%02x ", myethreceivebuffer[i]);

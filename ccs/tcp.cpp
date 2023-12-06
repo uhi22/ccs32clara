@@ -12,29 +12,30 @@
 uint8_t tcpHeaderLen;
 uint8_t tcpPayloadLen;
 uint8_t tcpPayload[TCP_PAYLOAD_LEN];
+uint8_t tcp_rxdataLen=0;
+uint8_t tcp_rxdata[TCP_RX_DATA_LEN];
 
 
 #define TCP_ACTIVITY_TIMER_START (5*33) /* 5 seconds */
-uint16_t tcpActivityTimer;
+static uint16_t tcpActivityTimer;
+static uint32_t lastUnackTransmissionTime = 0;
 
 #define TCP_TRANSMIT_PACKET_LEN 200
-uint8_t TcpTransmitPacketLen;
-uint8_t TcpTransmitPacket[TCP_TRANSMIT_PACKET_LEN];
+static uint8_t TcpTransmitPacketLen;
+static uint8_t TcpTransmitPacket[TCP_TRANSMIT_PACKET_LEN];
 
 #define TCPIP_TRANSMIT_PACKET_LEN 200
-uint8_t TcpIpRequestLen;
-uint8_t TcpIpRequest[TCPIP_TRANSMIT_PACKET_LEN];
+static uint8_t TcpIpRequestLen;
+static uint8_t TcpIpRequest[TCPIP_TRANSMIT_PACKET_LEN];
 
 #define TCP_STATE_CLOSED 0
 #define TCP_STATE_SYN_SENT 1
 #define TCP_STATE_ESTABLISHED 2
 
-uint8_t tcpState = TCP_STATE_CLOSED;
+static uint8_t tcpState = TCP_STATE_CLOSED;
 
-uint32_t TcpSeqNr=200; /* a "random" start sequence number */
-uint32_t TcpAckNr;
-uint8_t tcp_rxdataLen=0;
-uint8_t tcp_rxdata[TCP_RX_DATA_LEN];
+static uint32_t TcpSeqNr=200; /* a "random" start sequence number */
+static uint32_t TcpAckNr;
 
 /*** local function prototypes ****************************************************/
 
@@ -51,17 +52,17 @@ void evaluateTcpPacket(void) {
   uint32_t remoteSeqNr;
   uint32_t remoteAckNr;
   uint16_t sourcePort, destinationPort, pLen, hdrLen, tmpPayloadLen;
-    
+
   /* todo: check the IP addresses, checksum etc */
   nTcpPacketsReceived++;
   pLen =  (((uint16_t)myethreceivebuffer[18])<<8) +  myethreceivebuffer[19]; /* length of the IP payload */
   hdrLen=(myethreceivebuffer[66]>>4) * 4; /* header length in byte */
-  //log_v("pLen=%d, hdrLen=%d", pLen, hdrLen);  
+  //log_v("pLen=%d, hdrLen=%d", pLen, hdrLen);
   if (pLen>=hdrLen) {
     tmpPayloadLen = pLen - hdrLen;
   } else {
     tmpPayloadLen = 0; /* no TCP payload data */
-  } 
+  }
   sourcePort =      (((uint16_t)myethreceivebuffer[54])<<8) +  myethreceivebuffer[55];
   destinationPort = (((uint16_t)myethreceivebuffer[56])<<8) +  myethreceivebuffer[57];
   if ((sourcePort != seccTcpPort) || (destinationPort != evccPort)) {
@@ -70,12 +71,12 @@ void evaluateTcpPacket(void) {
     return; /* wrong port */
   }
   tcpActivityTimer=TCP_ACTIVITY_TIMER_START;
-  remoteSeqNr = 
+  remoteSeqNr =
         (((uint32_t)myethreceivebuffer[58])<<24) +
         (((uint32_t)myethreceivebuffer[59])<<16) +
         (((uint32_t)myethreceivebuffer[60])<<8) +
         (((uint32_t)myethreceivebuffer[61]));
-  remoteAckNr = 
+  remoteAckNr =
         (((uint32_t)myethreceivebuffer[62])<<24) +
         (((uint32_t)myethreceivebuffer[63])<<16) +
         (((uint32_t)myethreceivebuffer[64])<<8) +
@@ -97,11 +98,11 @@ void evaluateTcpPacket(void) {
   if (tcpState != TCP_STATE_ESTABLISHED) {
     /* received something while the connection is closed. Just ignore it. */
     addToTrace("[TCP] ignore, not connected.");
-    return;    
-  }      
+    return;
+  }
   /* It can be an ACK, or a data package, or a combination of both. We treat the ACK and the data independent from each other,
     to treat each combination. */
-  //log_v("L=%d", tmpPayloadLen);     
+  //log_v("L=%d", tmpPayloadLen);
   if ((tmpPayloadLen>0) && (tmpPayloadLen<TCP_RX_DATA_LEN)) {
     /* This is a data transfer packet. */
     tcp_rxdataLen = tmpPayloadLen;
@@ -113,7 +114,8 @@ void evaluateTcpPacket(void) {
   }
   if (flags & TCP_FLAG_ACK) {
       nTcpPacketsReceived+=1000;
-      TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */      
+      TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
+      lastUnackTransmissionTime = 0;
   }
 }
 
@@ -137,7 +139,7 @@ void tcp_connect(void) {
 
   tcpHeaderLen = 32; /* 20 bytes normal header, plus 12 bytes options */
   tcpPayloadLen = 0;   /* only the TCP header, no data is in the connect message. */
-  tcp_prepareTcpHeader(TCP_FLAG_SYN);	
+  tcp_prepareTcpHeader(TCP_FLAG_SYN);
   tcp_packRequestIntoIp();
   tcpState = TCP_STATE_SYN_SENT;
   tcpActivityTimer=TCP_ACTIVITY_TIMER_START;
@@ -147,36 +149,37 @@ void tcp_sendFirstAck(void) {
   addToTrace("[TCP] sending first ACK");
   tcpHeaderLen = 20; /* 20 bytes normal header, no options */
   tcpPayloadLen = 0;   /* only the TCP header, no data is in the first ACK message. */
-  tcp_prepareTcpHeader(TCP_FLAG_ACK);	
+  tcp_prepareTcpHeader(TCP_FLAG_ACK);
   tcp_packRequestIntoIp();
 }
 
 void tcp_sendAck(void) {
-  //addToTrace("[TCP] sending ACK");
+  addToTrace("[TCP] sending ACK");
   tcpHeaderLen = 20; /* 20 bytes normal header, no options */
   tcpPayloadLen = 0;   /* only the TCP header, no data is in the first ACK message. */
-  tcp_prepareTcpHeader(TCP_FLAG_ACK);	
+  tcp_prepareTcpHeader(TCP_FLAG_ACK);
   tcp_packRequestIntoIp();
 }
 
 void tcp_transmit(void) {
   //showAsHex(tcpPayload, tcpPayloadLen, "tcp_transmit");
-  if (tcpState == TCP_STATE_ESTABLISHED) {  
+  if (tcpState == TCP_STATE_ESTABLISHED) {
     //addToTrace("[TCP] sending data");
     tcpHeaderLen = 20; /* 20 bytes normal header, no options */
-    if (tcpPayloadLen+tcpHeaderLen<TCP_TRANSMIT_PACKET_LEN) {    
+    if (tcpPayloadLen+tcpHeaderLen<TCP_TRANSMIT_PACKET_LEN) {
       memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
       tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
       tcp_packRequestIntoIp();
+      lastUnackTransmissionTime = rtc_get_counter_val();
     } else {
       addToTrace("Error: tcpPayload and header do not fit into TcpTransmitPacket.");
-    }      
-  }  
+    }
+  }
 }
 
 
 void tcp_testSendData(void) {
-  if (tcpState == TCP_STATE_ESTABLISHED) {  
+  if (tcpState == TCP_STATE_ESTABLISHED) {
     addToTrace("[TCP] sending data");
     tcpHeaderLen = 20; /* 20 bytes normal header, no options */
     tcpPayloadLen = 3;   /* demo length */
@@ -185,7 +188,7 @@ void tcp_testSendData(void) {
     TcpTransmitPacket[tcpHeaderLen+2] = 0xBB; /* demo data */
     tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
     tcp_packRequestIntoIp();
-  }  
+  }
 }
 
 
@@ -215,7 +218,7 @@ void tcp_prepareTcpHeader(uint8_t tcpFlag) {
   TcpTransmitPacket[9] = (uint8_t)(TcpAckNr>>16);
   TcpTransmitPacket[10] = (uint8_t)(TcpAckNr>>8);
   TcpTransmitPacket[11] = (uint8_t)(TcpAckNr);
-  TcpTransmitPacketLen = tcpHeaderLen + tcpPayloadLen; 
+  TcpTransmitPacketLen = tcpHeaderLen + tcpPayloadLen;
   TcpTransmitPacket[12] = (tcpHeaderLen/4) << 4; /* High-nibble: DataOffset in 4-byte-steps. Low-nibble: Reserved=0. */
 
   TcpTransmitPacket[13] = tcpFlag;
@@ -230,7 +233,7 @@ void tcp_prepareTcpHeader(uint8_t tcpFlag) {
   TcpTransmitPacket[18] = 0; /* 16 bit urgentPointer. Always zero in our case. */
   TcpTransmitPacket[19] = 0;
 
-  checksum = calculateUdpAndTcpChecksumForIPv6(TcpTransmitPacket, TcpTransmitPacketLen, EvccIp, SeccIp, NEXT_TCP); 
+  checksum = calculateUdpAndTcpChecksumForIPv6(TcpTransmitPacket, TcpTransmitPacketLen, EvccIp, SeccIp, NEXT_TCP);
   TcpTransmitPacket[16] = (uint8_t)(checksum >> 8);
   TcpTransmitPacket[17] = (uint8_t)(checksum);
 }
@@ -246,7 +249,7 @@ void tcp_packRequestIntoIp(void) {
                                                     //  #   2 bytes length (incl checksum)
                                                     //  #   2 bytes checksum
         TcpIpRequest[0] = 0x60; // # traffic class, flow
-        TcpIpRequest[1] = 0; 
+        TcpIpRequest[1] = 0;
         TcpIpRequest[2] = 0;
         TcpIpRequest[3] = 0;
         plen = TcpTransmitPacketLen; // length of the payload. Without headers.
@@ -258,7 +261,7 @@ void tcp_packRequestIntoIp(void) {
         //EvccIp = addressManager_getLinkLocalIpv6Address("bytearray");
         for (i=0; i<16; i++) {
             TcpIpRequest[8+i] = EvccIp[i]; // source IP address
-        }            
+        }
         for (i=0; i<16; i++) {
             TcpIpRequest[24+i] = SeccIp[i]; // destination IP address
         }
@@ -271,7 +274,7 @@ void tcp_packRequestIntoIp(void) {
 
 void tcp_packRequestIntoEthernet(void) {
         //# packs the IP packet into an ethernet packet
-        uint8_t i;        
+        uint8_t i;
         myethtransmitbufferLen = TcpIpRequestLen + 6 + 6 + 2; // # Ethernet header needs 14 bytes:
                                                        // #  6 bytes destination MAC
                                                        // #  6 bytes source MAC
@@ -290,33 +293,39 @@ void tcp_packRequestIntoEthernet(void) {
 void tcp_Disconnect(void) {
   /* we should normally use the FIN handshake, to tell the charger that we closed the connection.
   But for the moment, just go away silently, and use an other port for the next connection. The
-  server will detect our absense sooner or later by timeout, this should be good enough. */    
+  server will detect our absense sooner or later by timeout, this should be good enough. */
   tcpState = TCP_STATE_CLOSED;
   /* use a new port */
   /* But: This causes multiple open connections and the Win10 messes-up them. */
   //evccPort++;
-  //if (evccPort>65000) evccPort=60000; 
+  //if (evccPort>65000) evccPort=60000;
 }
 
 uint8_t tcp_isClosed(void) {
   return (tcpState == TCP_STATE_CLOSED);
-}  
+}
 
 uint8_t tcp_isConnected(void) {
   return (tcpState == TCP_STATE_ESTABLISHED);
 }
 
 void tcp_Mainfunction(void) {
- if (connMgr_getConnectionLevel()<50) {
-  /* No SDP done. Means: It does not make sense to start or continue TCP. */
-  tcpState = TCP_STATE_CLOSED;
-  return;
- }
- if ((connMgr_getConnectionLevel()==50) && (tcpState == TCP_STATE_CLOSED)) {
-   /* SDP is finished, but no TCP connected yet. */
-   /* use a new port */
-   evccPort++;
-   if (evccPort>65000) evccPort=60000; 
-   tcp_connect();
- }
+   if (lastUnackTransmissionTime > 0 && (rtc_get_counter_val() - lastUnackTransmissionTime) > 10)
+   {
+      //Retransmit
+      tcp_packRequestIntoEthernet();
+      printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_counter_val());
+   }
+   if (connMgr_getConnectionLevel()<50) {
+     /* No SDP done. Means: It does not make sense to start or continue TCP. */
+     tcpState = TCP_STATE_CLOSED;
+     return;
+   }
+   if ((connMgr_getConnectionLevel()==50) && (tcpState == TCP_STATE_CLOSED)) {
+      /* SDP is finished, but no TCP connected yet. */
+      /* use a new port */
+      evccPort++;
+      if (evccPort>65000) evccPort=60000;
+      tcp_connect();
+   }
 }

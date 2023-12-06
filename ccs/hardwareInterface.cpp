@@ -255,7 +255,7 @@ void hardwareInterface_handleOutputTestMode(void)
    if (hwIf_testmode>23) hwIf_testmode=1;
 }
 
-void hwIf_handleContactorRequests(void)
+static void hwIf_handleContactorRequests(void)
 {
    if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
 
@@ -282,7 +282,7 @@ void hwIf_handleContactorRequests(void)
    }
 }
 
-void handleApplicationRGBLeds(void)
+static void handleApplicationRGBLeds(void)
 {
    if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
    hwIf_LedBlinkDivider++;
@@ -383,7 +383,6 @@ void hardwareInterface_cyclic(void)
 
 void hardwareInterface_init(void)
 {
-
    /* output initialization */
    hardwareInteface_setHBridge(0, 0); /* both low */
    hardwareInteface_setContactorPwm(0, 0); /* both off */

@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.11.B
+#define VER 0.12.B
 
 /* Entries must be ordered as follows:
    1. Saveable parameters (id != 0)

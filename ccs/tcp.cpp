@@ -185,7 +185,7 @@ void tcp_transmit(void)
          memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
          tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
          tcp_packRequestIntoIp();
-         lastUnackTransmissionTime = rtc_get_counter_val();
+         lastUnackTransmissionTime = rtc_get_ms();
       }
       else
       {
@@ -338,15 +338,17 @@ uint8_t tcp_isConnected(void)
    return (tcpState == TCP_STATE_ESTABLISHED);
 }
 
+#define TCP_ACK_TIMEOUT_MS 100 /* if for 100ms no ACK is received, we retry the transmission */
+
 void tcp_Mainfunction(void)
 {
-   if (lastUnackTransmissionTime > 0 && (rtc_get_counter_val() - lastUnackTransmissionTime) > 10)
+   if (lastUnackTransmissionTime > 0 && (rtc_get_ms() - lastUnackTransmissionTime) > TCP_ACK_TIMEOUT_MS)
    {
       //Retransmit
       tcp_packRequestIntoEthernet();
       //Only once
       lastUnackTransmissionTime = 0;
-      printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_counter_val());
+      printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_ms());
    }
    if (connMgr_getConnectionLevel()<50)
    {

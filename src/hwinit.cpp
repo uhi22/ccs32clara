@@ -129,6 +129,13 @@ void rtc_setup()
 }
 
 /**
+* returns the number of milliseconds since startup
+*/
+uint32_t rtc_get_ms(void) {
+    return rtc_get_counter_val()*10; /* The RTC has a 10ms tick (see rtc_setup()). So we multiply by 10 to get the milliseconds. */
+}
+
+/**
 * Setup CONTACT_LOCK_TIMER to switch the port relays (with PWM economizer)
 * and the charge port lock motor
 * Setup CP_TIMER to measure the pulse width of the CP signal

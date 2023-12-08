@@ -292,10 +292,10 @@ static LockStt hwIf_getLockState()
 
    if (state == LOCK_CLOSED)
    {
-      lockClosedTime = rtc_get_counter_val();
+      lockClosedTime = rtc_get_ms();
    }
 
-   bool isOpening = (rtc_get_counter_val() - lockClosedTime) < (Param::GetInt(Param::lockopentm) / 10U);
+   bool isOpening = (rtc_get_ms() - lockClosedTime) < (uint32_t)(Param::GetInt(Param::lockopentm));
    //Report lock opening at least x ms after we left closed state
    if (state == LOCK_OPEN && isOpening)
    {
@@ -305,7 +305,7 @@ static LockStt hwIf_getLockState()
    lastFeedbackValue = feedbackValue;
 
    return state;
-};
+}
 
 static void hwIf_handleContactorRequests(void)
 {

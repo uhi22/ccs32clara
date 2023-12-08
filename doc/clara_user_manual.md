@@ -19,6 +19,22 @@ https://github.com/jsphuebner/ccs32clara
 - Green/Blue fast blinking: charge finished
 - Red: Error
 
+## Serial logging
+
+Clara is talking a lot. For trouble-shooting it helps to listen to hers serial port. Connect an Serial-to-USB (e.g. FT232-like) to the TX pin,
+and start a serial terminal (e.g. Putty or the Arduino serial console) with 921600 Baud. While Clara is alone, we should see something like this (during the first 30 seconds after startup). The number in quare brackets is the time since startup in milliseconds.
+```
+    [1000] [CONNMGR] 165 0 0 0 0 0 0 --> 5
+    software version MAC-QCA7005-1.1.0.730-04-20140815-CS 
+    [1510] [ModemFinder] Number of modems: 1
+    [1540] [CONNMGR] ConnectionLevel changed from 5 to 10.
+```
+
+after around 30s, the modem will go to sleep:
+```
+    [34090] [ModemFinder] Number of modems: 0
+```
+
 ## How to setup the build chain?
 
 There are two totally different tool chains for Clara: The old one, until November 2023, uses the STM32 CubeIDE. The new one comes with a classical make file, and offers full flexibility regarding which editor/IDE is used. The description below is valid for the new variant.

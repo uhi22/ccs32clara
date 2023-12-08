@@ -418,7 +418,7 @@ void evaluateSetKeyCnf(void) {
     if (result == 0) {
         addToTrace("[PEVSLAC] SetKeyCnf says 0, this would be a bad sign for local modem, but normal for remote.");
     } else {
-     	 printf("[%d] [PEVSLAC] SetKeyCnf says %d, this is formally 'rejected', but indeed ok.\r\n" , rtc_get_counter_val(), result);
+     	 printf("[%d] [PEVSLAC] SetKeyCnf says %d, this is formally 'rejected', but indeed ok.\r\n" , rtc_get_ms(), result);
        publishStatus("modem is", "restarting");
        connMgr_SlacOk();
   }
@@ -571,7 +571,7 @@ uint8_t isEvseModemFound(void) {
 }
 
 void slac_enterState(int n) {
-  printf("[%d] [PEVSLAC] from %d entering %d\r\n", rtc_get_counter_val(), pevSequenceState, n);
+  printf("[%d] [PEVSLAC] from %d entering %d\r\n", rtc_get_ms(), pevSequenceState, n);
   pevSequenceState = n;
   pevSequenceCyclesInState = 0;
 }

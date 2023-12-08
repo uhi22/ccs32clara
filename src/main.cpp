@@ -154,9 +154,9 @@ static void PrintTrace()
    if ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state)
    {
       lastSttPrint = rtc_get_counter_val();
-      printf("[%u] In state %s\r\n", rtc_get_counter_val(), label);
+      printf("[%u] In state %s\r\n", rtc_get_ms(), label);
       lastState = state;
-      /*printf("[%u] Data received: ", rtc_get_counter_val(), label);
+      /*printf("[%u] Data received: ", rtc_get_ms(), label);
       for (uint16_t i=0; i < myethreceivebufferLen; i++) {
          printf("%02x ", myethreceivebuffer[i]);
       }

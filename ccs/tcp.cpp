@@ -39,6 +39,7 @@ static uint8_t tcpState = TCP_STATE_CLOSED;
 
 static uint32_t TcpSeqNr=200; /* a "random" start sequence number */
 static uint32_t TcpAckNr;
+static uint32_t tcp_debug_totalRetryCounter;
 
 /*** local function prototypes ****************************************************/
 
@@ -49,6 +50,9 @@ void tcp_sendAck(void);
 void tcp_sendFirstAck(void);
 
 /*** functions *********************************************************************/
+uint32_t tcp_getTotalNumberOfRetries(void) {
+  return tcp_debug_totalRetryCounter;
+}
 
 void evaluateTcpPacket(void)
 {
@@ -353,6 +357,7 @@ void tcp_Mainfunction(void)
         /* The maximum number of retransmissions are not yet over. We still are allowed to retransmit. */
         //Retransmit
         tcp_packRequestIntoEthernet();
+        tcp_debug_totalRetryCounter++;
         lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
         retryCounter--;
         printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_ms());

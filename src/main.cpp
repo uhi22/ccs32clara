@@ -154,7 +154,12 @@ static void PrintTrace()
    if ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state)
    {
       lastSttPrint = rtc_get_counter_val();
+      #define WITH_TCP_VERBOSITY
+      #ifdef WITH_TCP_VERBOSITY
+      printf("[%u] In state %s. TcpRetries %u\r\n", rtc_get_ms(), label, tcp_getTotalNumberOfRetries());
+      #else
       printf("[%u] In state %s\r\n", rtc_get_ms(), label);
+      #endif
       lastState = state;
       /*printf("[%u] Data received: ", rtc_get_ms(), label);
       for (uint16_t i=0; i < myethreceivebufferLen; i++) {

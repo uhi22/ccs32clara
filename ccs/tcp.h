@@ -19,6 +19,7 @@ extern "C" {
 
 extern void tcp_Mainfunction(void);
 extern void evaluateTcpPacket(void);
+extern uint32_t tcp_getTotalNumberOfRetries(void);
 extern void tcp_Disconnect(void);
 extern void tcp_transmit(void);
 

@@ -344,11 +344,14 @@ void tcp_Mainfunction(void)
    {
       //Retransmit
       tcp_packRequestIntoEthernet();
+      //Only once
+      lastUnackTransmissionTime = 0;
       printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_counter_val());
    }
    if (connMgr_getConnectionLevel()<50)
    {
       /* No SDP done. Means: It does not make sense to start or continue TCP. */
+      lastUnackTransmissionTime = 0;
       tcpState = TCP_STATE_CLOSED;
       return;
    }

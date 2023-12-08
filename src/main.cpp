@@ -56,6 +56,9 @@
 
 #define PRINT_JSON 0
 
+/* to solve linker warning, see https://openinverter.org/forum/viewtopic.php?p=64546#p64546 */
+extern "C" void __cxa_pure_virtual() { while (1); }
+
 static Stm32Scheduler* scheduler;
 static CanHardware* can;
 static CanMap* canMap;

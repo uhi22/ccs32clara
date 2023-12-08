@@ -15,6 +15,8 @@ static uint8_t ContactorOnTimer;
 static uint8_t LedBlinkDivider;
 static LockStt lockRequest;
 static LockStt lockState;
+static LockStt lockTarget;
+static uint16_t lockTimer;
 
 void hardwareInterface_showOnDisplay(char*, char*, char*)
 {
@@ -151,8 +153,7 @@ void hardwareInterface_triggerConnectorUnlocking(void)
 
 uint8_t hardwareInterface_isConnectorLocked(void)
 {
-   //When there is no lock configured always report as closed
-   return lockState == LOCK_CLOSED || lockState == LOCK_UNKNOWN;
+   return lockState == LOCK_CLOSED; /* no matter whether we have a real lock or just a simulated one, always give the state. */
 }
 
 uint8_t hardwareInterface_getPowerRelayConfirmation(void)
@@ -338,10 +339,12 @@ static void hwIf_handleLockRequests()
 {
    if (testmode!=0) return; /* in case of output test mode, decouple the application */
 
-   lockState = hwIf_getLockState();
+
    int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
    int pwmPos = (CONTACT_LOCK_PERIOD / 2) + (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
 
+   #ifdef LOCKING_ACTUATION_BASED_ON_FEEDBACK
+   lockState = hwIf_getLockState();
    if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
    {
       Param::SetInt(Param::lockstt, LOCK_OPENING);
@@ -357,6 +360,38 @@ static void hwIf_handleLockRequests()
       Param::SetInt(Param::lockstt, lockState);
       hardwareInteface_setHBridge(0, 0);
    }
+   #else
+     pwmNeg = 0;
+     pwmPos = CONTACT_LOCK_PERIOD;
+     /* connector lock just time-based, without evaluating the feedback */
+     if (lockRequest == LOCK_OPEN) {
+         printf("[%u] unlocking the connector\r\n", rtc_get_ms());
+         Param::SetInt(Param::lockstt, LOCK_OPENING);
+         hardwareInteface_setHBridge(pwmNeg, pwmPos);
+         lockTimer = 60; /* in 30ms steps */
+         lockTarget = LOCK_OPEN;
+         lockRequest = LOCK_UNKNOWN;
+     }
+     if (lockRequest == LOCK_CLOSED) {
+         printf("[%u] locking the connector\r\n", rtc_get_ms());
+         Param::SetInt(Param::lockstt, LOCK_CLOSING);
+         hardwareInteface_setHBridge(pwmPos, pwmNeg);
+         lockTimer = 60; /* in 30ms steps */
+         lockTarget = LOCK_CLOSED;
+         lockRequest = LOCK_UNKNOWN;
+     }
+     if (lockTimer>0) {
+         /* as long as the timer runs, the PWM on the lock motor is active */
+         lockTimer--;
+         if (lockTimer==0) {
+             /* if the time is expired, we turn off the lock motor and report the new state */
+             hardwareInteface_setHBridge(0, 0);
+             Param::SetInt(Param::lockstt, lockTarget);
+             lockState = lockTarget;
+             printf("[%u] finished connector (un)locking\r\n", rtc_get_ms());
+         }
+     }
+   #endif
 }
 
 static void handleApplicationRGBLeds(void)

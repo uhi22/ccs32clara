@@ -8,6 +8,9 @@
 #define TCP_FLAG_PSH 0x08
 #define TCP_FLAG_ACK 0x10
 
+#define TCP_ACK_TIMEOUT_MS 100 /* if for 100ms no ACK is received, we retry the transmission */
+#define TCP_MAX_NUMBER_OF_RETRANSMISSIONS 10
+
 uint8_t tcpHeaderLen;
 uint8_t tcpPayloadLen;
 uint8_t tcpPayload[TCP_PAYLOAD_LEN];
@@ -18,6 +21,7 @@ uint8_t tcp_rxdata[TCP_RX_DATA_LEN];
 #define TCP_ACTIVITY_TIMER_START (5*33) /* 5 seconds */
 static uint16_t tcpActivityTimer;
 static uint32_t lastUnackTransmissionTime = 0;
+static uint8_t retryCounter = 0;
 
 #define TCP_TRANSMIT_PACKET_LEN 200
 static uint8_t TcpTransmitPacketLen;
@@ -124,7 +128,8 @@ void evaluateTcpPacket(void)
    {
       nTcpPacketsReceived+=1000;
       TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
-      lastUnackTransmissionTime = 0;
+      lastUnackTransmissionTime = 0; /* mark timer as "not used", because we received the ACK */
+      retryCounter = 0;
    }
 }
 
@@ -185,7 +190,8 @@ void tcp_transmit(void)
          memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
          tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
          tcp_packRequestIntoIp();
-         lastUnackTransmissionTime = rtc_get_ms();
+         lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
+         retryCounter = TCP_MAX_NUMBER_OF_RETRANSMISSIONS; /* Allow n retries of the same packet */
       }
       else
       {
@@ -338,17 +344,21 @@ uint8_t tcp_isConnected(void)
    return (tcpState == TCP_STATE_ESTABLISHED);
 }
 
-#define TCP_ACK_TIMEOUT_MS 100 /* if for 100ms no ACK is received, we retry the transmission */
 
 void tcp_Mainfunction(void)
 {
-   if (lastUnackTransmissionTime > 0 && (rtc_get_ms() - lastUnackTransmissionTime) > TCP_ACK_TIMEOUT_MS)
+   if ((lastUnackTransmissionTime > 0) && ((rtc_get_ms() - lastUnackTransmissionTime) > TCP_ACK_TIMEOUT_MS))
    {
-      //Retransmit
-      tcp_packRequestIntoEthernet();
-      //Only once
-      lastUnackTransmissionTime = 0;
-      printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_ms());
+      if (retryCounter>0) {
+        /* The maximum number of retransmissions are not yet over. We still are allowed to retransmit. */
+        //Retransmit
+        tcp_packRequestIntoEthernet();
+        lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
+        retryCounter--;
+        printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_ms());
+      } else {
+        printf("[%u] [TCP] Giving up the retry\r\n", rtc_get_ms());
+      }
    }
    if (connMgr_getConnectionLevel()<50)
    {

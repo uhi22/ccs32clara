@@ -6,15 +6,15 @@
                                      we do not see PWM interrupts anymore */
 #define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
 
-
 static uint32_t cpDuty_Percent, cpFrequency_Hz;
 static uint8_t cpDutyValidTimer;
-static uint16_t hwIf_testmode;
-static uint16_t hwIf_testmodeTimer;
-static uint8_t hwIf_ContactorRequest;
-static uint8_t hwIf_ContactorOnTimer;
-static uint8_t hwIf_LedBlinkDivider;
-
+static uint16_t testmode;
+static uint16_t testmodeTimer;
+static uint8_t ContactorRequest;
+static uint8_t ContactorOnTimer;
+static uint8_t LedBlinkDivider;
+static LockStt lockRequest;
+static LockStt lockState;
 
 void hardwareInterface_showOnDisplay(char*, char*, char*)
 {
@@ -70,24 +70,22 @@ int16_t hardwareInterface_getChargingTargetCurrent(void)
 uint8_t hardwareInterface_getSoc(void)
 {
    /* SOC in percent */
-   //return hwIf_simulatedSoc_0p01/100;
    return Param::GetInt(Param::soc);
 }
 
 uint8_t hardwareInterface_getIsAccuFull(void)
 {
-   //return (hwIf_simulatedSoc_0p01/100)>95;
    return Param::GetInt(Param::soc) > 95;
 }
 
 void hardwareInterface_setPowerRelayOn(void)
 {
-   hwIf_ContactorRequest=1;
+   ContactorRequest=1;
 }
 
 void hardwareInterface_setPowerRelayOff(void)
 {
-   hwIf_ContactorRequest=0;
+   ContactorRequest=0;
 }
 
 void hardwareInterface_setStateB(void)
@@ -123,38 +121,38 @@ void hardwareInterface_setRGB(uint8_t rgb)
       DigIo::blue_out.Clear();
 }
 
-void hardwareInteface_setHBridge(uint16_t out1duty_64k, uint16_t out2duty_64k)
+static void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k)
 {
    /* Controls the H-bridge */
    /* PC6 (TIM3 ch 1) and PC7 (TIM3 ch 2) are controlling the two sides of the bridge */
    /* out1 and out2 are the PWM ratios in range 0 to 64k */
 
    /*Assign the new dutyCycle count to the capture compare register.*/
-   timer_set_oc_value(CONTACT_LOCK_TIMER, LOCK1_CHAN, out1duty_64k);
-   timer_set_oc_value(CONTACT_LOCK_TIMER, LOCK2_CHAN, out2duty_64k);
+   timer_set_oc_value(CONTACT_LOCK_TIMER, LOCK1_CHAN, out1duty_4k);
+   timer_set_oc_value(CONTACT_LOCK_TIMER, LOCK2_CHAN, out2duty_4k);
 }
 
-void hardwareInteface_setContactorPwm(uint16_t out1duty_64k, uint16_t out2duty_64k)
+static void hardwareInteface_setContactorPwm(uint16_t out1duty_4k, uint16_t out2duty_4k)
 {
    /*Assign the new dutyCycle count to the capture compare register.*/
-   timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT1_CHAN, out1duty_64k);
-   timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT2_CHAN, out2duty_64k);
+   timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT1_CHAN, out1duty_4k);
+   timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT2_CHAN, out2duty_4k);
 }
 
 void hardwareInterface_triggerConnectorLocking(void)
 {
-   /* todo */
+   lockRequest = LOCK_CLOSED;
 }
 
 void hardwareInterface_triggerConnectorUnlocking(void)
 {
-   /* todo */
+   lockRequest = LOCK_OPEN;
 }
 
 uint8_t hardwareInterface_isConnectorLocked(void)
 {
-   /* todo */
-   return 1;
+   //When there is no lock configured always report as closed
+   return lockState == LOCK_CLOSED || lockState == LOCK_UNKNOWN;
 }
 
 uint8_t hardwareInterface_getPowerRelayConfirmation(void)
@@ -172,12 +170,12 @@ void hardwareInterface_handleOutputTestMode(void)
 {
    /* This function is used to test the outputs. */
 
-   hwIf_testmodeTimer = 10; /* rewind the timer for the next phase */
-   if ((pushbutton_accumulatedButtonDigits==3411) && (hwIf_testmode==0))
+   testmodeTimer = 10; /* rewind the timer for the next phase */
+   if ((pushbutton_accumulatedButtonDigits==3411) && (testmode==0))
    {
-      hwIf_testmode=1;
+      testmode=1;
    }
-   switch (hwIf_testmode)
+   switch (testmode)
    {
    case 0: /* no test. Do not touch the outputs and do not increment the mode. */
       return;
@@ -209,25 +207,25 @@ void hardwareInterface_handleOutputTestMode(void)
       hardwareInteface_setHBridge(0, 0); /* both low */
       break;
    case 10:
-      hardwareInteface_setHBridge(6500, 0); /* channel 1 10% */
+      hardwareInteface_setHBridge(CONTACT_LOCK_PERIOD / 10, 0); /* channel 1 10% */
       break;
    case 11:
-      hardwareInteface_setHBridge(32768, 0); /* channel 1 50% */
+      hardwareInteface_setHBridge(CONTACT_LOCK_PERIOD / 2, 0); /* channel 1 50% */
       break;
    case 12:
-      hardwareInteface_setHBridge(65535, 0); /* channel 1 full */
+      hardwareInteface_setHBridge(CONTACT_LOCK_PERIOD, 0); /* channel 1 full */
       break;
    case 13:
       hardwareInteface_setHBridge(0, 0); /* both low */
       break;
    case 14:
-      hardwareInteface_setHBridge(0, 6500); /* channel 2 10% */
+      hardwareInteface_setHBridge(0, CONTACT_LOCK_PERIOD / 10); /* channel 2 10% */
       break;
    case 15:
-      hardwareInteface_setHBridge(0, 32768); /* channel 2 50% */
+      hardwareInteface_setHBridge(0, CONTACT_LOCK_PERIOD / 2); /* channel 2 50% */
       break;
    case 16:
-      hardwareInteface_setHBridge(0, 65535); /* channel 2 full */
+      hardwareInteface_setHBridge(0, CONTACT_LOCK_PERIOD); /* channel 2 full */
       break;
    case 17:
       hardwareInteface_setHBridge(0, 0); /* both low */
@@ -236,56 +234,135 @@ void hardwareInterface_handleOutputTestMode(void)
       hardwareInteface_setContactorPwm(0, 0); /* both off */
       break;
    case 19:
-      hardwareInteface_setContactorPwm(65535, 0); /* 1 on */
+      hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD, 0); /* 1 on */
       break;
    case 20:
-      hardwareInteface_setContactorPwm(50000, 0); /* 1 half */
+      hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD / 2, 0); /* 1 half */
       break;
    case 21:
-      hardwareInteface_setContactorPwm(0, 65535); /* 2 on */
+      hardwareInteface_setContactorPwm(0, CONTACT_LOCK_PERIOD); /* 2 on */
       break;
    case 22:
-      hardwareInteface_setContactorPwm(0, 50000); /* 2 half */
+      hardwareInteface_setContactorPwm(0, CONTACT_LOCK_PERIOD / 2); /* 2 half */
       break;
    case 23:
       hardwareInteface_setContactorPwm(0, 0); /* both off */
       break;
    }
-   hwIf_testmode++;
-   if (hwIf_testmode>23) hwIf_testmode=1;
+   testmode++;
+   if (testmode>23) testmode=1;
 }
+
+static LockStt hwIf_getLockState()
+{
+   static int lastFeedbackValue = 0;
+   static uint32_t lockClosedTime = 0;
+   int lockOpenThresh = Param::GetInt(Param::lockopenthr);
+   int lockClosedThresh = Param::GetInt(Param::lockclosethr);
+   int feedbackValue = AnaIn::lockfb.Get();
+   LockStt state = LOCK_UNKNOWN;
+
+   if (lockClosedThresh > lockOpenThresh) //Feedback value when closed is greater than when open
+   {
+      if (feedbackValue > lockClosedThresh)
+         state = LOCK_CLOSED;
+      else if (feedbackValue < lockOpenThresh)
+         state = LOCK_OPEN;
+      else if ((feedbackValue - lastFeedbackValue) < 10)
+         state = LOCK_OPENING;
+      else if ((feedbackValue - lastFeedbackValue) > 10)
+         state = LOCK_CLOSING;
+   }
+   else if (lockClosedThresh < lockOpenThresh)
+   {
+      if (feedbackValue < lockClosedThresh)
+         state = LOCK_CLOSED;
+      else if (feedbackValue > lockOpenThresh)
+         state = LOCK_OPEN;
+      else if ((feedbackValue - lastFeedbackValue) > 10)
+         state = LOCK_OPENING;
+      else if ((feedbackValue - lastFeedbackValue) < 10)
+         state = LOCK_CLOSING;
+   }
+   else
+   {
+      //When both threshold sit at the same value, disable lock feedback
+      state = LOCK_UNKNOWN;
+   }
+
+   if (state == LOCK_CLOSED)
+   {
+      lockClosedTime = rtc_get_counter_val();
+   }
+
+   bool isOpening = (rtc_get_counter_val() - lockClosedTime) < (Param::GetInt(Param::lockopentm) / 10U);
+   //Report lock opening at least x ms after we left closed state
+   if (state == LOCK_OPEN && isOpening)
+   {
+      state = LOCK_OPENING;
+   }
+
+   lastFeedbackValue = feedbackValue;
+
+   return state;
+};
 
 static void hwIf_handleContactorRequests(void)
 {
-   if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
+   if (testmode!=0) return; /* in case of output test mode, decouple the application */
 
-   if (hwIf_ContactorRequest==0)
+   if (ContactorRequest==0)
    {
       /* request is "OFF" -> set PWM immediately to zero for both contactors */
       hardwareInteface_setContactorPwm(0, 0); /* both off */
-      hwIf_ContactorOnTimer=0;
+      ContactorOnTimer=0;
    }
    else
    {
       /* request is "ON". Start with 100% PWM, and later switch to economizer mode */
-      if (hwIf_ContactorOnTimer<255) hwIf_ContactorOnTimer++;
-      if (hwIf_ContactorOnTimer<CONTACTOR_CYCLES_FOR_FULL_PWM)
+      if (ContactorOnTimer<255) ContactorOnTimer++;
+      if (ContactorOnTimer<CONTACTOR_CYCLES_FOR_FULL_PWM)
       {
-         hardwareInteface_setContactorPwm(65535, 65535); /* both full */
+         hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD, CONTACT_LOCK_PERIOD); /* both full */
          addToTrace("Turning on charge port contactors");
       }
       else
       {
-         int dc = (Param::GetInt(Param::economizer) * 65535) / 100;
+         int dc = (Param::GetInt(Param::economizer) * CONTACT_LOCK_PERIOD) / 100;
          hardwareInteface_setContactorPwm(dc, dc); /* both reduced */
       }
    }
 }
 
+static void hwIf_handleLockRequests()
+{
+   if (testmode!=0) return; /* in case of output test mode, decouple the application */
+
+   lockState = hwIf_getLockState();
+   int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
+   int pwmPos = (CONTACT_LOCK_PERIOD / 2) + (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
+
+   if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
+   {
+      Param::SetInt(Param::lockstt, LOCK_OPENING);
+      hardwareInteface_setHBridge(pwmNeg, pwmPos);
+   }
+   else if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
+   {
+      Param::SetInt(Param::lockstt, LOCK_CLOSING);
+      hardwareInteface_setHBridge(pwmPos, pwmNeg);
+   }
+   else
+   {
+      Param::SetInt(Param::lockstt, lockState);
+      hardwareInteface_setHBridge(0, 0);
+   }
+}
+
 static void handleApplicationRGBLeds(void)
 {
-   if (hwIf_testmode!=0) return; /* in case of output test mode, decouple the application */
-   hwIf_LedBlinkDivider++;
+   if (testmode!=0) return; /* in case of output test mode, decouple the application */
+   LedBlinkDivider++;
    if (checkpointNumber<100)
    {
       /* modem is sleeping (or defective), or modem search ongoing */
@@ -299,7 +376,7 @@ static void handleApplicationRGBLeds(void)
    }
    if ((checkpointNumber>150) && (checkpointNumber<=530))
    {
-      if (hwIf_LedBlinkDivider & 4)
+      if (LedBlinkDivider & 4)
       {
          hardwareInterface_setRGB(2); /* green */
       }
@@ -310,7 +387,7 @@ static void handleApplicationRGBLeds(void)
    }
    if ((checkpointNumber>=540) /* Auth finished */ && (checkpointNumber<560 /* CableCheck */))
    {
-      if (hwIf_LedBlinkDivider & 2)
+      if (LedBlinkDivider & 2)
       {
          hardwareInterface_setRGB(2); /* green */
       }
@@ -321,7 +398,7 @@ static void handleApplicationRGBLeds(void)
    }
    if ((checkpointNumber>=560 /* CableCheck */) && (checkpointNumber<700 /* charge loop start */))
    {
-      if (hwIf_LedBlinkDivider & 2)
+      if (LedBlinkDivider & 2)
       {
          hardwareInterface_setRGB(4); /* blue */
       }
@@ -336,7 +413,7 @@ static void handleApplicationRGBLeds(void)
    }
    if ((checkpointNumber>=800 /* charge end */) && (checkpointNumber<900 /* welding detection */))
    {
-      if (hwIf_LedBlinkDivider & 1)
+      if (LedBlinkDivider & 1)
       {
          hardwareInterface_setRGB(4); /* blue */
       }
@@ -378,6 +455,7 @@ void hardwareInterface_cyclic(void)
 
    handleApplicationRGBLeds();
    hwIf_handleContactorRequests();
+   hwIf_handleLockRequests();
    hardwareInterface_handleOutputTestMode();
 }
 

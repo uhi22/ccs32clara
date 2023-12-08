@@ -72,6 +72,17 @@ static void Ms100Task(void)
    //This sets a fixed point value WITHOUT calling the parm_Change() function
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
+   Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
+
+   switch (Param::GetInt(Param::locktest))
+   {
+   case LOCK_CLOSED:
+      hardwareInterface_triggerConnectorLocking();
+      break;
+   case LOCK_OPEN:
+      hardwareInterface_triggerConnectorUnlocking();
+      break;
+   }
 
    switch (Param::GetInt(Param::inletvtgsrc))
    {
@@ -167,6 +178,7 @@ extern "C" int main(void)
    DIG_IO_CONFIGURE(DIG_IO_LIST);
    AnaIn::Start(); //Starts background ADC conversion via DMA
    write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
+   hardwareInterface_setStateB();
 
    gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 

@@ -1,6 +1,10 @@
 /* Interface header for hardwareInterface.c */
 
 /* Global Defines */
+enum LockStt
+{
+   LOCK_UNKNOWN, LOCK_OPEN, LOCK_CLOSED, LOCK_OPENING, LOCK_CLOSING
+};
 
 /* Global Variables */
 

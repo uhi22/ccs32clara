@@ -6,6 +6,7 @@
 
 #define RCC_CLOCK_SETUP()   rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ])
 #define CONTACT_LOCK_TIMER  TIM3
+#define CONTACT_LOCK_PERIOD 4096
 #define LOCK1_CHAN          TIM_OC1
 #define LOCK2_CHAN          TIM_OC2
 #define CONTACT1_CHAN       TIM_OC3

@@ -39,24 +39,29 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.13.B
+#define VER 0.17.B
 
 /* Entries must be ordered as follows:
    1. Saveable parameters (id != 0)
    2. Temporary parameters (id = 0)
    3. Display values
  */
-//Next param id (increase when adding new parameter!): 8
-//Next value Id: 2013
+//Next param id (increase when adding new parameter!): 15
+//Next value Id: 2015
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
     PARAM_ENTRY(CAT_HARDWARE,economizer,  "%",       0,      100,    100,    7   ) \
     PARAM_ENTRY(CAT_HARDWARE,inletvtgsrc, IVSRC,     0,      2,      0,      8   ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockpwm,     "dig",    -100,    100,    0,      14  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockopentm,  "ms",      0,      10000,  1000,   13  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   1800,   11  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   2500,   12  ) \
     TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      500,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      500,    222,    6   ) \
+    TESTP_ENTRY(CAT_TEST,    locktest,    LOCK,      0,      2,      0,      9   ) \
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
     VALUE_ENTRY(version,     VERSTR,  2001 ) \
     VALUE_ENTRY(lasterr,     errorListString,  2002 ) \
@@ -69,7 +74,9 @@
     VALUE_ENTRY(temp1,       "°C",   2003 ) \
     VALUE_ENTRY(temp2,       "°C",   2004 ) \
     VALUE_ENTRY(temp3,       "°C",   2005 ) \
-    VALUE_ENTRY(dcsw1dc,     "%",    2011 ) \
+    VALUE_ENTRY(dcsw1dc,     "%",    2013 ) \
+    VALUE_ENTRY(lockfb,      "dig",  2011 ) \
+    VALUE_ENTRY(lockstt,     LOCK,   2014 ) \
     VALUE_ENTRY(cpuload,     "%",    2094 )
 
 
@@ -79,8 +86,10 @@
 12=ContactorsClosed, 13=PowerDelivery, 14=CurrentDemand, 15=WeldingDetection, 16=SessionStop, 17=Finished, 18=Error"
 
 #define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
-#define CAT_CHARGE   "Charge parameters"
+#define LOCK         "0=None, 1=Open, 2=Close, 3=Opening, 4=Closing"
 #define CAT_HARDWARE "Hardware Config"
+#define CAT_CHARGE   "Charge parameters"
+#define CAT_TEST     "Testing"
 
 #define VERSTR STRINGIFY(4=VER)
 

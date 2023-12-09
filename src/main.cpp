@@ -63,11 +63,6 @@ static Stm32Scheduler* scheduler;
 static CanHardware* can;
 static CanMap* canMap;
 
-void setCheckpoint(uint16_t newcheckpoint) {
-    checkpointNumber = newcheckpoint;
-    Param::SetInt(Param::checkpoint, newcheckpoint);
-}
-
 //sample 100ms task
 static void Ms100Task(void)
 {
@@ -152,7 +147,7 @@ static void PrintTrace()
    "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WeldingDetection", "SessionStop",
    "Finished", "Error" };
 
-   static uint32_t lastSttPrint = 0;
+   static uint32_t lastSttPrint = 0, lastEthPrint = 0;
    int state = Param::GetInt(Param::opmode);
    const char* label = state < 18 ? states[state] : "Unknown/Error";
 
@@ -166,11 +161,16 @@ static void PrintTrace()
       printf("[%u] In state %s\r\n", rtc_get_ms(), label);
       #endif
       lastState = state;
-      /*printf("[%u] Data received: ", rtc_get_ms(), label);
+   }
+
+   if ((rtc_get_counter_val() - lastEthPrint) >= 3)
+   {
+      lastEthPrint = rtc_get_counter_val();
+      printf("[%u] Data received: ", rtc_get_ms(), label);
       for (uint16_t i=0; i < myethreceivebufferLen; i++) {
          printf("%02x ", myethreceivebuffer[i]);
       }
-      printf("\r\n");*/
+      printf("\r\n");
    }
 }
 

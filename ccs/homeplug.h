@@ -6,7 +6,6 @@
 
 extern uint8_t evseMac[6];
 extern uint8_t numberOfSoftwareVersionResponses;
-extern uint16_t checkpointNumber;
 
 /* Global Functions */
 #ifdef __cplusplus
@@ -20,7 +19,6 @@ extern uint16_t getEtherType(uint8_t *messagebufferbytearray);
 extern void evaluateReceivedHomeplugPacket(void);
 extern void runSlacSequencer(void);
 extern void runSdpStateMachine(void);
-extern void setCheckpoint(uint16_t newcheckpoint);
 
 #ifdef __cplusplus
 }

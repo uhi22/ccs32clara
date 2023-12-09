@@ -5,6 +5,11 @@
 
 /* Helper functions */
 
+void setCheckpoint(uint16_t newcheckpoint) {
+    checkpointNumber = newcheckpoint;
+    Param::SetInt(Param::checkpoint, newcheckpoint);
+}
+
 void addToTrace(const char * s) {
    //printf("[%d] %s\r\n", rtc_get_ms(), s);
    // canbus_addStringToTextTransmitBuffer(mySerialPrintOutputBuffer); /* print to the CAN */

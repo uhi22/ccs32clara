@@ -31,7 +31,6 @@
 			</Target>
 		</Build>
 		<Unit filename="Makefile" />
-		<Unit filename="ccs/canbus.h" />
 		<Unit filename="ccs/ccs32_globals.h" />
 		<Unit filename="ccs/configuration.h" />
 		<Unit filename="ccs/connMgr.cpp" />
@@ -44,13 +43,8 @@
 		<Unit filename="ccs/ipv6.h" />
 		<Unit filename="ccs/modemFinder.cpp" />
 		<Unit filename="ccs/modemFinder.h" />
-		<Unit filename="ccs/myAdc.h" />
 		<Unit filename="ccs/myHelpers.cpp" />
 		<Unit filename="ccs/myHelpers.h" />
-		<Unit filename="ccs/myScheduler.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="ccs/myScheduler.h" />
 		<Unit filename="ccs/pevStateMachine.cpp" />
 		<Unit filename="ccs/pevStateMachine.h" />
 		<Unit filename="ccs/pushbutton.cpp" />
@@ -63,8 +57,6 @@
 		<Unit filename="ccs/temperatures.h" />
 		<Unit filename="ccs/udpChecksum.cpp" />
 		<Unit filename="ccs/udpChecksum.h" />
-		<Unit filename="ccs/xcp.cpp" />
-		<Unit filename="ccs/xcp.h" />
 		<Unit filename="exi/BitInputStream.c">
 			<Option compilerVar="CC" />
 		</Unit>

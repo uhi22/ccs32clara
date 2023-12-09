@@ -37,7 +37,8 @@ const uint8_t exiDemoSupportedApplicationProtocolRequestIoniq[]={0x80, 0x00, 0xd
 uint16_t pev_cyclesInState;
 uint8_t pev_DelayCycles;
 uint16_t pev_state=PEV_STATE_NotYetInitialized;
-uint8_t pev_isUserStopRequest=0;
+uint8_t pev_isUserStopRequestOnCarSide=0;
+uint8_t pev_isUserStopRequestOnChargerSide=0;
 uint16_t pev_numberOfContractAuthenticationReq;
 uint16_t pev_numberOfChargeParameterDiscoveryReq;
 uint16_t pev_numberOfCableCheckReq;
@@ -716,15 +717,36 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.CurrentDemandRes_isUsed) {
         /* as long as the accu is not full and no stop-demand from the user, we continue charging */
+        pev_isUserStopRequestOnChargerSide=0;
+        if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_Shutdown) {
+            /* https://github.com/uhi22/pyPLC#example-flow, checkpoint 790: If the user stops the
+               charging session on the charger, we get a CurrentDemandResponse with
+               DC_EVSEStatus.EVSEStatusCode = 2 "EVSE_Shutdown" (observed on Compleo. To be tested
+               on other chargers. */
+            addToTrace("Checkpoint790: Charging is terminated from charger side.");
+            checkpointNumber = 790;
+            pev_isUserStopRequestOnChargerSide = 1;
+        }
+        if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown) {
+            /* If the charger reports an emergency, we stop the charging. */
+            addToTrace("Charger reported EmergencyShutdown.");
+            pev_wasPowerDeliveryRequestedOn=0;
+            checkpointNumber = 800;
+            pev_sendPowerDeliveryReq(0);
+            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+        }
     	/* If the pushbutton is pressed longer than 0.5s, we interpret this as charge stop request. */
-    	pev_isUserStopRequest = pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
-        if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequest) {
+    	pev_isUserStopRequestOnCarSide = pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+        if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide) {
             if (hardwareInterface_getIsAccuFull()) {
                 publishStatus("Accu full", "");
                 addToTrace("Accu is full. Sending PowerDeliveryReq Stop.");
+            } else if (pev_isUserStopRequestOnCarSide) {
+                publishStatus("User req stop on car side", "");
+                addToTrace("User requested stop on car side. Sending PowerDeliveryReq Stop.");
             } else {
-                publishStatus("User req stop", "");
-                addToTrace("User requested stop. Sending PowerDeliveryReq Stop.");
+                publishStatus("User req stop on charger side", "");
+                addToTrace("User requested stop on charger side. Sending PowerDeliveryReq Stop.");
             }
             pev_wasPowerDeliveryRequestedOn=0;
             checkpointNumber = 800;

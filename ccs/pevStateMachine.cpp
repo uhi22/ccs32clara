@@ -84,7 +84,7 @@ void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBufferLen) {
       showAsHex(tcpPayload, tcpPayloadLen, "tcpPayload");
       tcp_transmit();
   } else {
-      addToTrace("Error: EXI does not fit into tcpPayload.");
+      addToTrace(MOD_PEV, "Error: EXI does not fit into tcpPayload.");
   }
 }
 
@@ -287,7 +287,7 @@ void pev_sendWeldingDetectionReq(void) {
 void stateFunctionConnected(void) {
   // We have a freshly established TCP channel. We start the V2GTP/EXI communication now.
   // We just use the initial request message from the Ioniq. It contains one entry: DIN.
-  addToTrace("Checkpoint400: Sending the initial SupportedApplicationProtocolReq");
+  addToTrace(MOD_PEV, "Checkpoint400: Sending the initial SupportedApplicationProtocolReq");
   setCheckpoint(400);
   addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
   hardwareInterface_resetSimulation();
@@ -297,20 +297,20 @@ void stateFunctionConnected(void) {
 void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
   uint8_t i;
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForSupportedApplicationProtocolResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForSupportedApplicationProtocolResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_appHandExiDocument();
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (aphsDoc.supportedAppProtocolRes_isUsed) {
         /* it is the correct response */
-        addToTrace("supportedAppProtocolRes");
+        addToTrace(MOD_PEV, "supportedAppProtocolRes");
         printf("ResponseCode %d, SchemaID_isUsed %d, SchemaID %d\r\n",
                       aphsDoc.supportedAppProtocolRes.ResponseCode,
                       aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                       aphsDoc.supportedAppProtocolRes.SchemaID);
         publishStatus("Schema negotiated", "");
-        addToTrace("Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
+        addToTrace(MOD_PEV, "Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
         setCheckpoint(500);
         projectExiConnector_prepare_DinExiDocument();
         dinDocEnc.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
@@ -346,7 +346,7 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
 
 void stateFunctionWaitForSessionSetupResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForSessionSetupResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForSessionSetupResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -356,11 +356,11 @@ void stateFunctionWaitForSessionSetupResponse(void) {
     if (dinDocDec.V2G_Message.Body.SessionSetupRes_isUsed) {
       memcpy(sessionId, dinDocDec.V2G_Message.Header.SessionID.bytes, SESSIONID_LEN);
       sessionIdLen = dinDocDec.V2G_Message.Header.SessionID.bytesLen; /* store the received SessionID, we will need it later. */
-      addToTrace("Checkpoint506: The Evse decided for SessionId");
+      addToTrace(MOD_PEV, "Checkpoint506: The Evse decided for SessionId");
       setCheckpoint(506);
       showAsHex(sessionId, sessionIdLen, "");
       publishStatus("Session established", "");
-      addToTrace("Will send ServiceDiscoveryReq");
+      addToTrace(MOD_PEV, "Will send ServiceDiscoveryReq");
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq_isUsed = 1u;
       init_dinServiceDiscoveryReqType(&dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq);
@@ -376,14 +376,14 @@ void stateFunctionWaitForSessionSetupResponse(void) {
 
 void stateFunctionWaitForServiceDiscoveryResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForServiceDiscoveryResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForServiceDiscoveryResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.ServiceDiscoveryRes_isUsed) {
       publishStatus("ServDisc done", "");
-      addToTrace("Will send ServicePaymentSelectionReq");
+      addToTrace(MOD_PEV, "Will send ServicePaymentSelectionReq");
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq_isUsed = 1u;
       init_dinServicePaymentSelectionReqType(&dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq);
@@ -403,14 +403,14 @@ void stateFunctionWaitForServiceDiscoveryResponse(void) {
 
 void stateFunctionWaitForServicePaymentSelectionResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForServicePaymentSelectionResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForServicePaymentSelectionResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.ServicePaymentSelectionRes_isUsed) {
       publishStatus("ServPaySel done", "");
-      addToTrace("Checkpoint530: Will send ContractAuthenticationReq");
+      addToTrace(MOD_PEV, "Checkpoint530: Will send ContractAuthenticationReq");
       setCheckpoint(530);
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
@@ -431,7 +431,7 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
     return;
   }
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForContractAuthenticationResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForContractAuthenticationResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -442,7 +442,7 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
         // Or, the authorization is finished. This is shown by EVSEProcessing=Finished.
         if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("Auth finished", "");
-            addToTrace("Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
+            addToTrace(MOD_PEV, "Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
             setCheckpoint(540);
             pev_sendChargeParameterDiscoveryReq();
             pev_numberOfChargeParameterDiscoveryReq = 1; // first message
@@ -450,14 +450,14 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
         } else {
             // Not (yet) finished.
             if (pev_numberOfContractAuthenticationReq>=120) { // approx 120 seconds, maybe the user searches two minutes for his RFID card...
-                addToTrace("Authentication lasted too long. Giving up.");
+                addToTrace(MOD_PEV, "Authentication lasted too long. Giving up.");
                 pev_enterState(PEV_STATE_SequenceTimeout);
             } else {
                 // Try again.
                 pev_numberOfContractAuthenticationReq += 1; // count the number of tries.
                 publishStatus("Waiting f Auth", "");
                 //addToTrace("Not (yet) finished. Will again send ContractAuthenticationReq #" + String(pev_numberOfContractAuthenticationReq));
-                addToTrace("Not (yet) finished. Will again send ContractAuthenticationReq");
+                addToTrace(MOD_PEV, "Not (yet) finished. Will again send ContractAuthenticationReq");
                 encodeAndTransmit();
                 // We just stay in the same state, until the timeout elapses.
                 pev_enterState(PEV_STATE_WaitForContractAuthenticationResponse);
@@ -475,7 +475,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
     return;
   }
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForChargeParameterDiscoveryResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForChargeParameterDiscoveryResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -486,7 +486,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
         // (B) The charger finished to tell the charge parameters.
         if (dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("ChargeParams discovered", "");
-            addToTrace("Checkpoint550: ChargeParams are discovered.. Will change to state C.");
+            addToTrace(MOD_PEV, "Checkpoint550: ChargeParams are discovered.. Will change to state C.");
             uint16_t evseMaxVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Value,
                                                                 dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Multiplier);
             uint16_t evseMaxCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Value,
@@ -498,7 +498,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
             setCheckpoint(550);
             // pull the CP line to state C here:
             hardwareInterface_setStateC();
-            addToTrace("Checkpoint555: Locking the connector.");
+            addToTrace(MOD_PEV, "Checkpoint555: Locking the connector.");
             hardwareInterface_triggerConnectorLocking();
             pev_enterState(PEV_STATE_WaitForConnectorLock);
         } else {
@@ -507,14 +507,14 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
                 ... The ISO allows up to 55s reaction time and 60s timeout for "ongoing". Taken over from
                     https://github.com/uhi22/pyPLC/commit/01c7c069fd4e7b500aba544ae4cfce6774f7344a */
                 //addToTrace("ChargeParameterDiscovery lasted too long. " + String(pev_numberOfChargeParameterDiscoveryReq) + " Giving up.");
-                addToTrace("ChargeParameterDiscovery lasted too long. Giving up.");
+                addToTrace(MOD_PEV, "ChargeParameterDiscovery lasted too long. Giving up.");
                 pev_enterState(PEV_STATE_SequenceTimeout);
             } else {
                 // Try again.
                 pev_numberOfChargeParameterDiscoveryReq += 1; // count the number of tries.
                 publishStatus("disc ChargeParams", "");
                 //addToTrace("Not (yet) finished. Will again send ChargeParameterDiscoveryReq #" + String(pev_numberOfChargeParameterDiscoveryReq));
-                addToTrace("Not (yet) finished. Will again send ChargeParameterDiscoveryReq");
+                addToTrace(MOD_PEV, "Not (yet) finished. Will again send ChargeParameterDiscoveryReq");
                 pev_sendChargeParameterDiscoveryReq();
                 // we stay in the same state
                 pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
@@ -529,7 +529,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
 
 void stateFunctionWaitForConnectorLock(void) {
   if (hardwareInterface_isConnectorLocked()) {
-    addToTrace("Checkpoint560: Connector Lock confirmed. Will send CableCheckReq.");
+    addToTrace(MOD_PEV, "Checkpoint560: Connector Lock confirmed. Will send CableCheckReq.");
     setCheckpoint(560);
     pev_sendCableCheckReq();
     pev_numberOfCableCheckReq = 1; // This is the first request.
@@ -546,7 +546,7 @@ void stateFunctionWaitForCableCheckResponse(void) {
     return;
   }
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForCableCheckResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForCableCheckResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -563,8 +563,8 @@ void stateFunctionWaitForCableCheckResponse(void) {
         // 2) Else: The charger says "need more time or cable not ok". In this case, we just run into timeout and start from the beginning.
         if ((proc==dinEVSEProcessingType_Finished) && (rc==dinresponseCodeType_OK)) {
             publishStatus("CbleChck done", "");
-            addToTrace("The EVSE says that the CableCheck is finished and ok.");
-            addToTrace("Will send PreChargeReq");
+            addToTrace(MOD_PEV, "The EVSE says that the CableCheck is finished and ok.");
+            addToTrace(MOD_PEV, "Will send PreChargeReq");
             setCheckpoint(570);
             pev_sendPreChargeReq();
             connMgr_ApplOk(31); /* PreChargeResponse may need longer. Inform the connection manager to be patient.
@@ -573,7 +573,7 @@ void stateFunctionWaitForCableCheckResponse(void) {
         } else {
             if (pev_numberOfCableCheckReq>60) { /* approx 60s should be sufficient for cable check. The ISO allows up to 55s reaction time and 60s timeout for "ongoing". Taken over from https://github.com/uhi22/pyPLC/commit/01c7c069fd4e7b500aba544ae4cfce6774f7344a */
                 //addToTrace("CableCheck lasted too long. " + String(pev_numberOfCableCheckReq) + " Giving up.");
-                addToTrace("CableCheck lasted too long. Giving up.");
+                addToTrace(MOD_PEV, "CableCheck lasted too long. Giving up.");
                 pev_enterState(PEV_STATE_SequenceTimeout);
             } else {
                 // cable check not yet finished or finished with bad result -> try again
@@ -584,7 +584,7 @@ void stateFunctionWaitForCableCheckResponse(void) {
                   /* no inlet voltage measurement available, just show status */
                   publishStatus("CbleChck ongoing", "");
                 #endif
-                addToTrace("Will again send CableCheckReq");
+                addToTrace(MOD_PEV, "Will again send CableCheckReq");
                 pev_sendCableCheckReq();
                 // stay in the same state
                 pev_enterState(PEV_STATE_WaitForCableCheckResponse);
@@ -605,23 +605,23 @@ void stateFunctionWaitForPreChargeResponse(void) {
     return;
   }
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForPreChargeResponse, received:");
+    addToTrace(MOD_PEV, "In state WaitForPreChargeResponse, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
     tcp_rxdataLen = 0; /* mark the input data as "consumed" */
     if (dinDocDec.V2G_Message.Body.PreChargeRes_isUsed) {
-        addToTrace("PreCharge aknowledge received.");
+        addToTrace(MOD_PEV, "PreCharge aknowledge received.");
         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
                   dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
         Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
         u = hardwareInterface_getInletVoltage();
         if (ABS(u-hardwareInterface_getAccuVoltage()) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) {
-            addToTrace("Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");
+            addToTrace(MOD_PEV, "Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");
             publishStatus("PreCharge done", "");
             if (isLightBulbDemo) {
                 // For light-bulb-demo, nothing to do here.
-                addToTrace("This is a light bulb demo. Do not turn-on the relay at end of precharge.");
+                addToTrace(MOD_PEV, "This is a light bulb demo. Do not turn-on the relay at end of precharge.");
             } else {
                 // In real-world-case, turn the power relay on.
                 hardwareInterface_setPowerRelayOn();
@@ -632,7 +632,7 @@ void stateFunctionWaitForPreChargeResponse(void) {
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
         } else {
             publishStatus("PreChrge ongoing", String(u) + "V");
-            addToTrace("Difference too big. Continuing PreCharge.");
+            addToTrace(MOD_PEV, "Difference too big. Continuing PreCharge.");
             pev_sendPreChargeReq();
             pev_DelayCycles=15; // wait with the next evaluation approx half a second
         }
@@ -654,12 +654,12 @@ void stateFunctionWaitForContactorsClosed(void) {
   } else {
         readyForNextState = hardwareInterface_getPowerRelayConfirmation(); /* check if the contactor is closed */
         if (readyForNextState) {
-            addToTrace("Contactors are confirmed to be closed.");
+            addToTrace(MOD_PEV, "Contactors are confirmed to be closed.");
             publishStatus("Contactors ON", "");
         }
   }
   if (readyForNextState) {
-        addToTrace("Sending PowerDeliveryReq.");
+        addToTrace(MOD_PEV, "Sending PowerDeliveryReq.");
         pev_sendPowerDeliveryReq(1); /* 1 is ON */
         pev_wasPowerDeliveryRequestedOn=1;
 		pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
@@ -672,7 +672,7 @@ void stateFunctionWaitForContactorsClosed(void) {
 
 void stateFunctionWaitForPowerDeliveryResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForPowerDeliveryRes, received:");
+    addToTrace(MOD_PEV, "In state WaitForPowerDeliveryRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -680,7 +680,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
     if (dinDocDec.V2G_Message.Body.PowerDeliveryRes_isUsed) {
         if (pev_wasPowerDeliveryRequestedOn) {
             publishStatus("PwrDelvy ON success", "");
-            addToTrace("Checkpoint700: Starting the charging loop with CurrentDemandReq");
+            addToTrace(MOD_PEV, "Checkpoint700: Starting the charging loop with CurrentDemandReq");
             setCheckpoint(700);
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
@@ -690,7 +690,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
             setCheckpoint(810);
             /* set the CP line to B */
             hardwareInterface_setStateB();
-            addToTrace("Turning off the relay and starting the WeldingDetection");
+            addToTrace(MOD_PEV, "Turning off the relay and starting the WeldingDetection");
             hardwareInterface_setPowerRelayOff();
             pev_isBulbOn = 0;
             setCheckpoint(850);
@@ -706,7 +706,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
 
 void stateFunctionWaitForCurrentDemandResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForCurrentDemandRes, received:");
+    addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     //printf("[%d] step1 %d\r\n", rtc_get_ms(), tcp_rxdataLen);
@@ -723,13 +723,13 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
                charging session on the charger, we get a CurrentDemandResponse with
                DC_EVSEStatus.EVSEStatusCode = 2 "EVSE_Shutdown" (observed on Compleo. To be tested
                on other chargers. */
-            addToTrace("Checkpoint790: Charging is terminated from charger side.");
+            addToTrace(MOD_PEV, "Checkpoint790: Charging is terminated from charger side.");
             setCheckpoint(790);
             pev_isUserStopRequestOnChargerSide = 1;
         }
         if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown) {
             /* If the charger reports an emergency, we stop the charging. */
-            addToTrace("Charger reported EmergencyShutdown.");
+            addToTrace(MOD_PEV, "Charger reported EmergencyShutdown.");
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);
             pev_sendPowerDeliveryReq(0);
@@ -740,13 +740,13 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
         if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide) {
             if (hardwareInterface_getIsAccuFull()) {
                 publishStatus("Accu full", "");
-                addToTrace("Accu is full. Sending PowerDeliveryReq Stop.");
+                addToTrace(MOD_PEV, "Accu is full. Sending PowerDeliveryReq Stop.");
             } else if (pev_isUserStopRequestOnCarSide) {
                 publishStatus("User req stop on car side", "");
-                addToTrace("User requested stop on car side. Sending PowerDeliveryReq Stop.");
+                addToTrace(MOD_PEV, "User requested stop on car side. Sending PowerDeliveryReq Stop.");
             } else {
                 publishStatus("User req stop on charger side", "");
-                addToTrace("User requested stop on charger side. Sending PowerDeliveryReq Stop.");
+                addToTrace(MOD_PEV, "User requested stop on charger side. Sending PowerDeliveryReq Stop.");
             }
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);
@@ -773,7 +773,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
           pev_cyclesLightBulbDelay+=1;
       } else {
           if (!pev_isBulbOn) {
-              addToTrace("This is a light bulb demo. Turning-on the bulb when 2s in the main charging loop.");
+              addToTrace(MOD_PEV, "This is a light bulb demo. Turning-on the bulb when 2s in the main charging loop.");
               hardwareInterface_setPowerRelayOn();
               pev_isBulbOn = 1;
           }
@@ -786,7 +786,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
 
 void stateFunctionWaitForWeldingDetectionResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForWeldingDetectionRes, received:");
+    addToTrace(MOD_PEV, "In state WaitForWeldingDetectionRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -794,7 +794,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void) {
     if (dinDocDec.V2G_Message.Body.WeldingDetectionRes_isUsed) {
         /* todo: add real welding detection here, run in welding detection loop until finished. */
         publishStatus("WldingDet done", "");
-        addToTrace("Sending SessionStopReq");
+        addToTrace(MOD_PEV, "Sending SessionStopReq");
         projectExiConnector_prepare_DinExiDocument();
         dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
         init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
@@ -811,7 +811,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void) {
 
 void stateFunctionWaitForSessionStopResponse(void) {
   if (tcp_rxdataLen>V2GTP_HEADER_SIZE) {
-    addToTrace("In state WaitForSessionStopRes, received:");
+    addToTrace(MOD_PEV, "In state WaitForSessionStopRes, received:");
     showAsHex(tcp_rxdata, tcp_rxdataLen, "");
     routeDecoderInputData();
     projectExiConnector_decode_DinExiDocument();
@@ -821,7 +821,7 @@ void stateFunctionWaitForSessionStopResponse(void) {
         // Todo: close the TCP connection here.
         // Todo: Unlock the connector lock.
         publishStatus("Stopped normally", "");
-        addToTrace("Charging is finished");
+        addToTrace(MOD_PEV, "Charging is finished");
         pev_enterState(PEV_STATE_ChargingFinished);
     }
   }
@@ -833,7 +833,7 @@ void stateFunctionWaitForSessionStopResponse(void) {
 void stateFunctionChargingFinished(void) {
   /* charging is finished. */
   /* Finally unlock the connector */
-  addToTrace("Charging successfully finished. Unlocking the connector");
+  addToTrace(MOD_PEV, "Charging successfully finished. Unlocking the connector");
   hardwareInterface_triggerConnectorUnlocking();
   pev_enterState(PEV_STATE_End);
 }
@@ -842,7 +842,7 @@ void stateFunctionSequenceTimeout(void) {
   /* Here we end, if we run into a timeout in the state machine. */
   publishStatus("ERROR Timeout", "");
   /* Initiate the safe-shutdown-sequence. */
-  addToTrace("Safe-shutdown-sequence: setting state B");
+  addToTrace(MOD_PEV, "Safe-shutdown-sequence: setting state B");
   setCheckpoint(1100);
   hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
   pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
@@ -853,7 +853,7 @@ void stateFunctionUnrecoverableError(void) {
   /* Here we end, if the EVSE reported an error code, which terminates the charging session. */
   publishStatus("ERROR reported", "");
   /* Initiate the safe-shutdown-sequence. */
-  addToTrace("Safe-shutdown-sequence: setting state B");
+  addToTrace(MOD_PEV, "Safe-shutdown-sequence: setting state B");
   setCheckpoint(1200);
   hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
   pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
@@ -867,7 +867,7 @@ void stateFunctionSafeShutDownWaitForChargerShutdown(void) {
       return;
   }
   /* Now the current flow is stopped by the charger. We can safely open the contactors: */
-  addToTrace("Safe-shutdown-sequence: opening contactors");
+  addToTrace(MOD_PEV, "Safe-shutdown-sequence: opening contactors");
   setCheckpoint(1300);
   hardwareInterface_setPowerRelayOff();
   pev_DelayCycles = 33; /* 33*30ms=1s for opening the contactors */
@@ -882,7 +882,7 @@ void stateFunctionSafeShutDownWaitForContactorsOpen(void) {
   }
   /* Finally, when we have no current and no voltage, unlock the connector */
   setCheckpoint(1400);
-  addToTrace("Safe-shutdown-sequence: unlocking the connector");
+  addToTrace(MOD_PEV, "Safe-shutdown-sequence: unlocking the connector");
   hardwareInterface_triggerConnectorUnlocking();
   /* This is the end of the safe-shutdown-sequence. */
   pev_enterState(PEV_STATE_End);
@@ -974,7 +974,7 @@ void pevStateMachine_Init(void) {
 }
 
 void pevStateMachine_ReInit(void) {
-  addToTrace("re-initializing fsmPev");
+  addToTrace(MOD_PEV, "re-initializing fsmPev");
   tcp_Disconnect();
   hardwareInterface_setStateB();
   hardwareInterface_setPowerRelayOff();

@@ -325,7 +325,7 @@ static void hwIf_handleContactorRequests(void)
       if (ContactorOnTimer<CONTACTOR_CYCLES_FOR_FULL_PWM)
       {
          hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD, CONTACT_LOCK_PERIOD); /* both full */
-         addToTrace("Turning on charge port contactors");
+         addToTrace(MOD_HWIF, "Turning on charge port contactors");
       }
       else
       {

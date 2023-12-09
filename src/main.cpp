@@ -45,7 +45,6 @@
 #include "ipv6.h"
 #include "modemFinder.h"
 #include "myHelpers.h"
-#include "myScheduler.h"
 #include "pevStateMachine.h"
 #include "qca7000.h"
 #include "tcp.h"
@@ -151,7 +150,7 @@ static void PrintTrace()
    int state = Param::GetInt(Param::opmode);
    const char* label = state < 18 ? states[state] : "Unknown/Error";
 
-   if ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state)
+   if ((Param::GetInt(Param::logging) & MOD_PEV) && ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state))
    {
       lastSttPrint = rtc_get_counter_val();
       #define WITH_TCP_VERBOSITY
@@ -161,16 +160,6 @@ static void PrintTrace()
       printf("[%u] In state %s\r\n", rtc_get_ms(), label);
       #endif
       lastState = state;
-   }
-
-   if ((rtc_get_counter_val() - lastEthPrint) >= 3)
-   {
-      lastEthPrint = rtc_get_counter_val();
-      printf("[%u] Data received: ", rtc_get_ms(), label);
-      for (uint16_t i=0; i < myethreceivebufferLen; i++) {
-         printf("%02x ", myethreceivebuffer[i]);
-      }
-      printf("\r\n");
    }
 }
 

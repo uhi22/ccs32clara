@@ -191,11 +191,11 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
           #endif
           if (etherType == 0x88E1) { /* it is a HomePlug message */
             //Serial.println("Its a HomePlug message.");
-            addToTrace("Its a HomePlug message.");
+            addToTrace(MOD_QCA, "Its a HomePlug message.");
             //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             evaluateReceivedHomeplugPacket();
           } else if (etherType == 0x86dd) { /* it is an IPv6 frame */
-           addToTrace("Its a IPv6 message.");
+           addToTrace(MOD_QCA, "Its a IPv6 message.");
             //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
             ipv6_evaluateReceivedPacket();
           } else {

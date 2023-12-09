@@ -10,8 +10,9 @@ void setCheckpoint(uint16_t newcheckpoint) {
     Param::SetInt(Param::checkpoint, newcheckpoint);
 }
 
-void addToTrace(const char * s) {
-   //printf("[%d] %s\r\n", rtc_get_ms(), s);
+void addToTrace(enum Module module, const char * s) {
+   if (Param::GetInt(Param::logging) & module)
+      printf("[%d] %s\r\n", rtc_get_ms(), s);
    // canbus_addStringToTextTransmitBuffer(mySerialPrintOutputBuffer); /* print to the CAN */
 }
 

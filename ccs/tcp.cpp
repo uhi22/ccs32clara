@@ -78,7 +78,7 @@ void evaluateTcpPacket(void)
    destinationPort = (((uint16_t)myethreceivebuffer[56])<<8) +  myethreceivebuffer[57];
    if ((sourcePort != seccTcpPort) || (destinationPort != evccPort))
    {
-      addToTrace("[TCP] wrong port.");
+      addToTrace(MOD_TCP, "[TCP] wrong port.");
       log_v("%d %d %d %d",sourcePort,seccTcpPort,destinationPort, evccPort   );
       return; /* wrong port */
    }
@@ -104,7 +104,7 @@ void evaluateTcpPacket(void)
          tcpState = TCP_STATE_ESTABLISHED;
          tcp_sendFirstAck();
          connMgr_TcpOk();
-         addToTrace("[TCP] connected.");
+         addToTrace(MOD_TCP, "[TCP] connected.");
       }
       return;
    }
@@ -112,7 +112,7 @@ void evaluateTcpPacket(void)
    if (tcpState != TCP_STATE_ESTABLISHED)
    {
       /* received something while the connection is closed. Just ignore it. */
-      addToTrace("[TCP] ignore, not connected.");
+      addToTrace(MOD_TCP, "[TCP] ignore, not connected.");
       return;
    }
    /* It can be an ACK, or a data package, or a combination of both. We treat the ACK and the data independent from each other,
@@ -127,6 +127,15 @@ void evaluateTcpPacket(void)
       connMgr_TcpOk();
       TcpAckNr = remoteSeqNr+tcp_rxdataLen; /* The ACK number of our next transmit packet is tcp_rxdataLen more than the received seq number. */
       tcp_sendAck();
+
+      if (Param::GetInt(Param::logging) & MOD_TCPTRAFFIC)
+      {
+         printf("[%u] Data received: ", rtc_get_ms());
+         for (uint16_t i=0; i < tcp_rxdataLen; i++) {
+            printf("%02x ", tcp_rxdata[i]);
+         }
+         printf("\r\n");
+      }
    }
    if (flags & TCP_FLAG_ACK)
    {
@@ -139,7 +148,7 @@ void evaluateTcpPacket(void)
 
 void tcp_connect(void)
 {
-   addToTrace("[TCP] Checkpoint301: connecting");
+   addToTrace(MOD_TCP, "[TCP] Checkpoint301: connecting");
    setCheckpoint(301);
    TcpTransmitPacket[20] = 0x02; /* options: 12 bytes, just copied from the Win10 notebook trace */
    TcpTransmitPacket[21] = 0x04;
@@ -166,7 +175,7 @@ void tcp_connect(void)
 
 void tcp_sendFirstAck(void)
 {
-   addToTrace("[TCP] sending first ACK");
+   addToTrace(MOD_TCP, "[TCP] sending first ACK");
    tcpHeaderLen = 20; /* 20 bytes normal header, no options */
    tcpPayloadLen = 0;   /* only the TCP header, no data is in the first ACK message. */
    tcp_prepareTcpHeader(TCP_FLAG_ACK);
@@ -175,7 +184,7 @@ void tcp_sendFirstAck(void)
 
 void tcp_sendAck(void)
 {
-   addToTrace("[TCP] sending ACK");
+   addToTrace(MOD_TCP, "[TCP] sending ACK");
    tcpHeaderLen = 20; /* 20 bytes normal header, no options */
    tcpPayloadLen = 0;   /* only the TCP header, no data is in the first ACK message. */
    tcp_prepareTcpHeader(TCP_FLAG_ACK);
@@ -199,7 +208,7 @@ void tcp_transmit(void)
       }
       else
       {
-         addToTrace("Error: tcpPayload and header do not fit into TcpTransmitPacket.");
+         addToTrace(MOD_TCP, "Error: tcpPayload and header do not fit into TcpTransmitPacket.");
       }
    }
 }
@@ -209,7 +218,7 @@ void tcp_testSendData(void)
 {
    if (tcpState == TCP_STATE_ESTABLISHED)
    {
-      addToTrace("[TCP] sending data");
+      addToTrace(MOD_TCP, "[TCP] sending data");
       tcpHeaderLen = 20; /* 20 bytes normal header, no options */
       tcpPayloadLen = 3;   /* demo length */
       TcpTransmitPacket[tcpHeaderLen] = 0x55; /* demo data */

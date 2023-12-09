@@ -67,7 +67,7 @@ void evaluateUdpPayload(void) {
                                       udpPayload[7];
                     if (v2gptPayloadLen == 20) {
                             //# 20 is the only valid length for a SDP response.
-                            addToTrace("[SDP] Checkpoint203: Received SDP response");
+                            addToTrace(MOD_IPV6, "[SDP] Checkpoint203: Received SDP response");
                             setCheckpoint(203);
                             //# at byte 8 of the UDP payload starts the IPv6 address of the charger.
                             for (i=0; i<16; i++) {
@@ -78,13 +78,13 @@ void evaluateUdpPayload(void) {
                             /* in case we did not yet found out the chargers MAC, because we jumped-over the SLAC,
                                we extract the chargers MAC from the SDP response. */
                             if ((evseMac[0]==0) && (evseMac[1]==0)) {
-                                addToTrace("[SDP] Taking evseMac from SDP response because not yet known.");
+                                addToTrace(MOD_IPV6, "[SDP] Taking evseMac from SDP response because not yet known.");
                                 for (i=0; i<6; i++) {
                                     evseMac[i] = myethreceivebuffer[6+i]; // source MAC starts at offset 6
                                 }
                             }
                             publishStatus("SDP finished", "");
-                            addToTrace("[SDP] Now we know the chargers IP.");
+                            addToTrace(MOD_IPV6, "[SDP] Now we know the chargers IP.");
                             connMgr_SdpOk();
                     }
                 } else {
@@ -104,7 +104,7 @@ void ipv6_evaluateReceivedPacket(void) {
       memcpy(sourceIp, &myethreceivebuffer[22], 16);
       nextheader = myethreceivebuffer[20];
       if (nextheader == 0x11) { //  it is an UDP frame
-          addToTrace("Its a UDP.");
+          addToTrace(MOD_IPV6, "Its a UDP.");
           sourceport = myethreceivebuffer[54] * 256 + myethreceivebuffer[55];
           destinationport = myethreceivebuffer[56] * 256 + myethreceivebuffer[57];
           udplen = myethreceivebuffer[58] * 256 + myethreceivebuffer[59];
@@ -112,7 +112,7 @@ void ipv6_evaluateReceivedPacket(void) {
           //# udplen is including 8 bytes header at the begin
           if (udplen>UDP_PAYLOAD_LEN) {
               /* ignore long UDP */
-              addToTrace("Ignoring too long UDP");
+              addToTrace(MOD_IPV6, "Ignoring too long UDP");
               return;
           }
           if (udplen>8) {
@@ -126,13 +126,13 @@ void ipv6_evaluateReceivedPacket(void) {
           }
       }
       if (nextheader == 0x06) { // # it is an TCP frame
-        addToTrace("TCP received");
+        addToTrace(MOD_IPV6, "TCP received");
         sanityCheck("before evaluateTcpPacket");
         evaluateTcpPacket();
         sanityCheck("before evaluateTcpPacket");
       }
       if (nextheader == NEXT_ICMPv6) { // it is an ICMPv6 (NeighborSolicitation etc) frame
-        addToTrace("ICMPv6 received");
+        addToTrace(MOD_IPV6, "ICMPv6 received");
         icmpv6type = myethreceivebuffer[54];
         if (icmpv6type == 0x87) { /* Neighbor Solicitation */
             //addToTrace("[PEV] Neighbor Solicitation received");
@@ -149,7 +149,7 @@ void ipv6_initiateSdpRequest(void) {
   //# send a SECC Discovery Request.
   //# The payload is just two bytes: 10 00.
   //# First step is, to pack this payload into a V2GTP frame.
-  addToTrace("[SDP] initiating SDP request");
+  addToTrace(MOD_IPV6, "[SDP] initiating SDP request");
   v2gtpFrameLen = 8 + 2; // # 8 byte header plus 2 bytes payload
   v2gtpFrame[0] = 0x01; // # version
   v2gtpFrame[1] = 0xFE; // # version inverted
@@ -338,7 +338,7 @@ void evaluateNeighborSolicitation(void) {
   myethtransmitbuffer[56] = checksum >> 8;
   myethtransmitbuffer[57] = checksum & 0xFF;
   myethtransmitbufferLen = 86; /* Length of the NeighborAdvertisement */
-  addToTrace("transmitting Neighbor Advertisement");
+  addToTrace(MOD_IPV6, "transmitting Neighbor Advertisement");
   myEthTransmit();
 }
 

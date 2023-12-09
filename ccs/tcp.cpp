@@ -100,7 +100,7 @@ void evaluateTcpPacket(void)
       {
          TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
          TcpAckNr = remoteSeqNr+1; /* The ACK number of our next transmit packet is one more than the received seq number. */
-         checkpointNumber = 303;
+         setCheckpoint(303);
          tcpState = TCP_STATE_ESTABLISHED;
          tcp_sendFirstAck();
          connMgr_TcpOk();
@@ -140,7 +140,7 @@ void evaluateTcpPacket(void)
 void tcp_connect(void)
 {
    addToTrace("[TCP] Checkpoint301: connecting");
-   checkpointNumber = 301;
+   setCheckpoint(301);
    TcpTransmitPacket[20] = 0x02; /* options: 12 bytes, just copied from the Win10 notebook trace */
    TcpTransmitPacket[21] = 0x04;
    TcpTransmitPacket[22] = 0x05;

@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.17.B
+#define VER 0.19.B
 
 /* Entries must be ordered as follows:
    1. Saveable parameters (id != 0)
@@ -47,7 +47,7 @@
    3. Display values
  */
 //Next param id (increase when adding new parameter!): 15
-//Next value Id: 2015
+//Next value Id: 2016
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
@@ -77,6 +77,7 @@
     VALUE_ENTRY(dcsw1dc,     "%",    2013 ) \
     VALUE_ENTRY(lockfb,      "dig",  2011 ) \
     VALUE_ENTRY(lockstt,     LOCK,   2014 ) \
+    VALUE_ENTRY(checkpoint,  "dig",  2015 ) \
     VALUE_ENTRY(cpuload,     "%",    2094 )
 
 

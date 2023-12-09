@@ -63,6 +63,11 @@ static Stm32Scheduler* scheduler;
 static CanHardware* can;
 static CanMap* canMap;
 
+void setCheckpoint(uint16_t newcheckpoint) {
+    checkpointNumber = newcheckpoint;
+    Param::SetInt(Param::checkpoint, newcheckpoint);
+}
+
 //sample 100ms task
 static void Ms100Task(void)
 {

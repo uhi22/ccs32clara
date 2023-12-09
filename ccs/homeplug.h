@@ -20,6 +20,7 @@ extern uint16_t getEtherType(uint8_t *messagebufferbytearray);
 extern void evaluateReceivedHomeplugPacket(void);
 extern void runSlacSequencer(void);
 extern void runSdpStateMachine(void);
+extern void setCheckpoint(uint16_t newcheckpoint);
 
 #ifdef __cplusplus
 }

@@ -288,7 +288,7 @@ void stateFunctionConnected(void) {
   // We have a freshly established TCP channel. We start the V2GTP/EXI communication now.
   // We just use the initial request message from the Ioniq. It contains one entry: DIN.
   addToTrace("Checkpoint400: Sending the initial SupportedApplicationProtocolReq");
-  checkpointNumber = 400;
+  setCheckpoint(400);
   addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
   hardwareInterface_resetSimulation();
   pev_enterState(PEV_STATE_WaitForSupportedApplicationProtocolResponse);
@@ -311,7 +311,7 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void) {
                       aphsDoc.supportedAppProtocolRes.SchemaID);
         publishStatus("Schema negotiated", "");
         addToTrace("Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
-        checkpointNumber = 500;
+        setCheckpoint(500);
         projectExiConnector_prepare_DinExiDocument();
         dinDocEnc.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
         init_dinSessionSetupReqType(&dinDocEnc.V2G_Message.Body.SessionSetupReq);
@@ -357,14 +357,14 @@ void stateFunctionWaitForSessionSetupResponse(void) {
       memcpy(sessionId, dinDocDec.V2G_Message.Header.SessionID.bytes, SESSIONID_LEN);
       sessionIdLen = dinDocDec.V2G_Message.Header.SessionID.bytesLen; /* store the received SessionID, we will need it later. */
       addToTrace("Checkpoint506: The Evse decided for SessionId");
-      checkpointNumber = 506;
+      setCheckpoint(506);
       showAsHex(sessionId, sessionIdLen, "");
       publishStatus("Session established", "");
       addToTrace("Will send ServiceDiscoveryReq");
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq_isUsed = 1u;
       init_dinServiceDiscoveryReqType(&dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq);
-      checkpointNumber = 510;
+      setCheckpoint(510);
       encodeAndTransmit();
       pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
     }
@@ -391,7 +391,7 @@ void stateFunctionWaitForServiceDiscoveryResponse(void) {
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedPaymentOption = dinpaymentOptionType_ExternalPayment; /* not paying per car */
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
       dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */
-      checkpointNumber = 520;
+      setCheckpoint(520);
       encodeAndTransmit();
       pev_enterState(PEV_STATE_WaitForServicePaymentSelectionResponse);
     }
@@ -411,7 +411,7 @@ void stateFunctionWaitForServicePaymentSelectionResponse(void) {
     if (dinDocDec.V2G_Message.Body.ServicePaymentSelectionRes_isUsed) {
       publishStatus("ServPaySel done", "");
       addToTrace("Checkpoint530: Will send ContractAuthenticationReq");
-      checkpointNumber = 530;
+      setCheckpoint(530);
       projectExiConnector_prepare_DinExiDocument();
       dinDocEnc.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
       init_dinContractAuthenticationReqType(&dinDocEnc.V2G_Message.Body.ContractAuthenticationReq);
@@ -443,7 +443,7 @@ void stateFunctionWaitForContractAuthenticationResponse(void) {
         if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished) {
             publishStatus("Auth finished", "");
             addToTrace("Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
-            checkpointNumber = 540;
+            setCheckpoint(540);
             pev_sendChargeParameterDiscoveryReq();
             pev_numberOfChargeParameterDiscoveryReq = 1; // first message
             pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
@@ -495,7 +495,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
             Param::SetInt(Param::evsemaxvtg, evseMaxVoltage);
             Param::SetInt(Param::evsemaxcur, evseMaxCurrent);
 
-            checkpointNumber = 550;
+            setCheckpoint(550);
             // pull the CP line to state C here:
             hardwareInterface_setStateC();
             addToTrace("Checkpoint555: Locking the connector.");
@@ -530,7 +530,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void) {
 void stateFunctionWaitForConnectorLock(void) {
   if (hardwareInterface_isConnectorLocked()) {
     addToTrace("Checkpoint560: Connector Lock confirmed. Will send CableCheckReq.");
-    checkpointNumber = 560;
+    setCheckpoint(560);
     pev_sendCableCheckReq();
     pev_numberOfCableCheckReq = 1; // This is the first request.
     pev_enterState(PEV_STATE_WaitForCableCheckResponse);
@@ -565,7 +565,7 @@ void stateFunctionWaitForCableCheckResponse(void) {
             publishStatus("CbleChck done", "");
             addToTrace("The EVSE says that the CableCheck is finished and ok.");
             addToTrace("Will send PreChargeReq");
-            checkpointNumber = 570;
+            setCheckpoint(570);
             pev_sendPreChargeReq();
             connMgr_ApplOk(31); /* PreChargeResponse may need longer. Inform the connection manager to be patient.
                                 (This is a takeover from https://github.com/uhi22/pyPLC/commit/08af8306c60d57c4c33221a0dbb25919371197f9 ) */
@@ -627,7 +627,7 @@ void stateFunctionWaitForPreChargeResponse(void) {
                 hardwareInterface_setPowerRelayOn();
             }
             pev_wasPowerDeliveryRequestedOn=1;
-            checkpointNumber = 600;
+            setCheckpoint(600);
             pev_sendPowerDeliveryReq(1); /* 1 is ON */
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
         } else {
@@ -681,19 +681,19 @@ void stateFunctionWaitForPowerDeliveryResponse(void) {
         if (pev_wasPowerDeliveryRequestedOn) {
             publishStatus("PwrDelvy ON success", "");
             addToTrace("Checkpoint700: Starting the charging loop with CurrentDemandReq");
-            checkpointNumber = 700;
+            setCheckpoint(700);
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
         } else {
             /* We requested "OFF". So we turn-off the Relay and continue with the Welding detection. */
             publishStatus("PwrDelvry OFF success", "");
-            checkpointNumber = 810;
+            setCheckpoint(810);
             /* set the CP line to B */
             hardwareInterface_setStateB();
             addToTrace("Turning off the relay and starting the WeldingDetection");
             hardwareInterface_setPowerRelayOff();
             pev_isBulbOn = 0;
-            checkpointNumber = 850;
+            setCheckpoint(850);
             pev_sendWeldingDetectionReq();
             pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
         }
@@ -724,14 +724,14 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
                DC_EVSEStatus.EVSEStatusCode = 2 "EVSE_Shutdown" (observed on Compleo. To be tested
                on other chargers. */
             addToTrace("Checkpoint790: Charging is terminated from charger side.");
-            checkpointNumber = 790;
+            setCheckpoint(790);
             pev_isUserStopRequestOnChargerSide = 1;
         }
         if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown) {
             /* If the charger reports an emergency, we stop the charging. */
             addToTrace("Charger reported EmergencyShutdown.");
             pev_wasPowerDeliveryRequestedOn=0;
-            checkpointNumber = 800;
+            setCheckpoint(800);
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
         }
@@ -749,7 +749,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
                 addToTrace("User requested stop on charger side. Sending PowerDeliveryReq Stop.");
             }
             pev_wasPowerDeliveryRequestedOn=0;
-            checkpointNumber = 800;
+            setCheckpoint(800);
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
         } else {
@@ -762,7 +762,7 @@ void stateFunctionWaitForCurrentDemandResponse(void) {
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
             Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
             Param::SetInt(Param::evsecur, evsePresentCurrent);
-            checkpointNumber = 710;
+            setCheckpoint(710);
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
         }
@@ -799,7 +799,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void) {
         dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
         init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
         /* no other fields are manatory */
-        checkpointNumber = 900;
+        setCheckpoint(900);
         encodeAndTransmit();
         pev_enterState(PEV_STATE_WaitForSessionStopResponse);
     }
@@ -843,7 +843,7 @@ void stateFunctionSequenceTimeout(void) {
   publishStatus("ERROR Timeout", "");
   /* Initiate the safe-shutdown-sequence. */
   addToTrace("Safe-shutdown-sequence: setting state B");
-  checkpointNumber = 1100;
+  setCheckpoint(1100);
   hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
   pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
   pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
@@ -854,7 +854,7 @@ void stateFunctionUnrecoverableError(void) {
   publishStatus("ERROR reported", "");
   /* Initiate the safe-shutdown-sequence. */
   addToTrace("Safe-shutdown-sequence: setting state B");
-  checkpointNumber = 1200;
+  setCheckpoint(1200);
   hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
   pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
   pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
@@ -868,7 +868,7 @@ void stateFunctionSafeShutDownWaitForChargerShutdown(void) {
   }
   /* Now the current flow is stopped by the charger. We can safely open the contactors: */
   addToTrace("Safe-shutdown-sequence: opening contactors");
-  checkpointNumber = 1300;
+  setCheckpoint(1300);
   hardwareInterface_setPowerRelayOff();
   pev_DelayCycles = 33; /* 33*30ms=1s for opening the contactors */
   pev_enterState(PEV_STATE_SafeShutDownWaitForContactorsOpen);
@@ -881,7 +881,7 @@ void stateFunctionSafeShutDownWaitForContactorsOpen(void) {
       return;
   }
   /* Finally, when we have no current and no voltage, unlock the connector */
-  checkpointNumber = 1400;
+  setCheckpoint(1400);
   addToTrace("Safe-shutdown-sequence: unlocking the connector");
   hardwareInterface_triggerConnectorUnlocking();
   /* This is the end of the safe-shutdown-sequence. */

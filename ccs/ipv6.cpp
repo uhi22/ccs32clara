@@ -68,7 +68,7 @@ void evaluateUdpPayload(void) {
                     if (v2gptPayloadLen == 20) {
                             //# 20 is the only valid length for a SDP response.
                             addToTrace("[SDP] Checkpoint203: Received SDP response");
-                            checkpointNumber = 203;
+                            setCheckpoint(203);
                             //# at byte 8 of the UDP payload starts the IPv6 address of the charger.
                             for (i=0; i<16; i++) {
                                 SeccIp[i] = udpPayload[8+i]; // 16 bytes IP address of the charger

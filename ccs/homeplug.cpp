@@ -188,7 +188,7 @@ void composeSlacParamReq(void) {
 void evaluateSlacParamCnf(void) {
   /* As PEV, we receive the first response from the charger. */
   addToTrace("[PEVSLAC] Checkpoint102: received SLAC_PARAM.CNF");
-  checkpointNumber = 102;
+  setCheckpoint(102);
   if (iAmPev) {
     if (pevSequenceState==STATE_WAITING_FOR_SLAC_PARAM_CNF) { //  we were waiting for the SlacParamCnf
       pevSequenceDelayCycles = 4; // original Ioniq is waiting 200ms
@@ -270,7 +270,7 @@ void evaluateAttenCharInd(void) {
             //addToTrace("[PEVSLAC] number of sounds reported by the EVSE (should be 10): " + str(AttenCharIndNumberOfSounds))
             composeAttenCharRsp();
             addToTrace("[PEVSLAC] transmitting ATTEN_CHAR.RSP...");
-            checkpointNumber = 140;
+            setCheckpoint(140);
             myEthTransmit();
             pevSequenceState=STATE_ATTEN_CHAR_IND_RECEIVED; // enter next state. Will be handled in the cyclic runSlacSequencer
 		    }
@@ -351,7 +351,7 @@ void evaluateSlacMatchCnf(void) {
             // use the extracted NMK and NID to set the key in the adaptor:
             composeSetKey();
             addToTrace("[PEVSLAC] Checkpoint170: transmitting CM_SET_KEY.REQ");
-            checkpointNumber = 170;
+            setCheckpoint(170);
             publishStatus("SLAC", "set key");
             myEthTransmit();
             if (pevSequenceState==STATE_WAITING_FOR_SLAC_MATCH_CNF) { // we were waiting for finishing the SLAC_MATCH.CNF and SET_KEY.REQ
@@ -602,7 +602,7 @@ void runSlacSequencer(void) {
     if (pevSequenceState==STATE_READY_FOR_SLAC) {
             publishStatus("Starting SLAC", "");
             addToTrace("[PEVSLAC] Checkpoint100: Sending SLAC_PARAM.REQ...");
-            checkpointNumber = 100;
+            setCheckpoint(100);
             composeSlacParamReq();
             myEthTransmit();
             slac_enterState(STATE_WAITING_FOR_SLAC_PARAM_CNF);
@@ -659,7 +659,7 @@ void runSlacSequencer(void) {
                 remainingNumberOfSounds-=1;
                 composeNmbcSoundInd();
                 addToTrace("[PEVSLAC] transmitting MNBC_SOUND.IND..."); // original from ioniq is 40ms after the last START_ATTEN_CHAR.IND
-                checkpointNumber = 104;
+                setCheckpoint(104);
                 myEthTransmit();
                 if (remainingNumberOfSounds==0) {
                     slac_enterState(STATE_WAIT_FOR_ATTEN_CHAR_IND); // move fast to the next state, so that a fast response is catched in the correct state
@@ -693,7 +693,7 @@ void runSlacSequencer(void) {
             composeSlacMatchReq();
             publishStatus("SLAC", "match req");
             addToTrace("[PEVSLAC] Checkpoint150: transmitting SLAC_MATCH.REQ...");
-            checkpointNumber = 150;
+            setCheckpoint(150);
             myEthTransmit();
             slac_enterState(STATE_WAITING_FOR_SLAC_MATCH_CNF);
             return;
@@ -776,7 +776,7 @@ void runSdpStateMachine(void) {
       // Next step is to discover the chargers communication controller (SECC) using discovery protocol (SDP).
       publishStatus("SDP ongoing", "");
       addToTrace("[SDP] Checkpoint200: Starting SDP.");
-      checkpointNumber = 200;
+      setCheckpoint(200);
       pevSequenceDelayCycles=0;
       SdpRepetitionCounter = 50; // prepare the number of retries for the SDP. The more the better.
       sdp_state = 1;

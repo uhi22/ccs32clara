@@ -51,6 +51,7 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 
 
 OBJS     = $(patsubst %.o,obj/%.o, $(OBJSL))
+DEPENDS := $(patsubst %.o,obj/%.d, $(OBJSL))
 vpath %.c src/ libopeninv/src exi/ ccs/
 vpath %.cpp src/ libopeninv/src exi/ ccs/
 
@@ -104,13 +105,15 @@ $(BINARY): $(OBJS) $(LDSCRIPT)
 	@printf "  LD      $(subst $(shell pwd)/,,$(@))\n"
 	$(Q)$(LD) $(LDFLAGS) -o $(BINARY) $(OBJS) -lopencm3_stm32f1
 
+-include $(DEPENDS)
+
 $(OUT_DIR)/%.o: %.c Makefile
 	@printf "  CC      $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(CC) $(CFLAGS) -o $@ -c $<
+	$(Q)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
 
 $(OUT_DIR)/%.o: %.cpp Makefile
 	@printf "  CPP     $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(CPP) $(CPPFLAGS) -o $@ -c $<
+	$(Q)$(CPP) $(CPPFLAGS) -MMD -MP -o $@ -c $<
 
 clean:
 	@printf "  CLEAN   ${OUT_DIR}\n"

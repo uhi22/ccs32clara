@@ -75,6 +75,7 @@ static void Ms100Task(void)
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
+   temperatures_calculateTemperatures();
 
    switch (Param::GetInt(Param::locktest))
    {

@@ -16,7 +16,7 @@
 #define ANA_IN_LIST \
    ANA_IN_ENTRY(pp,    GPIOA, 0) \
    ANA_IN_ENTRY(tempi, GPIOB, 2) /*internal temp sensor*/ \
-   ANA_IN_ENTRY(temp1, GPIOB, 1) \
+   ANA_IN_ENTRY(temp1, GPIOC, 0) \
    ANA_IN_ENTRY(temp2, GPIOC, 1) \
    ANA_IN_ENTRY(temp3, GPIOC, 2) \
    ANA_IN_ENTRY(udc,   GPIOC, 3) \

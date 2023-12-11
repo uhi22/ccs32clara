@@ -269,7 +269,7 @@ void pev_sendCurrentDemandReq(void)
    tcurr.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
    tcurr.Unit = dinunitSymbolType_A;
    tcurr.Unit_isUsed = 1;
-   tcurr.Value = hardwareInterface_getChargingTargetCurrent(); /* The charging target current. Scaling is 1A. */
+   tcurr.Value = pev_wasPowerDeliveryRequestedOn ? hardwareInterface_getChargingTargetCurrent() : 0; /* The charging target current. Scaling is 1A. */
 #undef tcurr
    dinDocEnc.V2G_Message.Body.CurrentDemandReq.ChargingComplete = 0; /* boolean. Todo: Do we need to take this from command line? Or is it fine
     that the PEV just sends a PowerDeliveryReq with STOP, if it decides to stop the charging? */
@@ -623,6 +623,7 @@ void stateFunctionWaitForCableCheckResponse(void)
          rc = dinDocDec.V2G_Message.Body.CableCheckRes.ResponseCode;
          proc = dinDocDec.V2G_Message.Body.CableCheckRes.EVSEProcessing;
          Param::SetInt(Param::evsevtg, 0);
+         pev_isUserStopRequestOnCarSide = 0;
          //addToTrace("The CableCheck result is " + String(rc) + " " + String(proc));
          // We have two cases here:
          // 1) The charger says "cable check is finished and cable ok", by setting ResponseCode=OK and EVSEProcessing=Finished.
@@ -807,7 +808,7 @@ void stateFunctionWaitForCurrentDemandResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
+      //addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
       showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       //printf("[%d] step1 %d\r\n", rtc_get_ms(), tcp_rxdataLen);
@@ -839,38 +840,49 @@ void stateFunctionWaitForCurrentDemandResponse(void)
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
          }
-         /* If the pushbutton is pressed longer than 0.5s, we interpret this as charge stop request. */
-         pev_isUserStopRequestOnCarSide = pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+         /* If the pushbutton is pressed longer than 0.5s, we interpret this as charge stop request. If pressed, remember */
+         pev_isUserStopRequestOnCarSide |= pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
+                              dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
+         uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Value,
+                                       dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Multiplier);
+
          if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
          {
             if (hardwareInterface_getIsAccuFull())
             {
                publishStatus("Accu full", "");
-               addToTrace(MOD_PEV, "Accu is full. Sending PowerDeliveryReq Stop.");
+               addToTrace(MOD_PEV, "Accu is full. Waiting for current to drop below 1A");
             }
             else if (pev_isUserStopRequestOnCarSide)
             {
                publishStatus("User req stop on car side", "");
-               addToTrace(MOD_PEV, "User requested stop on car side. Sending PowerDeliveryReq Stop.");
+               addToTrace(MOD_PEV, "User requested stop on car side. Waiting for current to drop below 1A");
             }
             else
             {
                publishStatus("User req stop on charger side", "");
-               addToTrace(MOD_PEV, "User requested stop on charger side. Sending PowerDeliveryReq Stop.");
+               addToTrace(MOD_PEV, "User requested stop on charger side. Waiting for current to drop below 1A");
             }
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);
-            pev_sendPowerDeliveryReq(0);
-            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+
+            if (evsePresentCurrent < 1)
+            {
+               addToTrace(MOD_PEV, "Current dropped to 0. Sending PowerDeliveryReq Stop.");
+               pev_sendPowerDeliveryReq(0);
+               pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+            }
+            else
+            {
+               pev_sendCurrentDemandReq();
+               pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
+            }
          }
          else
          {
             /* continue charging loop */
             hardwareInterface_simulateCharging();
-            EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
-                                 dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
-            uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Value,
-                                          dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Multiplier);
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
             Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
             Param::SetInt(Param::evsecur, evsePresentCurrent);

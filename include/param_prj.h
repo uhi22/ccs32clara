@@ -53,14 +53,14 @@
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
     PARAM_ENTRY(CAT_HARDWARE,economizer,  "%",       0,      100,    100,    7   ) \
     PARAM_ENTRY(CAT_HARDWARE,inletvtgsrc, IVSRC,     0,      2,      0,      8   ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockpwm,     "dig",    -100,    100,    0,      14  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockpwm,     "dig",    -100,    100,    30,     14  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockopentm,  "ms",      0,      10000,  1000,   13  ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   1800,   11  ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   2500,   12  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   0,      11  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   0,      12  ) \
     TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
-    TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      500,    0,      5   ) \
-    TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      500,    222,    6   ) \
+    TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      100,    0,      5   ) \
+    TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      1000,   1000,   6   ) \
     TESTP_ENTRY(CAT_TEST,    locktest,    LOCK,      0,      2,      0,      9   ) \
     TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      511,    0,      15  ) \
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \

@@ -613,7 +613,7 @@ void stateFunctionWaitForCableCheckResponse(void)
    }
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForCableCheckResponse, received:");
+      //addToTrace(MOD_PEV, "In state WaitForCableCheckResponse, received:");
       showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
@@ -622,9 +622,7 @@ void stateFunctionWaitForCableCheckResponse(void)
       {
          rc = dinDocDec.V2G_Message.Body.CableCheckRes.ResponseCode;
          proc = dinDocDec.V2G_Message.Body.CableCheckRes.EVSEProcessing;
-         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
-                              dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
-         Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+         Param::SetInt(Param::evsevtg, 0);
          //addToTrace("The CableCheck result is " + String(rc) + " " + String(proc));
          // We have two cases here:
          // 1) The charger says "cable check is finished and cable ok", by setting ResponseCode=OK and EVSEProcessing=Finished.
@@ -683,7 +681,7 @@ void stateFunctionWaitForPreChargeResponse(void)
    }
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForPreChargeResponse, received:");
+      //addToTrace(MOD_PEV, "In state WaitForPreChargeResponse, received:");
       showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
@@ -768,7 +766,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForPowerDeliveryRes, received:");
+      //addToTrace(MOD_PEV, "In state WaitForPowerDeliveryRes, received:");
       showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();

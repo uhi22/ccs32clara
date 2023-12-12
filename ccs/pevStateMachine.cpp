@@ -693,6 +693,9 @@ void stateFunctionWaitForPreChargeResponse(void)
                               dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
          Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
          u = hardwareInterface_getInletVoltage();
+         if (Param::GetInt(Param::logging) & MOD_PEV) {
+             printf("Inlet %dV, accu %dV\r\n", u, hardwareInterface_getAccuVoltage());
+         }
          if (ABS(u-hardwareInterface_getAccuVoltage()) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE)
          {
             addToTrace(MOD_PEV, "Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");

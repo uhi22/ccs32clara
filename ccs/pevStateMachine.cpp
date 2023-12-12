@@ -18,9 +18,10 @@
 #define PEV_STATE_WaitForContactorsClosed 12
 #define PEV_STATE_WaitForPowerDeliveryResponse 13
 #define PEV_STATE_WaitForCurrentDemandResponse 14
-#define PEV_STATE_WaitForWeldingDetectionResponse 15
-#define PEV_STATE_WaitForSessionStopResponse 16
-#define PEV_STATE_ChargingFinished 17
+#define PEV_STATE_WaitForCurrentDownAfterStateB 15
+#define PEV_STATE_WaitForWeldingDetectionResponse 16
+#define PEV_STATE_WaitForSessionStopResponse 17
+//#define PEV_STATE_ChargingFinished 18
 #define PEV_STATE_UnrecoverableError 88
 #define PEV_STATE_SequenceTimeout 99
 #define PEV_STATE_SafeShutDownWaitForChargerShutdown 111
@@ -46,6 +47,7 @@ uint8_t pev_isBulbOn;
 uint16_t pev_cyclesLightBulbDelay;
 uint16_t EVSEPresentVoltage;
 uint16_t EVSEMinimumVoltage;
+uint8_t numberOfWeldingDetectionRounds;
 
 /***local function prototypes *****************************************/
 
@@ -791,17 +793,18 @@ void stateFunctionWaitForPowerDeliveryResponse(void)
          }
          else
          {
-            /* We requested "OFF". So we turn-off the Relay and continue with the Welding detection. */
+            /* We requested "OFF". This is while the charging session is ending.
+            When we received this response, the charger had up to 1.5s time to ramp down
+            the current. On Compleo, there are really 1.5s until we get this response.
+            See https://github.com/uhi22/pyPLC#detailled-investigation-about-the-normal-end-of-the-charging-session */
             publishStatus("PwrDelvry OFF success", "");
             setCheckpoint(810);
             /* set the CP line to B */
-            hardwareInterface_setStateB();
-            addToTrace(MOD_PEV, "Turning off the relay and starting the WeldingDetection");
-            hardwareInterface_setPowerRelayOff();
-            pev_isBulbOn = 0;
-            setCheckpoint(850);
-            pev_sendWeldingDetectionReq();
-            pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
+            hardwareInterface_setStateB(); /* ISO Figure 107: The PEV shall set stateB after receiving PowerDeliveryRes and before WeldingDetectionReq */
+            addToTrace(MOD_PEV, "Giving the charger some time to detect StateB and ramp down the current.");
+            pev_DelayCycles = 10; /* 15*30ms=450ms for charger shutdown. Should be more than sufficient, because somewhere was a requirement with 20ms between StateB until current is down. The Ioniq uses 300ms. */
+            pev_enterState(PEV_STATE_WaitForCurrentDownAfterStateB); /* We give the charger some time to detect the StateB and fully ramp down
+                                                             the current */
          }
       }
    }
@@ -809,6 +812,28 @@ void stateFunctionWaitForPowerDeliveryResponse(void)
    {
       pev_enterState(PEV_STATE_SequenceTimeout);
    }
+}
+
+void stateFunctionWaitForCurrentDownAfterStateB(void) {
+    /* During normal end of the charging session, we have set the StateB, and
+       want to give the charger some time to ramp down the current completely,
+       before we are opening the contactors. */
+    if (pev_DelayCycles>0) {
+        /* just waiting */
+        pev_DelayCycles--;
+    } else {
+        /* Time is over. Current flow should have been stopped by the charger. Let's open the contactors and send a weldingDetectionRequest, to find out whether the voltage drops. */
+        addToTrace(MOD_PEV, "Turning off the relay and starting the WeldingDetection");
+        hardwareInterface_setPowerRelayOff();
+        pev_isBulbOn = 0;
+        setCheckpoint(850);
+        /* We do not need a waiting time before sending the weldingDetectionRequest, because the weldingDetection
+        will be anyway in a loop. So the first round will see a high voltage (because the contactor mechanically needed
+        some time to open, but this is no problem, the next samples will see decreasing voltage in normal case. */
+        numberOfWeldingDetectionRounds = 0;
+        pev_sendWeldingDetectionReq();
+        pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
+    }
 }
 
 void stateFunctionWaitForCurrentDemandResponse(void)
@@ -868,7 +893,8 @@ void stateFunctionWaitForCurrentDemandResponse(void)
             }
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);
-            pev_sendPowerDeliveryReq(0);
+            pev_sendPowerDeliveryReq(0); /* we can immediately send the powerDeliveryStopRequest, while we are under full current. 
+                                            sequence explained here: https://github.com/uhi22/pyPLC#detailled-investigation-about-the-normal-end-of-the-charging-session */
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
          }
          else
@@ -910,6 +936,9 @@ void stateFunctionWaitForCurrentDemandResponse(void)
    }
 }
 
+#define MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION 40 /* 40V is considered to be sufficiently low to not harm. The Ioniq already finishes at 65V. */
+#define MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS 10 /* The process time is specified with 1.5s. Ten loops should be fine. */
+
 void stateFunctionWaitForWeldingDetectionResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
@@ -921,16 +950,43 @@ void stateFunctionWaitForWeldingDetectionResponse(void)
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
       if (dinDocDec.V2G_Message.Body.WeldingDetectionRes_isUsed)
       {
-         /* todo: add real welding detection here, run in welding detection loop until finished. */
-         publishStatus("WldingDet done", "");
-         addToTrace(MOD_PEV, "Sending SessionStopReq");
-         projectExiConnector_prepare_DinExiDocument();
-         dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
-         init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
-         /* no other fields are manatory */
-         setCheckpoint(900);
-         encodeAndTransmit();
-         pev_enterState(PEV_STATE_WaitForSessionStopResponse);
+        /* The charger measured the voltage on the cable, and gives us the value. In the first
+           round will show a quite high voltage, because the contactors are just opening. We
+           need to repeat the requests, until the voltage is at a non-dangerous level. */
+         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage.Value,
+                              dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage.Multiplier);
+         Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+         if (Param::GetInt(Param::logging) & MOD_PEV) {
+             printf("EVSEPresentVoltage %dV\r\n", EVSEPresentVoltage);
+         }
+         if (EVSEPresentVoltage<MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION) {
+            /* voltage is low, weldingDetection finished successfully. */
+            publishStatus("WldingDet done", "");
+            addToTrace(MOD_PEV, "WeldingDetection successfully finished. Sending SessionStopReq");
+            projectExiConnector_prepare_DinExiDocument();
+            dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
+            init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
+            /* no other fields are manatory */
+            setCheckpoint(900);
+            encodeAndTransmit();
+            addToTrace(MOD_PEV, "Unlocking the connector");
+            /* unlock the connectore here. Better here than later, to avoid endless locked connector in case of broken SessionStopResponse. */
+            hardwareInterface_triggerConnectorUnlocking();
+            pev_enterState(PEV_STATE_WaitForSessionStopResponse);
+         } else {
+             /* The voltage on the cable is still high, so we make another round with the WeldingDetection. */
+             if (numberOfWeldingDetectionRounds<MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS) {
+                 /* max number of rounds not yet reached */
+                 addToTrace(MOD_PEV, "WeldingDetection: voltage still too high. Sending again WeldingDetectionReq.");
+                 pev_sendWeldingDetectionReq();
+                 pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
+             } else {
+                 /* even after multiple welding detection requests/responses, the voltage did not fall as expected.
+                 This may be due to two hanging/welded contactors or an issue of the charging station. We let the state machine
+                 run into timeout and safe shutdown sequence, this will at least indicate the red light to the user. */
+                 addToTrace(MOD_PEV, "WeldingDetection: ERROR: contactors probably welded. Did not reach low voltage. Entering safe shutdown.");
+             }
+         }
       }
    }
    if (pev_isTooLong())
@@ -952,10 +1008,9 @@ void stateFunctionWaitForSessionStopResponse(void)
       {
          // req -508
          // Todo: close the TCP connection here.
-         // Todo: Unlock the connector lock.
          publishStatus("Stopped normally", "");
          addToTrace(MOD_PEV, "Charging is finished");
-         pev_enterState(PEV_STATE_ChargingFinished);
+         pev_enterState(PEV_STATE_End);
       }
    }
    if (pev_isTooLong())
@@ -964,14 +1019,6 @@ void stateFunctionWaitForSessionStopResponse(void)
    }
 }
 
-void stateFunctionChargingFinished(void)
-{
-   /* charging is finished. */
-   /* Finally unlock the connector */
-   addToTrace(MOD_PEV, "Charging successfully finished. Unlocking the connector");
-   hardwareInterface_triggerConnectorUnlocking();
-   pev_enterState(PEV_STATE_End);
-}
 
 void stateFunctionSequenceTimeout(void)
 {
@@ -1136,14 +1183,14 @@ void pev_runFsm(void)
    case PEV_STATE_WaitForCurrentDemandResponse:
       stateFunctionWaitForCurrentDemandResponse();
       break;
+   case PEV_STATE_WaitForCurrentDownAfterStateB:
+      stateFunctionWaitForCurrentDownAfterStateB();
+      break;
    case PEV_STATE_WaitForWeldingDetectionResponse:
       stateFunctionWaitForWeldingDetectionResponse();
       break;
    case PEV_STATE_WaitForSessionStopResponse:
       stateFunctionWaitForSessionStopResponse();
-      break;
-   case PEV_STATE_ChargingFinished:
-      stateFunctionChargingFinished();
       break;
    case PEV_STATE_UnrecoverableError:
       stateFunctionUnrecoverableError();

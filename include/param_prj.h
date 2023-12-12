@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.22.B
+#define VER 0.23.B
 
 #include "myLogging.h"
 
@@ -48,7 +48,7 @@
    2. Temporary parameters (id = 0)
    3. Display values
  */
-//Next param id (increase when adding new parameter!): 20
+//Next param id (increase when adding new parameter!): 21
 //Next value Id: 2016
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
@@ -62,6 +62,7 @@
     PARAM_ENTRY(CAT_CHARGE,  maxpower,    "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxvtg,      "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxcur,      "A",       0,      500,    125,    19  ) \
+    PARAM_ENTRY(CAT_CHARGE,  demovtg,     "V",       0,      500,    0,      20  ) \
     TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      100,    0,      5   ) \

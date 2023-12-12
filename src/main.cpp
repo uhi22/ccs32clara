@@ -144,8 +144,8 @@ static void PrintTrace()
    static int lastState = 0;
    const char states[][25] = { "Off", "Connecting", "Connected", "NegotiateProtocol", "SessionSetup", "ServiceDiscovery",
    "PaymentSelection", "ContractAuthentication", "ParameterDiscovery", "ConnectorLock", "CableCheck",
-   "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WeldingDetection", "SessionStop",
-   "Finished", "Error" };
+   "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WaitCurrentDown", "WeldingDetection", "SessionStop",
+   "Error" };
 
    static uint32_t lastSttPrint = 0, lastEthPrint = 0;
    int state = Param::GetInt(Param::opmode);

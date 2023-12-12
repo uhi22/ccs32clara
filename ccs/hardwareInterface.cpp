@@ -56,12 +56,26 @@ int16_t hardwareInterface_getInletVoltage(void)
 
 int16_t hardwareInterface_getAccuVoltage(void)
 {
+    if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250)) {
+        /* for demonstration without an external provided target voltage, we take the value of
+           the parameter demovtg and put it to the target voltage variable. */
+        Param::SetInt(Param::batvtg, Param::GetInt(Param::demovtg));
+    } else {
+        /* if the demo voltage parameter is zero (which is the default) or not plausible, do not touch anything */
+    }
    return Param::GetInt(Param::batvtg);
 }
 
 int16_t hardwareInterface_getChargingTargetVoltage(void)
 {
-   return Param::GetInt(Param::targetvtg);
+    if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250)) {
+        /* for demonstration without an external provided target voltage, we take the value of
+           the parameter demovtg and put it to the target voltage variable. */
+        Param::SetInt(Param::targetvtg, Param::GetInt(Param::demovtg));
+    } else {
+        /* if the demo voltage parameter is zero (which is the default) or not plausible, do not touch anything */
+    }
+    return Param::GetInt(Param::targetvtg);
 }
 
 int16_t hardwareInterface_getChargingTargetCurrent(void)

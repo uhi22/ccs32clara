@@ -45,6 +45,7 @@ uint8_t pev_wasPowerDeliveryRequestedOn;
 uint8_t pev_isBulbOn;
 uint16_t pev_cyclesLightBulbDelay;
 uint16_t EVSEPresentVoltage;
+uint16_t EVSEMinimumVoltage;
 
 /***local function prototypes *****************************************/
 
@@ -141,32 +142,32 @@ void pev_sendChargeParameterDiscoveryReq(void)
    cp->DC_EVStatus.EVReady = 0;  /* What ever this means. The Ioniq sends 0 here in the ChargeParameterDiscoveryReq message. */
    //cp->DC_EVStatus.EVCabinConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
    //cp->DC_EVStatus.RESSConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
-   cp->DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc(); /* Todo: Take the SOC from the BMS. Scaling is 1%. */
-   cp->EVMaximumCurrentLimit.Value = 100;
+   cp->DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
+   cp->EVMaximumCurrentLimit.Value = Param::GetInt(Param::maxcur);
    cp->EVMaximumCurrentLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
    cp->EVMaximumCurrentLimit.Unit_isUsed = 1;
    cp->EVMaximumCurrentLimit.Unit = dinunitSymbolType_A;
 
    cp->EVMaximumPowerLimit_isUsed = 1; /* The Ioniq sends 1 here. */
-   cp->EVMaximumPowerLimit.Value = 9800; /* Ioniq: 9800 */
-   cp->EVMaximumPowerLimit.Multiplier = 1; /* 10^1 */
+   cp->EVMaximumPowerLimit.Value = Param::GetInt(Param::maxpower) * 10; /* maxpower is kW, then x10 x 100 by Multiplier */
+   cp->EVMaximumPowerLimit.Multiplier = 2; /* 10^2 */
    cp->EVMaximumPowerLimit.Unit_isUsed = 1;
    cp->EVMaximumPowerLimit.Unit = dinunitSymbolType_W; /* Watt */
 
-   cp->EVMaximumVoltageLimit.Value = 398;
+   cp->EVMaximumVoltageLimit.Value = Param::GetInt(Param::maxvtg);
    cp->EVMaximumVoltageLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
    cp->EVMaximumVoltageLimit.Unit_isUsed = 1;
    cp->EVMaximumVoltageLimit.Unit = dinunitSymbolType_V;
 
    cp->EVEnergyCapacity_isUsed = 1;
-   cp->EVEnergyCapacity.Value = 28000; /* 28kWh from Ioniq */
-   cp->EVEnergyCapacity.Multiplier = 0;
+   cp->EVEnergyCapacity.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
+   cp->EVEnergyCapacity.Multiplier = 1;
    cp->EVEnergyCapacity.Unit_isUsed = 1;
    cp->EVEnergyCapacity.Unit = dinunitSymbolType_Wh; /* from Ioniq */
 
    cp->EVEnergyRequest_isUsed = 1;
-   cp->EVEnergyRequest.Value = 20000; /* just invented 20kWh */
-   cp->EVEnergyRequest.Multiplier = 0;
+   cp->EVEnergyRequest.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
+   cp->EVEnergyRequest.Multiplier = 1;
    cp->EVEnergyRequest.Unit_isUsed = 1;
    cp->EVEnergyRequest.Unit = dinunitSymbolType_Wh; /* 9 from Ioniq */
 
@@ -545,6 +546,8 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
                                       dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Multiplier);
             uint16_t evseMaxCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Value,
                                       dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Multiplier);
+            EVSEMinimumVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMinimumVoltageLimit.Value,
+                                      dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMinimumVoltageLimit.Multiplier);
 
             Param::SetInt(Param::evsemaxvtg, evseMaxVoltage);
             Param::SetInt(Param::evsemaxcur, evseMaxCurrent);
@@ -672,7 +675,6 @@ void stateFunctionWaitForCableCheckResponse(void)
 
 void stateFunctionWaitForPreChargeResponse(void)
 {
-   uint16_t u;
    hardwareInterface_simulatePreCharge();
    if (pev_DelayCycles>0)
    {
@@ -692,8 +694,9 @@ void stateFunctionWaitForPreChargeResponse(void)
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
                               dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
          Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
-         u = hardwareInterface_getInletVoltage();
-         if (ABS(u-hardwareInterface_getAccuVoltage()) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE)
+         uint16_t inletVtg = hardwareInterface_getInletVoltage();
+         uint16_t batVtg = hardwareInterface_getAccuVoltage();
+         if (ABS(inletVtg - batVtg) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE && batVtg > EVSEMinimumVoltage)
          {
             addToTrace(MOD_PEV, "Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");
             publishStatus("PreCharge done", "");
@@ -807,8 +810,8 @@ void stateFunctionWaitForCurrentDemandResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      //addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
+      //showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       //printf("[%d] step1 %d\r\n", rtc_get_ms(), tcp_rxdataLen);
       projectExiConnector_decode_DinExiDocument();

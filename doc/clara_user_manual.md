@@ -35,6 +35,8 @@ after around 30s, the modem will go to sleep:
     [34090] [ModemFinder] Number of modems: 0
 ```
 
+The amount of logged data can be configured with the parameter "logging" using the web interface (see below).
+
 ## How to setup the build chain?
 
 There are two totally different tool chains for Clara: The old one, until November 2023, uses the STM32 CubeIDE. The new one comes with a classical make file, and offers full flexibility regarding which editor/IDE is used. The description below is valid for the new variant.
@@ -61,5 +63,14 @@ C:\ST\STM32CubeIDE_1.12.1\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.external
 - As soon as the bootloader is on the board, you have three options to flash:
     - JTAG/SWD adapter (STLink, with the command line mentioned above)
     - can-updater.py script (todo: more details)
-    - the esp32 web interface (todo: more details)
+    - the esp32 web interface (see below)
 
+## How to use Clara with the openinverter web interface?
+
+The esp32-web-interface (from openinverter shop or https://github.com/jsphuebner/esp32-web-interface) is able to talk to Clara via CAN.
+Both using 500kBaud. Select the NodeID 22 in the web interface to connect to Clara.
+
+Using the web interface, it is possible e.g.
+- to change parameters and store them into flash memory, so that they are surviving power-cycles.
+- to view spot values and to graph them
+- to add and change the CAN mapping, which defines which signals are transmitted and received in which CAN messages

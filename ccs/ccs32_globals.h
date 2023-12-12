@@ -10,6 +10,7 @@
 #include <libopencm3/stm32/spi.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/dma.h>
+#include "myLogging.h"
 #include "configuration.h"
 #include "printf.h"
 #include "connMgr.h"

@@ -200,11 +200,19 @@ void tcp_transmit(void)
       tcpHeaderLen = 20; /* 20 bytes normal header, no options */
       if (tcpPayloadLen+tcpHeaderLen<TCP_TRANSMIT_PACKET_LEN)
       {
-         memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
-         tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
-         tcp_packRequestIntoIp();
-         lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
-         retryCounter = TCP_MAX_NUMBER_OF_RETRANSMISSIONS; /* Allow n retries of the same packet */
+          /* The packet fits into our transmit buffer. */
+          if (Param::GetInt(Param::logging) & MOD_TCPTRAFFIC) {
+            printf("[%u] TCP will transmit: ", rtc_get_ms());
+            for (uint16_t i=0; i < tcpPayloadLen; i++) {
+              printf("%02x", tcpPayload[i]);
+            }
+            printf("\r\n");
+          }
+          memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
+          tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
+          tcp_packRequestIntoIp();
+          lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
+          retryCounter = TCP_MAX_NUMBER_OF_RETRANSMISSIONS; /* Allow n retries of the same packet */
       }
       else
       {

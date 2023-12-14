@@ -39,16 +39,11 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.23.B
+#define VER 0.24.B
 
 #include "myLogging.h"
 
-/* Entries must be ordered as follows:
-   1. Saveable parameters (id != 0)
-   2. Temporary parameters (id = 0)
-   3. Display values
- */
-//Next param id (increase when adding new parameter!): 23
+//Next param id (increase when adding new parameter!): 24
 //Next value Id: 2016
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
@@ -69,6 +64,7 @@
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      100,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      1000,   0,      6   ) \
+    TESTP_ENTRY(CAT_CHARGE,  enable,      OFFON,     0,      1,      1,      23  ) \
     TESTP_ENTRY(CAT_TEST,    locktest,    LOCK,      0,      2,      0,      9   ) \
     TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      511,    DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
@@ -99,6 +95,7 @@
 #define LOCK         "0=None, 1=Open, 2=Close, 3=Opening, 4=Closing"
 #define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 511=All, 447=AllButTraffic"
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
+#define OFFON        "0=Off, 1=On"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
@@ -107,20 +104,6 @@
 #define VERSTR STRINGIFY(4=VER)
 
 /***** enums ******/
-
-enum _canperiods
-{
-   CAN_PERIOD_100MS = 0,
-   CAN_PERIOD_10MS,
-   CAN_PERIOD_LAST
-};
-
-enum _modes
-{
-   MOD_OFF = 0,
-   MOD_RUN,
-   MOD_LAST
-};
 
 enum _inletsources
 {

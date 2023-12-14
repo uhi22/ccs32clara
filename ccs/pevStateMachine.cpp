@@ -872,8 +872,8 @@ void stateFunctionWaitForCurrentDemandResponse(void)
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
          }
-         /* If the pushbutton is pressed longer than 0.5s, we interpret this as charge stop request. */
-         pev_isUserStopRequestOnCarSide = pushbutton_isPressed500ms();
+         /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
+         pev_isUserStopRequestOnCarSide = pushbutton_isPressed500ms() || !Param::GetBool(Param::enable);
          if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
          {
             if (hardwareInterface_getIsAccuFull())

@@ -18,7 +18,7 @@ static uint8_t buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES];
 
 /* functions */
 
-void pushbutton_processPushButtonSeries(void) {
+static void pushbutton_processPushButtonSeries(void) {
   uint8_t i;
   uint16_t tmp16;
   for (i=0; i<PUSHBUTTON_NUMBER_OF_ENTRIES-1; i++) {

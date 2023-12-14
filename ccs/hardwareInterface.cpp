@@ -56,26 +56,32 @@ int16_t hardwareInterface_getInletVoltage(void)
 
 int16_t hardwareInterface_getAccuVoltage(void)
 {
-    if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250)) {
-        /* for demonstration without an external provided target voltage, we take the value of
-           the parameter demovtg and put it to the target voltage variable. */
-        Param::SetInt(Param::batvtg, Param::GetInt(Param::demovtg));
-    } else {
-        /* if the demo voltage parameter is zero (which is the default) or not plausible, do not touch anything */
-    }
+   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250))
+   {
+      /* for demonstration without an external provided target voltage, we take the value of
+         the parameter demovtg and put it to the target voltage variable. */
+      Param::SetInt(Param::batvtg, Param::GetInt(Param::demovtg));
+   }
+   else
+   {
+      /* if the demo voltage parameter is zero (which is the default) or not plausible, do not touch anything */
+   }
    return Param::GetInt(Param::batvtg);
 }
 
 int16_t hardwareInterface_getChargingTargetVoltage(void)
 {
-    if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250)) {
-        /* for demonstration without an external provided target voltage, we take the value of
-           the parameter demovtg and put it to the target voltage variable. */
-        Param::SetInt(Param::targetvtg, Param::GetInt(Param::demovtg));
-    } else {
-        /* if the demo voltage parameter is zero (which is the default) or not plausible, do not touch anything */
-    }
-    return Param::GetInt(Param::targetvtg);
+   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250))
+   {
+      /* for demonstration without an external provided target voltage, we take the value of
+         the parameter demovtg and put it to the target voltage variable. */
+      Param::SetInt(Param::targetvtg, Param::GetInt(Param::demovtg));
+   }
+   else
+   {
+      /* if the demo voltage parameter is zero (which is the default) or not plausible, do not touch anything */
+   }
+   return Param::GetInt(Param::targetvtg);
 }
 
 int16_t hardwareInterface_getChargingTargetCurrent(void)
@@ -174,6 +180,13 @@ uint8_t hardwareInterface_getPowerRelayConfirmation(void)
 {
    /* todo */
    return 1;
+}
+
+bool hardwareInterface_stopCharging()
+{
+   return pushbutton_isPressed500ms() ||
+          !Param::GetBool(Param::enable) ||
+          (Param::GetInt(Param::canwatchdog) >= CAN_TIMEOUT && !Param::GetBool(Param::wd_disable));
 }
 
 void hardwareInterface_resetSimulation(void)
@@ -353,59 +366,68 @@ static void hwIf_handleLockRequests()
 {
    if (testmode!=0) return; /* in case of output test mode, decouple the application */
 
-
+   int lockOpenThresh = Param::GetInt(Param::lockopenthr);
+   int lockClosedThresh = Param::GetInt(Param::lockclosethr);
    int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
    int pwmPos = (CONTACT_LOCK_PERIOD / 2) + (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
 
-   #ifdef LOCKING_ACTUATION_BASED_ON_FEEDBACK
-   lockState = hwIf_getLockState();
-   if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
+   //Lock drive based on actuator feedback
+   if (lockClosedThresh != lockOpenThresh)
    {
-      Param::SetInt(Param::lockstt, LOCK_OPENING);
-      hardwareInteface_setHBridge(pwmNeg, pwmPos);
+      lockState = hwIf_getLockState();
+      if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
+      {
+         Param::SetInt(Param::lockstt, LOCK_OPENING);
+         hardwareInteface_setHBridge(pwmNeg, pwmPos);
+      }
+      else if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
+      {
+         Param::SetInt(Param::lockstt, LOCK_CLOSING);
+         hardwareInteface_setHBridge(pwmPos, pwmNeg);
+      }
+      else
+      {
+         Param::SetInt(Param::lockstt, lockState);
+         hardwareInteface_setHBridge(0, 0);
+      }
    }
-   else if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
+   else //lock drive without feedback
    {
-      Param::SetInt(Param::lockstt, LOCK_CLOSING);
-      hardwareInteface_setHBridge(pwmPos, pwmNeg);
-   }
-   else
-   {
-      Param::SetInt(Param::lockstt, lockState);
-      hardwareInteface_setHBridge(0, 0);
-   }
-   #else
-     pwmNeg = 0;
-     pwmPos = CONTACT_LOCK_PERIOD;
-     /* connector lock just time-based, without evaluating the feedback */
-     if (lockRequest == LOCK_OPEN) {
+      pwmNeg = 0;
+      pwmPos = CONTACT_LOCK_PERIOD;
+      /* connector lock just time-based, without evaluating the feedback */
+      if (lockRequest == LOCK_OPEN)
+      {
          printf("[%u] unlocking the connector\r\n", rtc_get_ms());
          Param::SetInt(Param::lockstt, LOCK_OPENING);
          hardwareInteface_setHBridge(pwmNeg, pwmPos);
          lockTimer = 60; /* in 30ms steps */
          lockTarget = LOCK_OPEN;
          lockRequest = LOCK_UNKNOWN;
-     }
-     if (lockRequest == LOCK_CLOSED) {
+      }
+      if (lockRequest == LOCK_CLOSED)
+      {
          printf("[%u] locking the connector\r\n", rtc_get_ms());
          Param::SetInt(Param::lockstt, LOCK_CLOSING);
          hardwareInteface_setHBridge(pwmPos, pwmNeg);
          lockTimer = 60; /* in 30ms steps */
          lockTarget = LOCK_CLOSED;
          lockRequest = LOCK_UNKNOWN;
-     }
-     if (lockTimer>0) {
+      }
+      if (lockTimer>0)
+      {
          /* as long as the timer runs, the PWM on the lock motor is active */
          lockTimer--;
-         if (lockTimer==0) {
-             /* if the time is expired, we turn off the lock motor and report the new state */
-             hardwareInteface_setHBridge(0, 0);
-             Param::SetInt(Param::lockstt, lockTarget);
-             lockState = lockTarget;
-             printf("[%u] finished connector (un)locking\r\n", rtc_get_ms());
+         if (lockTimer==0)
+         {
+            /* if the time is expired, we turn off the lock motor and report the new state */
+            hardwareInteface_setHBridge(0, 0);
+            Param::SetInt(Param::lockstt, lockTarget);
+            lockState = lockTarget;
+            printf("[%u] finished connector (un)locking\r\n", rtc_get_ms());
          }
-     }
-   #endif
+      }
+   }
 }
 
 static void handleApplicationRGBLeds(void)

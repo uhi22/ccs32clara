@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.24.B
+#define VER 0.25.B
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 24
-//Next value Id: 2016
+//Next param id (increase when adding new parameter!): 25
+//Next value Id: 2017
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
@@ -66,6 +66,7 @@
     TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      1000,   0,      6   ) \
     TESTP_ENTRY(CAT_CHARGE,  enable,      OFFON,     0,      1,      1,      23  ) \
     TESTP_ENTRY(CAT_TEST,    locktest,    LOCK,      0,      2,      0,      9   ) \
+    TESTP_ENTRY(CAT_TEST,    wd_disable,  OFFON,     0,      1,      0,      24   ) \
     TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      511,    DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
     VALUE_ENTRY(version,     VERSTR,  2001 ) \
@@ -83,6 +84,7 @@
     VALUE_ENTRY(lockfb,      "dig",  2011 ) \
     VALUE_ENTRY(lockstt,     LOCK,   2014 ) \
     VALUE_ENTRY(checkpoint,  "dig",  2015 ) \
+    VALUE_ENTRY(canwatchdog, "dig",  2016 ) \
     VALUE_ENTRY(cpuload,     "%",    2094 )
 
 

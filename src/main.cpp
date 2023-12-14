@@ -74,6 +74,7 @@ static void Ms100Task(void)
    float cpuLoad = scheduler->GetCpuLoad();
    //This sets a fixed point value WITHOUT calling the parm_Change() function
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
+   Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
    temperatures_calculateTemperatures();
@@ -100,6 +101,17 @@ static void Ms100Task(void)
       case IVSRC_CAN:
          //Do nothing, value received via CAN map
          break;
+   }
+
+   //Watchdog
+   int wd = Param::GetInt(Param::canwatchdog);
+   if (wd < CAN_TIMEOUT)
+   {
+      Param::SetInt(Param::canwatchdog, ++wd);
+   }
+   else if (!Param::GetBool(Param::wd_disable))
+   {
+      ErrorMessage::Post(ERR_CANTIMEOUT);
    }
 
    canMap->SendAll();

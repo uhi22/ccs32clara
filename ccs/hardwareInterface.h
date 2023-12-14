@@ -1,6 +1,8 @@
 /* Interface header for hardwareInterface.c */
 
 /* Global Defines */
+#define CAN_TIMEOUT 5 //multiples of 100ms
+
 enum LockStt
 {
    LOCK_UNKNOWN, LOCK_OPEN, LOCK_CLOSED, LOCK_OPENING, LOCK_CLOSING
@@ -22,6 +24,7 @@ extern void hardwareInterface_triggerConnectorLocking(void);
 extern void hardwareInterface_triggerConnectorUnlocking(void);
 extern uint8_t hardwareInterface_isConnectorLocked(void);
 extern uint8_t hardwareInterface_getPowerRelayConfirmation(void);
+extern bool hardwareInterface_stopCharging();
 
 extern uint8_t hardwareInterface_getIsAccuFull(void);
 extern uint8_t hardwareInterface_getSoc(void);

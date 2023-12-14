@@ -4,17 +4,17 @@
 #include "ccs32_globals.h"
 
 /* public interface */
-uint16_t pushbutton_tButtonReleaseTime;
-uint16_t pushbutton_tButtonPressTime;
+static uint16_t pushbutton_tButtonReleaseTime;
+static uint16_t pushbutton_tButtonPressTime;
 
-uint8_t pushbutton_nNumberOfButtonPresses;
-uint8_t pushbutton_buttonSeriesCounter;
-uint16_t pushbutton_accumulatedButtonDigits;
+static uint8_t pushbutton_nNumberOfButtonPresses;
+static uint8_t pushbutton_buttonSeriesCounter;
+static uint16_t pushbutton_accumulatedButtonDigits;
 
 /* local defines and variables */
 #define PUSHBUTTON_NUMBER_OF_ENTRIES 4
-uint8_t blButtonPressedOld;
-uint8_t buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES];
+static uint8_t blButtonPressedOld;
+static uint8_t buttonSeriesEntries[PUSHBUTTON_NUMBER_OF_ENTRIES];
 
 /* functions */
 
@@ -36,6 +36,16 @@ void pushbutton_processPushButtonSeries(void) {
   if (pushbutton_buttonSeriesCounter==PUSHBUTTON_NUMBER_OF_ENTRIES) {
 	  pushbutton_accumulatedButtonDigits = tmp16;
   }
+}
+
+bool pushbutton_isPressed500ms()
+{
+   return pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+}
+
+int pushButton_getAccumulatedDigits()
+{
+   return pushbutton_accumulatedButtonDigits;
 }
 
 void pushbutton_handlePushbutton(void) {

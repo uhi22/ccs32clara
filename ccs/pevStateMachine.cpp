@@ -873,7 +873,7 @@ void stateFunctionWaitForCurrentDemandResponse(void)
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
          }
          /* If the pushbutton is pressed longer than 0.5s, we interpret this as charge stop request. */
-         pev_isUserStopRequestOnCarSide = pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+         pev_isUserStopRequestOnCarSide = pushbutton_isPressed500ms();
          if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
          {
             if (hardwareInterface_getIsAccuFull())
@@ -893,7 +893,7 @@ void stateFunctionWaitForCurrentDemandResponse(void)
             }
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);
-            pev_sendPowerDeliveryReq(0); /* we can immediately send the powerDeliveryStopRequest, while we are under full current. 
+            pev_sendPowerDeliveryReq(0); /* we can immediately send the powerDeliveryStopRequest, while we are under full current.
                                             sequence explained here: https://github.com/uhi22/pyPLC#detailled-investigation-about-the-normal-end-of-the-charging-session */
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
          }

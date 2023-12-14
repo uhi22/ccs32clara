@@ -186,7 +186,7 @@ void hardwareInterface_handleOutputTestMode(void)
    /* This function is used to test the outputs. */
 
    testmodeTimer = 10; /* rewind the timer for the next phase */
-   if ((pushbutton_accumulatedButtonDigits==3411) && (testmode==0))
+   if ((pushButton_getAccumulatedDigits() == 3411) && (testmode==0))
    {
       testmode=1;
    }

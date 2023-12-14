@@ -48,7 +48,7 @@
    2. Temporary parameters (id = 0)
    3. Display values
  */
-//Next param id (increase when adding new parameter!): 21
+//Next param id (increase when adding new parameter!): 23
 //Next value Id: 2016
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
@@ -59,6 +59,8 @@
     PARAM_ENTRY(CAT_HARDWARE,lockopentm,  "ms",      0,      10000,  1000,   13  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   0,      11  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   0,      12  ) \
+    PARAM_ENTRY(CAT_COMM,    nodeid,      "",        1,      63,     22,     21  ) \
+    PARAM_ENTRY(CAT_COMM,    canspeed,    CANSPEEDS, 0,      4,      2,      22  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxpower,    "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxvtg,      "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxcur,      "A",       0,      500,    125,    19  ) \
@@ -96,8 +98,10 @@
 #define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
 #define LOCK         "0=None, 1=Open, 2=Close, 3=Opening, 4=Closing"
 #define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 511=All, 447=AllButTraffic"
+#define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
+#define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
 
 #define VERSTR STRINGIFY(4=VER)

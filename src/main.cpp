@@ -61,6 +61,7 @@ extern "C" void __cxa_pure_virtual() { while (1); }
 static Stm32Scheduler* scheduler;
 static CanHardware* can;
 static CanMap* canMap;
+static CanSdo* canSdo;
 
 //sample 100ms task
 static void Ms100Task(void)
@@ -133,9 +134,15 @@ void Param::Change(Param::PARAM_NUM paramNum)
 {
    switch (paramNum)
    {
-   default:
-      //Handle general parameter changes here. Add paramNum labels for handling specific parameters
-      break;
+      case Param::canspeed:
+         can->SetBaudrate((CanHardware::baudrates)Param::GetInt(Param::canspeed));
+         break;
+      case Param::nodeid:
+         canSdo->SetNodeId(Param::GetInt(Param::nodeid));
+         break;
+      default:
+         //Handle general parameter changes here. Add paramNum labels for handling specific parameters
+         break;
    }
 }
 
@@ -147,7 +154,7 @@ static void PrintTrace()
    "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WaitCurrentDown", "WeldingDetection", "SessionStop",
    "Error" };
 
-   static uint32_t lastSttPrint = 0, lastEthPrint = 0;
+   static uint32_t lastSttPrint = 0;
    int state = Param::GetInt(Param::opmode);
    const char* label = state < 18 ? states[state] : "Unknown/Error";
 
@@ -193,13 +200,14 @@ extern "C" int main(void)
    Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
    scheduler = &s;
    //Initialize CAN1, including interrupts. Clock must be enabled in clock_setup()
-   Stm32Can c(CAN1, CanHardware::Baud500);
+   Stm32Can c(CAN1, (CanHardware::baudrates)Param::GetInt(Param::canspeed));
    CanMap cm(&c);
    CanSdo sdo(&c, &cm);
-   sdo.SetNodeId(22);
+   sdo.SetNodeId(Param::GetInt(Param::nodeid));
    //store a pointer for easier access
    can = &c;
    canMap = &cm;
+   canSdo = &sdo;
 
    //This is all we need to do to set up a terminal on USART3
    Terminal t(UART4, termCmds);

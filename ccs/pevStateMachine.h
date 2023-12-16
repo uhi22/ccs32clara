@@ -5,7 +5,7 @@
 #define V2GTP_HEADER_SIZE 8 /* The V2GTP header has 8 bytes */
 
 /* Global Variables */
-extern uint16_t EVSEPresentVoltage;
+
 
 /* Global Functions */
 #ifdef __cplusplus

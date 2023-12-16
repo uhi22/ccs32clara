@@ -63,7 +63,6 @@ static CanHardware* can;
 static CanMap* canMap;
 static CanSdo* canSdo;
 
-//sample 100ms task
 static void Ms100Task(void)
 {
    DigIo::led_out.Toggle();
@@ -132,12 +131,6 @@ static void Ms30Task()
    hardwareInterface_cyclic();
    pushbutton_handlePushbutton();
    DigIo::tp8_out.Clear();
-}
-
-//sample 10 ms task
-static void Ms10Task(void)
-{
-   //Set timestamp of error message
    ErrorMessage::SetTime(rtc_get_counter_val());
 }
 
@@ -204,7 +197,7 @@ extern "C" int main(void)
 
    gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
-   tim_setup(); //Sample init of a timer
+   tim_setup(); //Initialize CP duty cycle measurement and lock/contactor PWM
    nvic_setup(); //Set up some interrupts
    parm_load(); //Load stored parameters
    qca7000setup();
@@ -221,11 +214,10 @@ extern "C" int main(void)
    canMap = &cm;
    canSdo = &sdo;
 
-   //This is all we need to do to set up a terminal on USART3
+   //This is all we need to do to set up a terminal on USART4
    Terminal t(UART4, termCmds);
    TerminalCommands::SetCanMap(canMap);
 
-   s.AddTask(Ms10Task, 10);
    s.AddTask(Ms30Task, 30);
    s.AddTask(Ms100Task, 100);
 

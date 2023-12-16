@@ -31,32 +31,32 @@
 #define LEN_OF_EVCCID 6 /* The EVCCID is the MAC according to spec. Ioniq uses exactly these 6 byte. */
 
 
-const uint8_t exiDemoSupportedApplicationProtocolRequestIoniq[]= {0x80, 0x00, 0xdb, 0xab, 0x93, 0x71, 0xd3, 0x23, 0x4b, 0x71, 0xd1, 0xb9, 0x81, 0x89, 0x91, 0x89, 0xd1, 0x91, 0x81, 0x89, 0x91, 0xd2, 0x6b, 0x9b, 0x3a, 0x23, 0x2b, 0x30, 0x02, 0x00, 0x00, 0x04, 0x00, 0x40 };
+static const uint8_t exiDemoSupportedApplicationProtocolRequestIoniq[]= {0x80, 0x00, 0xdb, 0xab, 0x93, 0x71, 0xd3, 0x23, 0x4b, 0x71, 0xd1, 0xb9, 0x81, 0x89, 0x91, 0x89, 0xd1, 0x91, 0x81, 0x89, 0x91, 0xd2, 0x6b, 0x9b, 0x3a, 0x23, 0x2b, 0x30, 0x02, 0x00, 0x00, 0x04, 0x00, 0x40 };
 
 
-uint16_t pev_cyclesInState;
-uint8_t pev_DelayCycles;
-uint16_t pev_state=PEV_STATE_NotYetInitialized;
-uint8_t pev_isUserStopRequestOnCarSide=0;
-uint8_t pev_isUserStopRequestOnChargerSide=0;
-uint16_t pev_numberOfContractAuthenticationReq;
-uint16_t pev_numberOfChargeParameterDiscoveryReq;
-uint16_t pev_numberOfCableCheckReq;
-uint8_t pev_wasPowerDeliveryRequestedOn;
-uint8_t pev_isBulbOn;
-uint16_t pev_cyclesLightBulbDelay;
-uint16_t EVSEPresentVoltage;
-uint16_t EVSEMinimumVoltage;
-uint8_t numberOfWeldingDetectionRounds;
+static uint16_t pev_cyclesInState;
+static uint8_t pev_DelayCycles;
+static uint16_t pev_state=PEV_STATE_NotYetInitialized;
+static uint8_t pev_isUserStopRequestOnCarSide=0;
+static uint8_t pev_isUserStopRequestOnChargerSide=0;
+static uint16_t pev_numberOfContractAuthenticationReq;
+static uint16_t pev_numberOfChargeParameterDiscoveryReq;
+static uint16_t pev_numberOfCableCheckReq;
+static uint8_t pev_wasPowerDeliveryRequestedOn;
+static uint8_t pev_isBulbOn;
+static uint16_t pev_cyclesLightBulbDelay;
+static uint16_t EVSEPresentVoltage;
+static uint16_t EVSEMinimumVoltage;
+static uint8_t numberOfWeldingDetectionRounds;
 
 /***local function prototypes *****************************************/
 
-uint8_t pev_isTooLong(void);
-void pev_enterState(uint16_t n);
+static uint8_t pev_isTooLong(void);
+static void pev_enterState(uint16_t n);
 
 /*** functions ********************************************************/
 
-int32_t combineValueAndMultiplier(int32_t val, int8_t multiplier)
+static int32_t combineValueAndMultiplier(int32_t val, int8_t multiplier)
 {
    int32_t x;
    x = val;
@@ -73,7 +73,7 @@ int32_t combineValueAndMultiplier(int32_t val, int8_t multiplier)
    return x;
 }
 
-void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBufferLen)
+static void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBufferLen)
 {
    // takes the bytearray with exidata, and adds a header to it, according to the Vehicle-to-Grid-Transport-Protocol
    // V2GTP header has 8 bytes
@@ -103,7 +103,7 @@ void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBufferLen)
    }
 }
 
-void encodeAndTransmit(void)
+static void encodeAndTransmit(void)
 {
    /* calls the EXI encoder, adds the V2GTP header and sends the result to ethernet */
    //addToTrace("before: g_errn=" + String(g_errn));
@@ -115,7 +115,7 @@ void encodeAndTransmit(void)
    addV2GTPHeaderAndTransmit(global_streamEnc.data, global_streamEncPos);
 }
 
-void routeDecoderInputData(void)
+static void routeDecoderInputData(void)
 {
    /* connect the data from the TCP to the exiDecoder */
    /* The TCP receive data consists of two parts: 1. The V2GTP header and 2. the EXI stream.
@@ -133,7 +133,7 @@ void routeDecoderInputData(void)
 }
 
 /********* EXI creation functions ************************/
-void pev_sendChargeParameterDiscoveryReq(void)
+static void pev_sendChargeParameterDiscoveryReq(void)
 {
    struct dinDC_EVChargeParameterType *cp;
    projectExiConnector_prepare_DinExiDocument();
@@ -182,7 +182,7 @@ void pev_sendChargeParameterDiscoveryReq(void)
    encodeAndTransmit();
 }
 
-void pev_sendCableCheckReq(void)
+static void pev_sendCableCheckReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
    dinDocEnc.V2G_Message.Body.CableCheckReq_isUsed = 1u;
@@ -200,7 +200,7 @@ void pev_sendCableCheckReq(void)
    connMgr_ApplOk(31);
 }
 
-void pev_sendPreChargeReq(void)
+static void pev_sendPreChargeReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
    dinDocEnc.V2G_Message.Body.PreChargeReq_isUsed = 1u;
@@ -225,7 +225,7 @@ void pev_sendPreChargeReq(void)
    encodeAndTransmit();
 }
 
-void pev_sendPowerDeliveryReq(uint8_t isOn)
+static void pev_sendPowerDeliveryReq(uint8_t isOn)
 {
    projectExiConnector_prepare_DinExiDocument();
    dinDocEnc.V2G_Message.Body.PowerDeliveryReq_isUsed = 1u;
@@ -249,7 +249,7 @@ void pev_sendPowerDeliveryReq(uint8_t isOn)
    encodeAndTransmit();
 }
 
-void pev_sendCurrentDemandReq(void)
+static void pev_sendCurrentDemandReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
    dinDocEnc.V2G_Message.Body.CurrentDemandReq_isUsed = 1u;
@@ -292,7 +292,7 @@ void pev_sendCurrentDemandReq(void)
    encodeAndTransmit();
 }
 
-void pev_sendWeldingDetectionReq(void)
+static void pev_sendWeldingDetectionReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
    dinDocEnc.V2G_Message.Body.WeldingDetectionReq_isUsed = 1u;
@@ -307,7 +307,7 @@ void pev_sendWeldingDetectionReq(void)
 
 /**** State functions ***************/
 
-void stateFunctionConnected(void)
+static void stateFunctionConnected(void)
 {
    // We have a freshly established TCP channel. We start the V2GTP/EXI communication now.
    // We just use the initial request message from the Ioniq. It contains one entry: DIN.
@@ -318,7 +318,7 @@ void stateFunctionConnected(void)
    pev_enterState(PEV_STATE_WaitForSupportedApplicationProtocolResponse);
 }
 
-void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
+static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
 {
    uint8_t i;
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
@@ -369,11 +369,12 @@ void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
    }
    if (pev_isTooLong())
    {
+      ErrorMessage::Post(ERR_PLCTIMEOUT);
       pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
-void stateFunctionWaitForSessionSetupResponse(void)
+static void stateFunctionWaitForSessionSetupResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -407,7 +408,7 @@ void stateFunctionWaitForSessionSetupResponse(void)
    }
 }
 
-void stateFunctionWaitForServiceDiscoveryResponse(void)
+static void stateFunctionWaitForServiceDiscoveryResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -438,7 +439,7 @@ void stateFunctionWaitForServiceDiscoveryResponse(void)
    }
 }
 
-void stateFunctionWaitForServicePaymentSelectionResponse(void)
+static void stateFunctionWaitForServicePaymentSelectionResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -467,7 +468,7 @@ void stateFunctionWaitForServicePaymentSelectionResponse(void)
    }
 }
 
-void stateFunctionWaitForContractAuthenticationResponse(void)
+static void stateFunctionWaitForContractAuthenticationResponse(void)
 {
    if (pev_cyclesInState<30)   // The first second in the state just do nothing.
    {
@@ -522,7 +523,7 @@ void stateFunctionWaitForContractAuthenticationResponse(void)
    }
 }
 
-void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
+static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
 {
    if (pev_cyclesInState<30)   // The first second in the state just do nothing.
    {
@@ -559,7 +560,15 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
             hardwareInterface_setStateC();
             addToTrace(MOD_PEV, "Checkpoint555: Locking the connector.");
             hardwareInterface_triggerConnectorLocking();
-            pev_enterState(PEV_STATE_WaitForConnectorLock);
+            //If we are not ready for charging, don't go past this state -> will time out
+            if (hardwareInterface_stopCharging())
+            {
+               pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
+            }
+            else
+            {
+               pev_enterState(PEV_STATE_WaitForConnectorLock);
+            }
          }
          else
          {
@@ -593,7 +602,7 @@ void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
    }
 }
 
-void stateFunctionWaitForConnectorLock(void)
+static void stateFunctionWaitForConnectorLock(void)
 {
    if (hardwareInterface_isConnectorLocked())
    {
@@ -605,11 +614,12 @@ void stateFunctionWaitForConnectorLock(void)
    }
    if (pev_isTooLong())
    {
+      ErrorMessage::Post(ERR_LOCKTIMEOUT);
       pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
-void stateFunctionWaitForCableCheckResponse(void)
+static void stateFunctionWaitForCableCheckResponse(void)
 {
    uint8_t rc, proc;
    if (pev_cyclesInState<30)   // The first second in the state just do nothing.
@@ -675,7 +685,7 @@ void stateFunctionWaitForCableCheckResponse(void)
    }
 }
 
-void stateFunctionWaitForPreChargeResponse(void)
+static void stateFunctionWaitForPreChargeResponse(void)
 {
    hardwareInterface_simulatePreCharge();
    if (pev_DelayCycles>0)
@@ -733,11 +743,12 @@ void stateFunctionWaitForPreChargeResponse(void)
    }
    if (pev_isTooLong())
    {
+      ErrorMessage::Post(ERR_PRECTIMEOUT);
       pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
-void stateFunctionWaitForContactorsClosed(void)
+static void stateFunctionWaitForContactorsClosed(void)
 {
    uint8_t readyForNextState=0;
    if (pev_DelayCycles>0)
@@ -772,7 +783,7 @@ void stateFunctionWaitForContactorsClosed(void)
 }
 
 
-void stateFunctionWaitForPowerDeliveryResponse(void)
+static void stateFunctionWaitForPowerDeliveryResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -814,7 +825,7 @@ void stateFunctionWaitForPowerDeliveryResponse(void)
    }
 }
 
-void stateFunctionWaitForCurrentDownAfterStateB(void) {
+static void stateFunctionWaitForCurrentDownAfterStateB(void) {
     /* During normal end of the charging session, we have set the StateB, and
        want to give the charger some time to ramp down the current completely,
        before we are opening the contactors. */
@@ -836,7 +847,7 @@ void stateFunctionWaitForCurrentDownAfterStateB(void) {
     }
 }
 
-void stateFunctionWaitForCurrentDemandResponse(void)
+static void stateFunctionWaitForCurrentDemandResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -939,7 +950,7 @@ void stateFunctionWaitForCurrentDemandResponse(void)
 #define MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION 40 /* 40V is considered to be sufficiently low to not harm. The Ioniq already finishes at 65V. */
 #define MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS 10 /* The process time is specified with 1.5s. Ten loops should be fine. */
 
-void stateFunctionWaitForWeldingDetectionResponse(void)
+static void stateFunctionWaitForWeldingDetectionResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -985,6 +996,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void)
                  This may be due to two hanging/welded contactors or an issue of the charging station. We let the state machine
                  run into timeout and safe shutdown sequence, this will at least indicate the red light to the user. */
                  addToTrace(MOD_PEV, "WeldingDetection: ERROR: contactors probably welded. Did not reach low voltage. Entering safe shutdown.");
+                 ErrorMessage::Post(ERR_RELAYWELDED);
              }
          }
       }
@@ -995,7 +1007,7 @@ void stateFunctionWaitForWeldingDetectionResponse(void)
    }
 }
 
-void stateFunctionWaitForSessionStopResponse(void)
+static void stateFunctionWaitForSessionStopResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
@@ -1020,7 +1032,7 @@ void stateFunctionWaitForSessionStopResponse(void)
 }
 
 
-void stateFunctionSequenceTimeout(void)
+static void stateFunctionSequenceTimeout(void)
 {
    /* Here we end, if we run into a timeout in the state machine. */
    publishStatus("ERROR Timeout", "");
@@ -1032,19 +1044,20 @@ void stateFunctionSequenceTimeout(void)
    pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
 }
 
-void stateFunctionUnrecoverableError(void)
+static void stateFunctionUnrecoverableError(void)
 {
    /* Here we end, if the EVSE reported an error code, which terminates the charging session. */
    publishStatus("ERROR reported", "");
    /* Initiate the safe-shutdown-sequence. */
    addToTrace(MOD_PEV, "Safe-shutdown-sequence: setting state B");
+   ErrorMessage::Post(ERR_EVSEFAULT);
    setCheckpoint(1200);
    hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
    pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
    pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
 }
 
-void stateFunctionSafeShutDownWaitForChargerShutdown(void)
+static void stateFunctionSafeShutDownWaitForChargerShutdown(void)
 {
    /* wait state, to give the charger the time to stop the current. */
    if (pev_DelayCycles>0)
@@ -1060,7 +1073,7 @@ void stateFunctionSafeShutDownWaitForChargerShutdown(void)
    pev_enterState(PEV_STATE_SafeShutDownWaitForContactorsOpen);
 }
 
-void stateFunctionSafeShutDownWaitForContactorsOpen(void)
+static void stateFunctionSafeShutDownWaitForContactorsOpen(void)
 {
    /* wait state, to give the contactors the time to open. */
    if (pev_DelayCycles>0)
@@ -1076,12 +1089,12 @@ void stateFunctionSafeShutDownWaitForContactorsOpen(void)
    pev_enterState(PEV_STATE_End);
 }
 
-void stateFunctionEnd(void)
+static void stateFunctionEnd(void)
 {
    /* Just stay here, until we get re-initialized after a new SLAC/SDP. */
 }
 
-void pev_enterState(uint16_t n)
+static void pev_enterState(uint16_t n)
 {
    //printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_ms(), pev_state, n);
    pev_state = n;
@@ -1089,7 +1102,7 @@ void pev_enterState(uint16_t n)
    Param::SetInt(Param::opmode, MIN(n, 18));
 }
 
-uint8_t pev_isTooLong(void)
+static uint8_t pev_isTooLong(void)
 {
    uint16_t limit;
    /* The timeout handling function. */
@@ -1122,7 +1135,7 @@ uint8_t pev_isTooLong(void)
 }
 
 /******* The statemachine dispatcher *******************/
-void pev_runFsm(void)
+static void pev_runFsm(void)
 {
    if (connMgr_getConnectionLevel()<CONNLEVEL_80_TCP_RUNNING)
    {
@@ -1211,23 +1224,7 @@ void pev_runFsm(void)
 }
 
 /************ public interfaces *****************************************/
-/* The init function for the PEV charging state machine. */
-void pevStateMachine_Init(void)
-{
-   pev_state=PEV_STATE_NotYetInitialized;
-}
 
-void pevStateMachine_ReInit(void)
-{
-   addToTrace(MOD_PEV, "re-initializing fsmPev");
-   tcp_Disconnect();
-   hardwareInterface_setStateB();
-   hardwareInterface_setPowerRelayOff();
-   pev_isBulbOn = 0;
-   pev_cyclesLightBulbDelay = 0;
-   pev_state = PEV_STATE_Connecting;
-   pev_cyclesInState = 0;
-}
 
 /* The cyclic main function of the PEV charging state machine.
    Called each 30ms. */

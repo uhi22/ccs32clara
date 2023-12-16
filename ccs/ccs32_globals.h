@@ -30,6 +30,7 @@
 #include "digio.h"
 #include "params.h"
 #include "hwinit.h"
+#include "errormessage.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

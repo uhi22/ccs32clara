@@ -168,7 +168,7 @@ static void PrintTrace()
 
    static uint32_t lastSttPrint = 0;
    int state = Param::GetInt(Param::opmode);
-   const char* label = state < 18 ? states[state] : "Unknown/Error";
+   const char* label = state < 19 ? states[state] : "Unknown/Error";
 
    if ((Param::GetInt(Param::logging) & MOD_PEV) && ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state))
    {

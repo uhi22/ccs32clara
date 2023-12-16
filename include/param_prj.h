@@ -91,7 +91,7 @@
 /***** Enum String definitions *****/
 #define OPMODES      "0=Off, 1=Connecting, 2=Connected, 3=NegotiateProtocol, 4=SessionSetup, 5=ServiceDiscovery, \
 6=PaymentSelection, 7=ContractAuthentication, 8=ParameterDiscovery, 9=ConnectorLock, 10=CableCheck, 11=Precharge, \
-12=ContactorsClosed, 13=PowerDelivery, 14=CurrentDemand, 15=WeldingDetection, 16=SessionStop, 17=Finished, 18=Error"
+12=ContactorsClosed, 13=PowerDelivery, 14=CurrentDemand, 15=WaitCurrentDown, 16=WeldingDetection, 17=SessionStop, 18=Finished, 19=Error"
 
 #define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
 #define LOCK         "0=None, 1=Open, 2=Close, 3=Opening, 4=Closing"

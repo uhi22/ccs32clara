@@ -58,42 +58,33 @@
 #define iAmPev 1 /* This project is intended only for PEV mode at the moment. */
 #define iAmEvse 0
 
-const uint8_t MAC_BROADCAST[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static const uint8_t MAC_BROADCAST[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 const uint8_t myMAC[6] = {0xFE, 0xED, 0xBE, 0xEF, 0xAF, 0xFE};
-
-char strVersion[200];
-uint8_t verLen;
-uint8_t sourceMac[6];
-uint8_t localModemMac[6];
 uint8_t evseMac[6];
-uint8_t NID[7];
-uint8_t NMK[16];
-uint8_t localModemCurrentKey[16];
-uint8_t localModemFound;
 uint8_t numberOfSoftwareVersionResponses;
-uint8_t numberOfFoundModems;
-uint8_t pevSequenceState;
-uint16_t pevSequenceCyclesInState;
-uint16_t pevSequenceDelayCycles;
-uint8_t nRemainingStartAttenChar;
-uint8_t remainingNumberOfSounds;
-uint8_t AttenCharIndNumberOfSounds;
-uint8_t SdpRepetitionCounter;
-uint8_t isSDPDone;
-uint8_t sdp_state;
-uint8_t nEvseModemMissingCounter;
-uint16_t checkpointNumber;
+
+static char strVersion[200];
+static uint8_t verLen;
+static uint8_t sourceMac[6];
+static uint8_t NID[7];
+static uint8_t NMK[16];
+static uint8_t numberOfFoundModems;
+static uint8_t pevSequenceState;
+static uint16_t pevSequenceCyclesInState;
+static uint16_t pevSequenceDelayCycles;
+static uint8_t nRemainingStartAttenChar;
+static uint8_t remainingNumberOfSounds;
+static uint8_t AttenCharIndNumberOfSounds;
+static uint8_t SdpRepetitionCounter;
+static uint8_t sdp_state;
+static uint8_t nEvseModemMissingCounter;
 
 /********** local prototypes *****************************************/
-void composeAttenCharRsp(void);
-void slac_enterState(int n);
-void composeSetKey(void);
+static void composeAttenCharRsp(void);
+static void slac_enterState(int n);
+static void composeSetKey(void);
 
 /*********************************************************************************/
-void callbackReadyForTcp(uint8_t) {
-  pevStateMachine_ReInit(); /* let the PEV state machine start the TCP stuff */
-}
-
 /* Extracting the EtherType from a received message. */
 uint16_t getEtherType(uint8_t *messagebufferbytearray) {
   uint16_t etherType=0;
@@ -113,7 +104,7 @@ void fillDestinationMac(const uint8_t *mac, uint8_t offset) {
   memcpy(&myethtransmitbuffer[offset], mac, 6);
 }
 
-void cleanTransmitBuffer(void) {
+static void cleanTransmitBuffer(void) {
   /* fill the complete ethernet transmit buffer with 0x00 */
   int i;
   for (i=0; i<MY_ETH_TRANSMIT_BUFFER_LEN; i++) {
@@ -121,7 +112,7 @@ void cleanTransmitBuffer(void) {
   }
 }
 
-void setNmkAt(uint8_t index) {
+static void setNmkAt(uint8_t index) {
   /* sets the Network Membership Key (NMK) at a certain position in the transmit buffer */
   uint8_t i;
   for (i=0; i<16; i++) {
@@ -129,7 +120,7 @@ void setNmkAt(uint8_t index) {
   }
 }
 
-void setNidAt(uint8_t index) {
+static void setNidAt(uint8_t index) {
   /* copies the network ID (NID, 7 bytes) into the wished position in the transmit buffer */
   uint8_t i;
   for (i=0; i<7; i++) {
@@ -137,7 +128,7 @@ void setNidAt(uint8_t index) {
   }
 }
 
-uint16_t getManagementMessageType(void) {
+static uint16_t getManagementMessageType(void) {
   /* calculates the MMTYPE (base value + lower two bits), see Table 11-2 of homeplug spec */
   return (myethreceivebuffer[16]<<8) + myethreceivebuffer[15];
 }
@@ -161,7 +152,7 @@ void composeGetSwReq(void) {
     myethtransmitbuffer[19]=0x52; //
 }
 
-void composeSlacParamReq(void) {
+static void composeSlacParamReq(void) {
 	/* SLAC_PARAM request, as it was recorded 2021-12-17 WP charger 2 */
     myethtransmitbufferLen = 60;
     cleanTransmitBuffer();
@@ -185,7 +176,7 @@ void composeSlacParamReq(void) {
     // rest is 00
 }
 
-void evaluateSlacParamCnf(void) {
+static void evaluateSlacParamCnf(void) {
   /* As PEV, we receive the first response from the charger. */
   addToTrace(MOD_HOMEPLUG, "[PEVSLAC] Checkpoint102: received SLAC_PARAM.CNF");
   setCheckpoint(102);
@@ -197,7 +188,7 @@ void evaluateSlacParamCnf(void) {
 	}
 }
 
-void composeStartAttenCharInd(void) {
+static void composeStartAttenCharInd(void) {
     /* reference: see wireshark interpreted frame from ioniq */
     myethtransmitbufferLen = 60;
     cleanTransmitBuffer();
@@ -225,7 +216,7 @@ void composeStartAttenCharInd(void) {
     // rest is 00
 }
 
-void composeNmbcSoundInd(void) {
+static void composeNmbcSoundInd(void) {
     /* reference: see wireshark interpreted frame from Ioniq */
     uint8_t i;
     myethtransmitbufferLen = 71;
@@ -254,7 +245,7 @@ void composeNmbcSoundInd(void) {
     }
 }
 
-void evaluateAttenCharInd(void) {
+static void evaluateAttenCharInd(void) {
   uint8_t i;
   addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received ATTEN_CHAR.IND");
   if (iAmPev==1) {
@@ -277,7 +268,7 @@ void evaluateAttenCharInd(void) {
 	}
 }
 
-void composeAttenCharRsp(void) {
+static void composeAttenCharRsp(void) {
     /* reference: see wireshark interpreted frame from Ioniq */
     myethtransmitbufferLen = 70;
     cleanTransmitBuffer();
@@ -302,7 +293,7 @@ void composeAttenCharRsp(void) {
     // 69: result. 0 is ok
 }
 
-void composeSlacMatchReq(void) {
+static void composeSlacMatchReq(void) {
     /* reference: see wireshark interpreted frame from Ioniq */
     myethtransmitbufferLen = 85;
     cleanTransmitBuffer();
@@ -330,7 +321,7 @@ void composeSlacMatchReq(void) {
     // 77 to 84: reserved, all 00
 }
 
-void evaluateSlacMatchCnf(void) {
+static void evaluateSlacMatchCnf(void) {
     uint8_t i;
     // The SLAC_MATCH.CNF contains the NMK and the NID.
     // We extract this information, so that we can use it for the CM_SET_KEY afterwards.
@@ -360,7 +351,7 @@ void evaluateSlacMatchCnf(void) {
 		}
 }
 
-void composeSetKey(void) {
+static void composeSetKey(void) {
 	/* CM_SET_KEY.REQ request */
   /* From example trace from catphish https://openinverter.org/forum/viewtopic.php?p=40558&sid=9c23d8c3842e95c4cf42173996803241#p40558
      Table 11-88 in the homeplug_av21_specification_final_public.pdf */
@@ -408,7 +399,7 @@ void composeSetKey(void) {
   // and three remaining zeros
 }
 
-void evaluateSetKeyCnf(void) {
+static void evaluateSetKeyCnf(void) {
     // The Setkey confirmation
     uint8_t result;
     // In spec, the result 0 means "success". But in reality, the 0 means: did not work. When it works,
@@ -424,7 +415,7 @@ void evaluateSetKeyCnf(void) {
   }
 }
 
-void composeGetKey(void) {
+static void composeGetKey(void) {
 		/* CM_GET_KEY.REQ request
          from https://github.com/uhi22/plctool2/blob/master/listen_to_eth.c
          and homeplug_av21_specification_final_public.pdf */
@@ -455,70 +446,6 @@ void composeGetKey(void) {
     myethtransmitbuffer[33]=0x00; // 15-16 PRN Protocol run number
     myethtransmitbuffer[34]=0x00; //
     myethtransmitbuffer[35]=0x00; // 17 PMN Protocol message number
-}
-
-void evaluateGetKeyCnf(void) {
-#ifdef OLD
-	uint8_t i;
-	uint8_t result;
-	char strMac[20];
-	char strResult[100];
-	char strNID[50];
-	char s[300];
-    addToTrace("received GET_KEY.CNF");
-    numberOfFoundModems += 1;
-    for (i=0; i<6; i++) {
-        sourceMac[i] = myethreceivebuffer[6+i];
-    }
-    strMac = String(sourceMac[0], HEX) + ":" + String(sourceMac[1], HEX) + ":" + String(sourceMac[2], HEX) + ":"
-     + String(sourceMac[3], HEX) + ":" + String(sourceMac[4], HEX) + ":" + String(sourceMac[5], HEX);
-    result = myethreceivebuffer[19]; // 0 in case of success
-    if (result==0) {
-            strResult="(OK)";
-    } else {
-            strResult="(NOK)";
-	  }
-    addToTrace("Modem #" + String(numberOfFoundModems) + " has " + strMac + " and result code is " + String(result) + strResult);
-	  if (numberOfFoundModems>1) {
-		  addToTrace("Info: NOK is normal for remote modems.");
-	  }
-
-    //    We observed the following cases:
-    //    (A) Result=1 (NOK), NID all 00, key all 00: We requested the key with the wrong NID.
-    //    (B) Result=0 (OK), NID all 00, key non-zero: We used the correct NID for the request.
-    //               It is the local TPlink adaptor. A fresh started non-coordinator, like the PEV side.
-    //    (C) Result=0 (OK), NID non-zero, key non-zero: We used the correct NID for the request.
-    //               It is the local TPlink adaptor.
-    //    (D) Result=1 (NOK), NID non-zero, key all 00: It was a remote device. They are rejecting the GET_KEY.
-    if (result==0) {
-      // The ok case is for sure the local modem. Let's store its data.
-      memcpy(localModemMac, sourceMac, 6);
-      s="";
-			for (i=0; i<16; i++) { // NMK has 16 bytes
-                localModemCurrentKey[i] = myethreceivebuffer[41+i];
-                s=s+String(localModemCurrentKey[i], HEX)+ " ";
-			}
-      addToTrace("The local modem has key " + s);
-      //if (localModemCurrentKey == bytearray(NMKdevelopment)):
-      //    addToTrace("This is the developer NMK.")
-      //    isDeveloperLocalKey = 1
-      //else:
-      //    addToTrace("This is NOT the developer NMK.")
-      localModemFound=1;
-	  }
-    strNID = "";
-    //    The getkey response contains the Network ID (NID), even if the request was rejected. We store the NID,
-    //    to have it available for the next request. Use case: A fresh started, unconnected non-Coordinator
-    //    modem has the default-NID all 00. On the other hand, a fresh started coordinator has the
-    //    NID which he was configured before. We want to be able to cover both cases. That's why we
-    //    ask GET_KEY, it will tell the NID (even if response code is 1 (NOK), and we will use this
-    //    received NID for the next request. This will be ansered positive (for the local modem).
-    for (i=0; i<7; i++) { // NID has 7 bytes
-        NID[i] = myethreceivebuffer[29+i];
-        strNID=strNID+String(NID[i], HEX)+ " ";
-    }
-    addToTrace("From GetKeyCnf, got network ID (NID) " + strNID);
-#endif
 }
 
 void sendTestFrame(void) {
@@ -804,6 +731,8 @@ void runSdpStateMachine(void) {
     sdp_state = 0;
   }
 }
+
+static void evaluateGetKeyCnf(void) {}
 
 void evaluateReceivedHomeplugPacket(void) {
   switch (getManagementMessageType()) {

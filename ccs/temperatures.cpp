@@ -29,22 +29,22 @@
 
 #define MAX_ADC_VALUE 4095 /* we have 12 bit ADC resolution */
 
-float temperatureChannel_1_R_NTC;
-float temperatureChannel_1_celsius;
-uint8_t temperatureChannel_1_M40;
+static float temperatureChannel_1_R_NTC;
+static float temperatureChannel_1_celsius;
+static uint8_t temperatureChannel_1_M40;
 
-float temperatureChannel_2_R_NTC;
-float temperatureChannel_2_celsius;
-uint8_t temperatureChannel_2_M40;
+static float temperatureChannel_2_R_NTC;
+static float temperatureChannel_2_celsius;
+static uint8_t temperatureChannel_2_M40;
 
-float temperatureChannel_3_R_NTC;
-float temperatureChannel_3_celsius;
-uint8_t temperatureChannel_3_M40;
+static float temperatureChannel_3_R_NTC;
+static float temperatureChannel_3_celsius;
+static uint8_t temperatureChannel_3_M40;
 
-float fCpuTemperature_Celsius;
-uint8_t temperatureCpu_M40;
+static float fCpuTemperature_Celsius;
+static uint8_t temperatureCpu_M40;
 
-float ohmToCelsius(float rNTC) {
+static float ohmToCelsius(float rNTC) {
     /* Convert the resistance to a temperature */
     /* Based on: https://learn.adafruit.com/thermistor/using-a-thermistor */
     float steinhart;
@@ -57,7 +57,7 @@ float ohmToCelsius(float rNTC) {
     return steinhart;
 }
 
-uint8_t temperatures_convertFloatToM40(float t_celsius) {
+static uint8_t temperatures_convertFloatToM40(float t_celsius) {
 	/* converts a float temperature (in celsius) into an uint8 which has
 	 * the offset=-40°C and LSB=1Kelvin.
 	 */

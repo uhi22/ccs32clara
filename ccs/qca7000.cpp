@@ -26,7 +26,7 @@ uint16_t myethreceivebufferLen;
 
 uint16_t debugCounter_cutted_myethreceivebufferLen;
 
-void mySpiTransmitReceive()
+static void mySpiTransmitReceive()
 {
    while (SPI_SR(SPI1) & SPI_SR_BSY);
    DigIo::spics.Clear();
@@ -36,7 +36,7 @@ void mySpiTransmitReceive()
    DigIo::spics.Set();
 }
 
-void dmaTransmitReceive()
+static void dmaTransmitReceive()
 {
    while (SPI_SR(SPI1) & SPI_SR_BSY);
    dma_disable_channel(DMA1, DMA_CHANNEL2);
@@ -89,7 +89,7 @@ void qca7000setup() {
    dma_set_memory_address(DMA1, DMA_CHANNEL2, (uint32_t)mySpiRxBuffer);
 }
 
-void spiQCA7000DemoReadSignature(void) {
+static void spiQCA7000DemoReadSignature(void) {
   /* Demo for reading the signature of the QCA7000. This should show AA55. */
   uint16_t sig;
   uint8_t i;
@@ -107,7 +107,7 @@ void spiQCA7000DemoReadSignature(void) {
 }
 
 
-void spiQCA7000DemoReadWRBUF_SPC_AVA(void) {
+static void spiQCA7000DemoReadWRBUF_SPC_AVA(void) {
   /* Demo for reading the available write buffer size from the QCA7000 */
   int i;
   i=0;
@@ -121,7 +121,7 @@ void spiQCA7000DemoReadWRBUF_SPC_AVA(void) {
   printf("RBUF_SPC_AVA is %x %x\r\n", mySpiRxBuffer[2], mySpiRxBuffer[3]);
 }
 
-void spiQCA7000DemoWriteBFR_SIZE(uint16_t n) {
+static void spiQCA7000DemoWriteBFR_SIZE(uint16_t n) {
   /* Demo for writing the write buffer size to the QCA7000 */
   int i;
   i=0;
@@ -134,7 +134,7 @@ void spiQCA7000DemoWriteBFR_SIZE(uint16_t n) {
 }
 
 
-uint16_t spiQCA7000DemoReadRDBUF_BYTE_AVA(void) {
+static uint16_t spiQCA7000DemoReadRDBUF_BYTE_AVA(void) {
   /* Demo for retrieving the amount of available received data from QCA7000 */
   uint16_t n;
   int i;

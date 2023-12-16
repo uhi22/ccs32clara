@@ -2,6 +2,7 @@
 
 #include "ccs32_globals.h"
 
+uint16_t checkpointNumber;
 
 /* Helper functions */
 

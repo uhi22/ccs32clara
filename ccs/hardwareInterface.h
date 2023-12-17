@@ -1,7 +1,7 @@
 /* Interface header for hardwareInterface.c */
 
 /* Global Defines */
-#define CAN_TIMEOUT 5 //multiples of 100ms
+#define CAN_TIMEOUT 10 //multiples of 100ms
 
 enum LockStt
 {

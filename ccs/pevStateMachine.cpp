@@ -93,8 +93,6 @@ static void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBuffe
    {
       memcpy(&tcpPayload[8], exiBuffer, exiBufferLen);
       tcpPayloadLen = 8 + exiBufferLen; /* 8 byte V2GTP header, plus the EXI data */
-      //log_v("Step3 %d", tcpPayloadLen);
-      showAsHex(tcpPayload, tcpPayloadLen, "tcpPayload");
       tcp_transmit();
    }
    else
@@ -323,8 +321,7 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
    uint8_t i;
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForSupportedApplicationProtocolResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForSupportedApplicationProtocolResponse");
       routeDecoderInputData();
       projectExiConnector_decode_appHandExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -378,8 +375,7 @@ static void stateFunctionWaitForSessionSetupResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForSessionSetupResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForSessionSetupResponse");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -389,9 +385,8 @@ static void stateFunctionWaitForSessionSetupResponse(void)
       {
          memcpy(sessionId, dinDocDec.V2G_Message.Header.SessionID.bytes, SESSIONID_LEN);
          sessionIdLen = dinDocDec.V2G_Message.Header.SessionID.bytesLen; /* store the received SessionID, we will need it later. */
-         addToTrace(MOD_PEV, "Checkpoint506: The Evse decided for SessionId");
+         addToTrace(MOD_PEV, "Checkpoint506: The Evse decided for SessionId", sessionId, sessionIdLen);
          setCheckpoint(506);
-         showAsHex(sessionId, sessionIdLen, "");
          publishStatus("Session established", "");
          addToTrace(MOD_PEV, "Will send ServiceDiscoveryReq");
          projectExiConnector_prepare_DinExiDocument();
@@ -412,8 +407,7 @@ static void stateFunctionWaitForServiceDiscoveryResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForServiceDiscoveryResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForServiceDiscoveryResponse");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -443,8 +437,7 @@ static void stateFunctionWaitForServicePaymentSelectionResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForServicePaymentSelectionResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForServicePaymentSelectionResponse");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -476,8 +469,7 @@ static void stateFunctionWaitForContractAuthenticationResponse(void)
    }
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForContractAuthenticationResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForContractAuthenticationResponse");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -531,8 +523,7 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
    }
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForChargeParameterDiscoveryResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForChargeParameterDiscoveryResponse");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -629,7 +620,6 @@ static void stateFunctionWaitForCableCheckResponse(void)
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
       //addToTrace(MOD_PEV, "In state WaitForCableCheckResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -696,7 +686,6 @@ static void stateFunctionWaitForPreChargeResponse(void)
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
       //addToTrace(MOD_PEV, "In state WaitForPreChargeResponse, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -788,7 +777,6 @@ static void stateFunctionWaitForPowerDeliveryResponse(void)
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
       //addToTrace(MOD_PEV, "In state WaitForPowerDeliveryRes, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -954,8 +942,7 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForWeldingDetectionRes, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForWeldingDetectionRes");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
@@ -972,12 +959,12 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
          }
          if (EVSEPresentVoltage<MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION) {
             /* voltage is low, weldingDetection finished successfully. */
-            publishStatus("WldingDet done", "");
+            publishStatus("WeldingDet done", "");
             addToTrace(MOD_PEV, "WeldingDetection successfully finished. Sending SessionStopReq");
             projectExiConnector_prepare_DinExiDocument();
             dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
             init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
-            /* no other fields are manatory */
+            /* no other fields are mandatory */
             setCheckpoint(900);
             encodeAndTransmit();
             addToTrace(MOD_PEV, "Unlocking the connector");
@@ -1011,8 +998,7 @@ static void stateFunctionWaitForSessionStopResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForSessionStopRes, received:");
-      showAsHex(tcp_rxdata, tcp_rxdataLen, "");
+      addToTrace(MOD_PEV, "In state WaitForSessionStopRes");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */

@@ -51,7 +51,7 @@
     PARAM_ENTRY(CAT_HARDWARE,economizer,  "%",       0,      100,    100,    7   ) \
     PARAM_ENTRY(CAT_HARDWARE,inletvtgsrc, IVSRC,     0,      2,      0,      8   ) \
     PARAM_ENTRY(CAT_HARDWARE,lockpwm,     "dig",    -100,    100,    30,     14  ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockopentm,  "ms",      0,      10000,  1000,   13  ) \
+    PARAM_ENTRY(CAT_HARDWARE,lockruntm,   "ms",      0,      10000,  1500,   13  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   0,      11  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   0,      12  ) \
     PARAM_ENTRY(CAT_COMM,    nodeid,      "",        1,      63,     22,     21  ) \

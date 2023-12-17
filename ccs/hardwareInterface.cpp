@@ -323,7 +323,7 @@ static LockStt hwIf_getLockState()
       lockClosedTime = rtc_get_ms();
    }
 
-   bool isOpening = (rtc_get_ms() - lockClosedTime) < (uint32_t)(Param::GetInt(Param::lockopentm));
+   bool isOpening = (rtc_get_ms() - lockClosedTime) < (uint32_t)(Param::GetInt(Param::lockruntm));
    //Report lock opening at least x ms after we left closed state
    if (state == LOCK_OPEN && isOpening)
    {
@@ -398,19 +398,19 @@ static void hwIf_handleLockRequests()
       /* connector lock just time-based, without evaluating the feedback */
       if (lockRequest == LOCK_OPEN)
       {
-         printf("[%u] unlocking the connector\r\n", rtc_get_ms());
+         addToTrace(MOD_HWIF, "unlocking the connector");
          Param::SetInt(Param::lockstt, LOCK_OPENING);
          hardwareInteface_setHBridge(pwmNeg, pwmPos);
-         lockTimer = 60; /* in 30ms steps */
+         lockTimer = Param::GetInt(Param::lockruntm) / 30; /* in 30ms steps */
          lockTarget = LOCK_OPEN;
          lockRequest = LOCK_UNKNOWN;
       }
       if (lockRequest == LOCK_CLOSED)
       {
-         printf("[%u] locking the connector\r\n", rtc_get_ms());
+         addToTrace(MOD_HWIF, "locking the connector");
          Param::SetInt(Param::lockstt, LOCK_CLOSING);
          hardwareInteface_setHBridge(pwmPos, pwmNeg);
-         lockTimer = 60; /* in 30ms steps */
+         lockTimer = Param::GetInt(Param::lockruntm) / 30; /* in 30ms steps */
          lockTarget = LOCK_CLOSED;
          lockRequest = LOCK_UNKNOWN;
       }
@@ -424,7 +424,7 @@ static void hwIf_handleLockRequests()
             hardwareInteface_setHBridge(0, 0);
             Param::SetInt(Param::lockstt, lockTarget);
             lockState = lockTarget;
-            printf("[%u] finished connector (un)locking\r\n", rtc_get_ms());
+            addToTrace(MOD_HWIF, "finished connector (un)locking");
          }
       }
    }

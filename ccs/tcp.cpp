@@ -128,14 +128,7 @@ void evaluateTcpPacket(void)
       TcpAckNr = remoteSeqNr+tcp_rxdataLen; /* The ACK number of our next transmit packet is tcp_rxdataLen more than the received seq number. */
       tcp_sendAck();
 
-      if (Param::GetInt(Param::logging) & MOD_TCPTRAFFIC)
-      {
-         printf("[%u] Data received: ", rtc_get_ms());
-         for (uint16_t i=0; i < tcp_rxdataLen; i++) {
-            printf("%02x ", tcp_rxdata[i]);
-         }
-         printf("\r\n");
-      }
+      addToTrace(MOD_TCPTRAFFIC, "Data received: ", tcp_rxdata, tcp_rxdataLen);
    }
    if (flags & TCP_FLAG_ACK)
    {
@@ -193,7 +186,6 @@ void tcp_sendAck(void)
 
 void tcp_transmit(void)
 {
-   //showAsHex(tcpPayload, tcpPayloadLen, "tcp_transmit");
    if (tcpState == TCP_STATE_ESTABLISHED)
    {
       //addToTrace("[TCP] sending data");
@@ -201,13 +193,7 @@ void tcp_transmit(void)
       if (tcpPayloadLen+tcpHeaderLen<TCP_TRANSMIT_PACKET_LEN)
       {
           /* The packet fits into our transmit buffer. */
-          if (Param::GetInt(Param::logging) & MOD_TCPTRAFFIC) {
-            printf("[%u] TCP will transmit: ", rtc_get_ms());
-            for (uint16_t i=0; i < tcpPayloadLen; i++) {
-              printf("%02x", tcpPayload[i]);
-            }
-            printf("\r\n");
-          }
+          addToTrace(MOD_TCPTRAFFIC, "TCP will transmit:", tcpPayload, tcpPayloadLen);
           memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
@@ -377,9 +363,9 @@ void tcp_Mainfunction(void)
         tcp_debug_totalRetryCounter++;
         lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
         retryCounter--;
-        printf("[%u] [TCP] Last packet wasn't ACKed for 100 ms, retransmitting\r\n", rtc_get_ms());
+        addToTrace(MOD_TCP, "[TCP] Last packet wasn't ACKed for 100 ms, retransmitting");
       } else {
-        printf("[%u] [TCP] Giving up the retry\r\n", rtc_get_ms());
+        addToTrace(MOD_TCP, "[TCP] Giving up the retry");
       }
    }
    if (connMgr_getConnectionLevel()<50)

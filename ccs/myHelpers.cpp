@@ -13,19 +13,20 @@ void setCheckpoint(uint16_t newcheckpoint) {
 
 void addToTrace(enum Module module, const char * s) {
    if (Param::GetInt(Param::logging) & module)
-      printf("[%d] %s\r\n", rtc_get_ms(), s);
+      printf("[%u] %s\r\n", rtc_get_ms(), s);
    // canbus_addStringToTextTransmitBuffer(mySerialPrintOutputBuffer); /* print to the CAN */
 }
 
-void showAsHex(uint8_t *data, uint16_t len, const char *description) {
-   int i;
-   /*printf("%s (%d bytes): ", description, len);
-   for (i=0; i<len; i++) {
-       printf("%02x ", data[i]);
-   }*/
+void addToTrace(enum Module module, const char * s, uint8_t* data, uint16_t len) {
+   if (Param::GetInt(Param::logging) & module) {
+      printf("[%u] %s ", rtc_get_ms(), s);
+      for (uint16_t i = 0; i < len; i++)
+         printf("%02x", data[i]);
+      printf("\r\n");
+   }
 }
 
-void sanityCheck(const char *hint) {
+void sanityCheck(const char*) {
     /* todo: check the canaries, config registers, maybe stack, ... */
 }
 

@@ -13,16 +13,16 @@
 
 #include "ccs32_globals.h"
 
-uint16_t connMgr_timerEthLink;
-uint16_t connMgr_timerModemLocal;
-uint16_t connMgr_timerModemRemote;
-uint16_t connMgr_timerSlac;
-uint16_t connMgr_timerSDP;
-uint16_t connMgr_timerTCP;
-uint16_t connMgr_timerAppl;
-uint16_t connMgr_ConnectionLevel;
-uint16_t connMgr_ConnectionLevelOld;
-uint16_t connMgr_cycles;
+static uint16_t connMgr_timerEthLink;
+static uint16_t connMgr_timerModemLocal;
+static uint16_t connMgr_timerModemRemote;
+static uint16_t connMgr_timerSlac;
+static uint16_t connMgr_timerSDP;
+static uint16_t connMgr_timerTCP;
+static uint16_t connMgr_timerAppl;
+static uint16_t connMgr_ConnectionLevel;
+static uint16_t connMgr_ConnectionLevelOld;
+static uint16_t connMgr_cycles;
 
 #define CONNMGR_CYCLES_PER_SECOND 33 /* 33 cycles per second, because 30ms cycle time */
 #define CONNMGR_TIMER_MAX (5*33) /* 5 seconds until an OkReport is forgotten. */

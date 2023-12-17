@@ -1,9 +1,9 @@
 # Test results on different chargers
-Please add your test result above past test results of your tested charger model (if there are already tests on it). If your charger model is not already listed here, please add it as a new section below the other models and add your data.
+### Adding test results:
+Please add test result above past test results of your tested charger model (if there are already tests on it). If your charger model is not already listed here, please add it as a new section below the other models and add your data.
 Thank you for contributing to the list!
 
-(proposed) Formatting Style:
-
+### (proposed) Formatting Style:
 
 ## Manufacturer Modelname
 

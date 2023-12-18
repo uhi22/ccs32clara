@@ -26,6 +26,8 @@
 #define PEV_STATE_SequenceTimeout 99
 #define PEV_STATE_SafeShutDownWaitForChargerShutdown 111
 #define PEV_STATE_SafeShutDownWaitForContactorsOpen 222
+#define PEV_STATE_EmergencyShutDown 333
+#define PEV_STATE_EmergencyShutDownVehicleDisconnect 444
 #define PEV_STATE_End 1000
 
 #define LEN_OF_EVCCID 6 /* The EVCCID is the MAC according to spec. Ioniq uses exactly these 6 byte. */

@@ -313,6 +313,7 @@ static void stateFunctionConnected(void)
    setCheckpoint(400);
    addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
    hardwareInterface_resetSimulation();
+   Param::SetInt(Param::stopreason, STOP_REASON_NONE);
    pev_enterState(PEV_STATE_WaitForSupportedApplicationProtocolResponse);
 }
 
@@ -862,6 +863,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             addToTrace(MOD_PEV, "Checkpoint790: Charging is terminated from charger side.");
             setCheckpoint(790);
             pev_isUserStopRequestOnChargerSide = 1;
+            Param::SetInt(Param::stopreason, STOP_REASON_CHARGER_SHUTDOWN);
          }
          if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
          {
@@ -871,6 +873,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             setCheckpoint(800);
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+            Param::SetInt(Param::stopreason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
          }
          /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
          pev_isUserStopRequestOnCarSide = hardwareInterface_stopCharging();
@@ -880,6 +883,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             {
                publishStatus("Accu full", "");
                addToTrace(MOD_PEV, "Accu is full. Sending PowerDeliveryReq Stop.");
+               Param::SetInt(Param::stopreason, STOP_REASON_ACCU_FULL);
             }
             else if (pev_isUserStopRequestOnCarSide)
             {

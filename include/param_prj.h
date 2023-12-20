@@ -101,7 +101,7 @@
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
 #define DEMOCONTROL  "0=CAN,234=STANDALONE"
-#define STOPREASONS "0=NONE, 1=BUTTON, 2=MISSING_ENABLE, 3=CAN_TIMEOUT"
+#define STOPREASONS "0=NONE, 1=BUTTON, 2=MISSING_ENABLE, 3=CAN_TIMEOUT, 4=CHARGER_SHUTDOWN, 5=ACCUFULL, 6=CHARGEREMERGENCY"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
@@ -124,6 +124,9 @@ enum _inletsources
 #define STOP_REASON_BUTTON 1
 #define STOP_REASON_MISSING_ENABLE 2
 #define STOP_REASON_CAN_TIMEOUT 3
+#define STOP_REASON_CHARGER_SHUTDOWN 4
+#define STOP_REASON_ACCU_FULL 5
+#define STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN 6
 
 //Generated enum-string for possible errors
 extern const char* errorListString;

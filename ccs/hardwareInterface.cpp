@@ -187,14 +187,16 @@ bool hardwareInterface_stopCharging()
     uint8_t stopReason = STOP_REASON_NONE;
     if (pushbutton_isPressed500ms()) {
         stopReason = STOP_REASON_BUTTON;
+        Param::SetInt(Param::stopreason, stopReason);
     }
     if (!Param::GetBool(Param::enable)) {
         stopReason = STOP_REASON_MISSING_ENABLE;
+        Param::SetInt(Param::stopreason, stopReason);
     }
     if ((Param::GetInt(Param::canwatchdog) >= CAN_TIMEOUT) && (!Param::GetBool(Param::wd_disable)) && (Param::GetInt(Param::democtrl)!=DEMOCONTROL_STANDALONE)) {
         stopReason = STOP_REASON_CAN_TIMEOUT;
+        Param::SetInt(Param::stopreason, stopReason);
     }
-    Param::SetInt(Param::stopreason, stopReason);
     return (stopReason!=STOP_REASON_NONE);
 }
 

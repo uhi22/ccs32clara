@@ -56,7 +56,7 @@ int16_t hardwareInterface_getInletVoltage(void)
 
 int16_t hardwareInterface_getAccuVoltage(void)
 {
-   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250))
+   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE))
    {
       /* for demonstration without an external provided target voltage, we take the value of
          the parameter demovtg and put it to the target voltage variable. */
@@ -71,7 +71,7 @@ int16_t hardwareInterface_getAccuVoltage(void)
 
 int16_t hardwareInterface_getChargingTargetVoltage(void)
 {
-   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250))
+   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE))
    {
       /* for demonstration without an external provided target voltage, we take the value of
          the parameter demovtg and put it to the target voltage variable. */
@@ -184,9 +184,18 @@ uint8_t hardwareInterface_getPowerRelayConfirmation(void)
 
 bool hardwareInterface_stopCharging()
 {
-   return pushbutton_isPressed500ms() ||
-          !Param::GetBool(Param::enable) ||
-          (Param::GetInt(Param::canwatchdog) >= CAN_TIMEOUT && !Param::GetBool(Param::wd_disable));
+    uint8_t stopReason = STOP_REASON_NONE;
+    if (pushbutton_isPressed500ms()) {
+        stopReason = STOP_REASON_BUTTON;
+    }
+    if (!Param::GetBool(Param::enable)) {
+        stopReason = STOP_REASON_MISSING_ENABLE;
+    }
+    if ((Param::GetInt(Param::canwatchdog) >= CAN_TIMEOUT) && (!Param::GetBool(Param::wd_disable)) && (Param::GetInt(Param::democtrl)!=DEMOCONTROL_STANDALONE)) {
+        stopReason = STOP_REASON_CAN_TIMEOUT;
+    }
+    Param::SetInt(Param::stopreason, stopReason);
+    return (stopReason!=STOP_REASON_NONE);
 }
 
 void hardwareInterface_resetSimulation(void)

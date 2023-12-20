@@ -110,7 +110,12 @@ static void Ms100Task(void)
    }
    else if (!Param::GetBool(Param::wd_disable))
    {
-      ErrorMessage::Post(ERR_CANTIMEOUT);
+       if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE)) {
+           /* we are in demo mode without CAN. Do not set the CAN timeout error indication. */
+       } else {
+           /* we rely on the CAN input, so we set the error indication if the CAN messages timed out. */
+           ErrorMessage::Post(ERR_CANTIMEOUT);
+       }
    }
 
    canMap->SendAll();

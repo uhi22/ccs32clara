@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.26.B
+#define VER 0.28.B
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 25
-//Next value Id: 2017
+//Next param id (increase when adding new parameter!): 26
+//Next value Id: 2018
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
@@ -60,6 +60,7 @@
     PARAM_ENTRY(CAT_CHARGE,  maxvtg,      "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxcur,      "A",       0,      500,    125,    19  ) \
     PARAM_ENTRY(CAT_CHARGE,  demovtg,     "V",       0,      500,    0,      20  ) \
+    PARAM_ENTRY(CAT_CHARGE,  democtrl,    DEMOCONTROL,0,     511,    0,      25  ) \
     TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      100,    0,      5   ) \
@@ -83,6 +84,7 @@
     VALUE_ENTRY(dcsw1dc,     "%",    2013 ) \
     VALUE_ENTRY(lockfb,      "dig",  2011 ) \
     VALUE_ENTRY(lockstt,     LOCK,   2014 ) \
+    VALUE_ENTRY(stopreason,  STOPREASONS,  2017 ) \
     VALUE_ENTRY(checkpoint,  "dig",  2015 ) \
     VALUE_ENTRY(canwatchdog, "dig",  2016 ) \
     VALUE_ENTRY(cpuload,     "%",    2094 )
@@ -98,6 +100,8 @@
 #define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 511=All, 447=AllButTraffic"
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
+#define DEMOCONTROL  "0=CAN,234=STANDALONE"
+#define STOPREASONS "0=NONE, 1=BUTTON, 2=MISSING_ENABLE, 3=CAN_TIMEOUT"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
@@ -113,6 +117,13 @@ enum _inletsources
    IVSRC_ANAIN,
    IVSRC_CAN
 };
+
+#define DEMOCONTROL_STANDALONE 234 /* activates the demo-mode without CAN input. Uses just an "unlikely" uint16 number, to reduce risk of unintended activation. */
+
+#define STOP_REASON_NONE 0
+#define STOP_REASON_BUTTON 1
+#define STOP_REASON_MISSING_ENABLE 2
+#define STOP_REASON_CAN_TIMEOUT 3
 
 //Generated enum-string for possible errors
 extern const char* errorListString;

@@ -554,6 +554,7 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
             //If we are not ready for charging, don't go past this state -> will time out
             if (hardwareInterface_stopCharging())
             {
+               addToTrace(MOD_PEV, "Stopping due to stoprequest.");
                pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
             }
             else

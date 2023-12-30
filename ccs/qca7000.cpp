@@ -19,9 +19,9 @@ static uint8_t mySpiTxBuffer[MY_SPI_TX_RX_BUFFER_SIZE];
 static uint32_t nTotalTransmittedBytes;
 uint16_t nTcpPacketsReceived;
 
-uint8_t myethtransmitbuffer[MY_ETH_TRANSMIT_BUFFER_LEN];
+uint8_t* myethtransmitbuffer;
 uint16_t myethtransmitbufferLen; /* The number of used bytes in the ethernet transmit buffer */
-uint8_t myethreceivebuffer[MY_ETH_RECEIVE_BUFFER_LEN];
+uint8_t* myethreceivebuffer;
 uint16_t myethreceivebufferLen;
 
 uint16_t debugCounter_cutted_myethreceivebufferLen;
@@ -183,7 +183,7 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
               myethreceivebufferLen = MY_ETH_RECEIVE_BUFFER_LEN;
               debugCounter_cutted_myethreceivebufferLen++;
           }
-          memcpy(myethreceivebuffer, &p[12], myethreceivebufferLen);
+          //memcpy(myethreceivebuffer, &p[12], myethreceivebufferLen);
           /* We received an ethernet package. Determine its type, and dispatch it to the related handler. */
           uint16_t etherType = getEtherType(myethreceivebuffer);
           #ifdef VERBOSE_QCA7000
@@ -313,7 +313,7 @@ void spiQCA7000SendEthFrame(void) {
   mySpiTxBuffer[7] = myethtransmitbufferLen>>8; /* MSB of the length */
   mySpiTxBuffer[8] = 0x00; /* to bytes reserved, 0x00 */
   mySpiTxBuffer[9] = 0x00;
-  memcpy(&mySpiTxBuffer[10], myethtransmitbuffer, myethtransmitbufferLen); /* the ethernet frame */
+  //memcpy(&mySpiTxBuffer[10], myethtransmitbuffer, myethtransmitbufferLen); /* the ethernet frame */
   mySpiTxBuffer[10+myethtransmitbufferLen] = 0x55; /* End of frame, 2 bytes with 0x55. Aka QcaFrmCreateFooter in the linux driver */
   mySpiTxBuffer[11+myethtransmitbufferLen] = 0x55;
   mySpiDataSize = 12+myethtransmitbufferLen;
@@ -345,4 +345,6 @@ void demoQCA7000(void) {
   demoQCA7000SendSoftwareVersionRequest();
   spiQCA7000checkForReceivedData();
   spiQCA7000checkForReceivedData();
+  myethtransmitbuffer = &mySpiTxBuffer[10];
+  myethreceivebuffer = &mySpiRxBuffer[12];
 }

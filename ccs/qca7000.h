@@ -12,9 +12,9 @@ extern "C" {
 
 /* Global Variables */
 
-extern uint8_t* myethtransmitbuffer;
+extern uint8_t myethtransmitbuffer[MY_ETH_TRANSMIT_BUFFER_LEN];
 extern uint16_t myethtransmitbufferLen; /* The number of used bytes in the ethernet transmit buffer */
-extern uint8_t* myethreceivebuffer;
+extern uint8_t myethreceivebuffer[MY_ETH_RECEIVE_BUFFER_LEN];
 extern uint16_t myethreceivebufferLen;
 extern const uint8_t myMAC[6];
 extern uint8_t nMaxInMyEthernetReceiveCallback, nInMyEthernetReceiveCallback;

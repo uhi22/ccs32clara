@@ -19,9 +19,9 @@ static uint8_t mySpiTxBuffer[MY_SPI_TX_RX_BUFFER_SIZE];
 static uint32_t nTotalTransmittedBytes;
 uint16_t nTcpPacketsReceived;
 
-uint8_t* myethtransmitbuffer;
+uint8_t* myethtransmitbuffer = &mySpiTxBuffer[10];
 uint16_t myethtransmitbufferLen; /* The number of used bytes in the ethernet transmit buffer */
-uint8_t* myethreceivebuffer;
+uint8_t* myethreceivebuffer = &mySpiRxBuffer[12];
 uint16_t myethreceivebufferLen;
 
 uint16_t debugCounter_cutted_myethreceivebufferLen;
@@ -345,6 +345,4 @@ void demoQCA7000(void) {
   demoQCA7000SendSoftwareVersionRequest();
   spiQCA7000checkForReceivedData();
   spiQCA7000checkForReceivedData();
-  myethtransmitbuffer = &mySpiTxBuffer[10];
-  myethreceivebuffer = &mySpiRxBuffer[12];
 }

@@ -76,17 +76,8 @@ static void Ms100Task(void)
    Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
+   Param::SetInt(Param::pp, AnaIn::pp.Get());
    temperatures_calculateTemperatures();
-
-   switch (Param::GetInt(Param::locktest))
-   {
-   case LOCK_CLOSED:
-      hardwareInterface_triggerConnectorLocking();
-      break;
-   case LOCK_OPEN:
-      hardwareInterface_triggerConnectorUnlocking();
-      break;
-   }
 
    switch (Param::GetInt(Param::inletvtgsrc))
    {
@@ -104,18 +95,15 @@ static void Ms100Task(void)
 
    //Watchdog
    int wd = Param::GetInt(Param::canwatchdog);
-   if (wd < CAN_TIMEOUT)
-   {
+   if (wd < CAN_TIMEOUT) {
       Param::SetInt(Param::canwatchdog, ++wd);
    }
-   else if (!Param::GetBool(Param::wd_disable))
-   {
-       if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE)) {
-           /* we are in demo mode without CAN. Do not set the CAN timeout error indication. */
-       } else {
-           /* we rely on the CAN input, so we set the error indication if the CAN messages timed out. */
-           ErrorMessage::Post(ERR_CANTIMEOUT);
-       }
+   else if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE)) {
+      /* we are in demo mode without CAN. Do not set the CAN timeout error indication. */
+   }
+   else {
+      /* we rely on the CAN input, so we set the error indication if the CAN messages timed out. */
+      ErrorMessage::Post(ERR_CANTIMEOUT);
    }
 
    canMap->SendAll();

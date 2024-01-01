@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.28.B
+#define VER 0.29.B
 
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 26
-//Next value Id: 2018
+//Next value Id: 2019
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
@@ -59,35 +59,35 @@
     PARAM_ENTRY(CAT_CHARGE,  maxpower,    "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxvtg,      "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxcur,      "A",       0,      500,    125,    19  ) \
-    PARAM_ENTRY(CAT_CHARGE,  demovtg,     "V",       0,      500,    0,      20  ) \
-    PARAM_ENTRY(CAT_CHARGE,  democtrl,    DEMOCONTROL,0,     511,    0,      25  ) \
     TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      100,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      1000,   0,      6   ) \
     TESTP_ENTRY(CAT_CHARGE,  enable,      OFFON,     0,      1,      1,      23  ) \
-    TESTP_ENTRY(CAT_TEST,    locktest,    LOCK,      0,      2,      0,      9   ) \
-    TESTP_ENTRY(CAT_TEST,    wd_disable,  OFFON,     0,      1,      0,      24   ) \
+    PARAM_ENTRY(CAT_TEST,    demovtg,     "V",       0,      500,    0,      20  ) \
+    PARAM_ENTRY(CAT_TEST,    democtrl,    DEMOCTRL,  0,      511,    0,      25  ) \
+    TESTP_ENTRY(CAT_TEST,    actuatortest,ACTEST,    0,      7,      0,      9   ) \
     TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      511,    DEFAULT_LOGGINGMASK,    15  ) \
-    VALUE_ENTRY(opmode,      OPMODES, 2000 ) \
-    VALUE_ENTRY(version,     VERSTR,  2001 ) \
-    VALUE_ENTRY(lasterr,     errorListString,  2002 ) \
-    VALUE_ENTRY(evsevtg,     "V",    2006 ) \
-    VALUE_ENTRY(evsecur,     "A",    2010 ) \
-    VALUE_ENTRY(inletvtg,    "V",    2007 ) \
-    VALUE_ENTRY(evsemaxcur,  "A",    2008 ) \
-    VALUE_ENTRY(evsemaxvtg,  "V",    2009 ) \
-    VALUE_ENTRY(evsecp,      "%",    2012 ) \
-    VALUE_ENTRY(temp1,       "°C",   2003 ) \
-    VALUE_ENTRY(temp2,       "°C",   2004 ) \
-    VALUE_ENTRY(temp3,       "°C",   2005 ) \
-    VALUE_ENTRY(dcsw1dc,     "%",    2013 ) \
-    VALUE_ENTRY(lockfb,      "dig",  2011 ) \
-    VALUE_ENTRY(lockstt,     LOCK,   2014 ) \
-    VALUE_ENTRY(stopreason,  STOPREASONS,  2017 ) \
-    VALUE_ENTRY(checkpoint,  "dig",  2015 ) \
-    VALUE_ENTRY(canwatchdog, "dig",  2016 ) \
-    VALUE_ENTRY(cpuload,     "%",    2094 )
+    VALUE_ENTRY(opmode,      OPMODES,         2000 ) \
+    VALUE_ENTRY(version,     VERSTR,          2001 ) \
+    VALUE_ENTRY(lasterr,     errorListString, 2002 ) \
+    VALUE_ENTRY(evsevtg,     "V",             2006 ) \
+    VALUE_ENTRY(evsecur,     "A",             2010 ) \
+    VALUE_ENTRY(inletvtg,    "V",             2007 ) \
+    VALUE_ENTRY(evsemaxcur,  "A",             2008 ) \
+    VALUE_ENTRY(evsemaxvtg,  "V",             2009 ) \
+    VALUE_ENTRY(evsecp,      "%",             2012 ) \
+    VALUE_ENTRY(temp1,       "°C",            2003 ) \
+    VALUE_ENTRY(temp2,       "°C",            2004 ) \
+    VALUE_ENTRY(temp3,       "°C",            2005 ) \
+    VALUE_ENTRY(dcsw1dc,     "%",             2013 ) \
+    VALUE_ENTRY(lockfb,      "dig",           2011 ) \
+    VALUE_ENTRY(pp,          "dig",           2018 ) \
+    VALUE_ENTRY(lockstt,     LOCK,            2014 ) \
+    VALUE_ENTRY(stopreason,  STOPREASONS,     2017 ) \
+    VALUE_ENTRY(checkpoint,  "dig",           2015 ) \
+    VALUE_ENTRY(canwatchdog, "dig",           2016 ) \
+    VALUE_ENTRY(cpuload,     "%",             2094 )
 
 
 /***** Enum String definitions *****/
@@ -96,12 +96,13 @@
 12=ContactorsClosed, 13=PowerDelivery, 14=CurrentDemand, 15=WaitCurrentDown, 16=WeldingDetection, 17=SessionStop, 18=Finished, 19=Error"
 
 #define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
-#define LOCK         "0=None, 1=Open, 2=Close, 3=Opening, 4=Closing"
+#define LOCK         "0=None, 1=Open, 2=Closed, 3=Opening, 4=Closing"
+#define ACTEST       "0=None, 1=OpenLock, 2=CloseLock, 3=Contactor, 4=LedRed, 5=LedGreen, 6=LedBlue, 7=StateC"
 #define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 511=All, 447=AllButTraffic"
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
-#define DEMOCONTROL  "0=CAN,234=STANDALONE"
-#define STOPREASONS "0=NONE, 1=BUTTON, 2=MISSING_ENABLE, 3=CAN_TIMEOUT, 4=CHARGER_SHUTDOWN, 5=ACCUFULL, 6=CHARGEREMERGENCY"
+#define DEMOCTRL     "0=CAN, 234=StandAlone"
+#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
@@ -118,15 +119,31 @@ enum _inletsources
    IVSRC_CAN
 };
 
+enum _stopreasons
+{
+   STOP_REASON_NONE,
+   STOP_REASON_BUTTON,
+   STOP_REASON_MISSING_ENABLE,
+   STOP_REASON_CAN_TIMEOUT,
+   STOP_REASON_CHARGER_SHUTDOWN,
+   STOP_REASON_ACCU_FULL,
+   STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN
+};
+
+enum _actuatortest
+{
+   TEST_NONE,
+   TEST_OPENLOCK,
+   TEST_CLOSELOCK,
+   TEST_CONTACTOR,
+   TEST_LEDGREEN,
+   TEST_LEDRED,
+   TEST_LEDBLUE,
+   TEST_STATEC
+};
+
 #define DEMOCONTROL_STANDALONE 234 /* activates the demo-mode without CAN input. Uses just an "unlikely" uint16 number, to reduce risk of unintended activation. */
 
-#define STOP_REASON_NONE 0
-#define STOP_REASON_BUTTON 1
-#define STOP_REASON_MISSING_ENABLE 2
-#define STOP_REASON_CAN_TIMEOUT 3
-#define STOP_REASON_CHARGER_SHUTDOWN 4
-#define STOP_REASON_ACCU_FULL 5
-#define STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN 6
 
 //Generated enum-string for possible errors
 extern const char* errorListString;

@@ -182,7 +182,7 @@ uint8_t hardwareInterface_getPowerRelayConfirmation(void)
    return 1;
 }
 
-bool hardwareInterface_stopCharging()
+bool hardwareInterface_stopChargeRequested()
 {
     uint8_t stopReason = STOP_REASON_NONE;
     if (pushbutton_isPressed500ms()) {
@@ -193,7 +193,7 @@ bool hardwareInterface_stopCharging()
         stopReason = STOP_REASON_MISSING_ENABLE;
         Param::SetInt(Param::stopreason, stopReason);
     }
-    if ((Param::GetInt(Param::canwatchdog) >= CAN_TIMEOUT) && (!Param::GetBool(Param::wd_disable)) && (Param::GetInt(Param::democtrl)!=DEMOCONTROL_STANDALONE)) {
+    if ((Param::GetInt(Param::canwatchdog) >= CAN_TIMEOUT) && (Param::GetInt(Param::democtrl) != DEMOCONTROL_STANDALONE)) {
         stopReason = STOP_REASON_CAN_TIMEOUT;
         Param::SetInt(Param::stopreason, stopReason);
     }
@@ -514,8 +514,48 @@ static void handleApplicationRGBLeds(void)
    }
 }
 
+static bool ActuatorTest()
+{
+   bool testRunning = true;
+
+   switch (Param::GetInt(Param::actuatortest))
+   {
+   case TEST_CLOSELOCK:
+      hardwareInterface_triggerConnectorLocking();
+      break;
+   case TEST_OPENLOCK:
+      hardwareInterface_triggerConnectorUnlocking();
+      break;
+   case TEST_CONTACTOR:
+      hardwareInterface_setPowerRelayOn();
+      break;
+   case TEST_STATEC:
+      hardwareInterface_setStateC();
+      break;
+   case TEST_LEDGREEN:
+      hardwareInterface_setRGB(2);
+      break;
+   case TEST_LEDRED:
+      hardwareInterface_setRGB(1);
+      break;
+   case TEST_LEDBLUE:
+      hardwareInterface_setRGB(4);
+      break;
+   case TEST_NONE:
+      //Return everything to default state. LEDs are reset anyway as soon as we leave test mode
+      hardwareInterface_setPowerRelayOff();
+      hardwareInterface_setStateB();
+      hardwareInterface_triggerConnectorUnlocking();
+      testRunning = false;
+      break;
+   }
+   return testRunning;
+}
+
 void hardwareInterface_cyclic(void)
 {
+   static bool testRunning = false;
+
    if (timer_get_flag(CP_TIMER, TIM_SR_CC1IF))
       cpDutyValidTimer = CP_DUTY_VALID_TIMER_MAX;
 
@@ -535,10 +575,27 @@ void hardwareInterface_cyclic(void)
 
    Param::SetInt(Param::evsecp, cpDuty_Percent);
 
-   handleApplicationRGBLeds();
+   //Run actuator test only if we are not connected to a charger
+   if (AnaIn::pp.Get() > 4000 && Param::GetInt(Param::opmode) == 0)
+      testRunning = ActuatorTest();
+   else if ((AnaIn::pp.Get() < 4000 || Param::GetInt(Param::opmode) != 0) && testRunning)
+   {
+      Param::SetInt(Param::actuatortest, 0);
+      testRunning = ActuatorTest(); //Run once to disable all tested outputs
+   }
+   else
+   {
+      //Keep test selection reset while tests are not allowed
+      Param::SetInt(Param::actuatortest, 0);
+   }
+
+   //LEDs may be tested, disconnect from application
+   if (testRunning)
+      handleApplicationRGBLeds();
+
    hwIf_handleContactorRequests();
    hwIf_handleLockRequests();
-   hardwareInterface_handleOutputTestMode();
+   //hardwareInterface_handleOutputTestMode();
 }
 
 void hardwareInterface_init(void)

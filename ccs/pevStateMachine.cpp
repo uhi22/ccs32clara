@@ -553,7 +553,7 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
             addToTrace(MOD_PEV, "Checkpoint555: Locking the connector.");
             hardwareInterface_triggerConnectorLocking();
             //If we are not ready for charging, don't go past this state -> will time out
-            if (hardwareInterface_stopCharging())
+            if (hardwareInterface_stopChargeRequested())
             {
                addToTrace(MOD_PEV, "Stopping due to stoprequest.");
                pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
@@ -876,7 +876,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             Param::SetInt(Param::stopreason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
          }
          /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
-         pev_isUserStopRequestOnCarSide = hardwareInterface_stopCharging();
+         pev_isUserStopRequestOnCarSide = hardwareInterface_stopChargeRequested();
          if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
          {
             if (hardwareInterface_getIsAccuFull())

@@ -24,8 +24,7 @@ extern void hardwareInterface_triggerConnectorLocking(void);
 extern void hardwareInterface_triggerConnectorUnlocking(void);
 extern uint8_t hardwareInterface_isConnectorLocked(void);
 extern uint8_t hardwareInterface_getPowerRelayConfirmation(void);
-extern bool hardwareInterface_stopCharging();
-
+extern bool hardwareInterface_stopChargeRequested();
 extern uint8_t hardwareInterface_getIsAccuFull(void);
 extern uint8_t hardwareInterface_getSoc(void);
 extern void hardwareInterface_simulateCharging(void);

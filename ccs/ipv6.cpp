@@ -111,9 +111,6 @@ void ipv6_evaluateReceivedPacket(void) {
           }
           if (udplen>8) {
                     udpPayloadLen = udplen-8;
-                    /*for (i=0; i<udplen-8; i++) {
-                        udpPayload[i] = myethreceivebuffer[62+i];
-                    }*/
                     sanityCheck("before evaluateUdpPayload");
                     evaluateUdpPayload();
                     sanityCheck("after evaluateUdpPayload");
@@ -162,7 +159,6 @@ void ipv6_initiateSdpRequest(void) {
 void ipv6_packRequestIntoUdp(void) {
         //# embeds the (SDP) request into the lower-layer-protocol: UDP
         //# Reference: wireshark trace of the ioniq car
-        //uint8_t i;
         uint16_t lenInclChecksum;
         uint16_t checksum;
         UdpRequestLen = v2gtpFrameLen + 8; // # UDP header needs 8 bytes:
@@ -181,9 +177,6 @@ void ipv6_packRequestIntoUdp(void) {
         // checksum will be calculated afterwards
         UdpRequest[6] = 0;
         UdpRequest[7] = 0;
-        /*for (i=0; i<v2gtpFrameLen; i++) {
-            UdpRequest[8+i] = v2gtpFrame[i];
-        }*/
         // The content of buffer is ready. We can calculate the checksum. see https://en.wikipedia.org/wiki/User_Datagram_Protocol
         checksum = calculateUdpAndTcpChecksumForIPv6(UdpRequest, UdpRequestLen, EvccIp, broadcastIPv6, NEXT_UDP);
         UdpRequest[6] = checksum >> 8;
@@ -227,7 +220,6 @@ void ipv6_packRequestIntoIp(void) {
 
 void ipv6_packRequestIntoEthernet(void) {
   //# packs the IP packet into an ethernet packet
-//  uint8_t i;
   myethtransmitbufferLen = IpRequestLen + 6 + 6 + 2; // # Ethernet header needs 14 bytes:
                                                   // #  6 bytes destination MAC
                                                   // #  6 bytes source MAC
@@ -242,9 +234,6 @@ void ipv6_packRequestIntoEthernet(void) {
   fillSourceMac(myMAC, 6); // bytes 6 to 11 are the source MAC
   myethtransmitbuffer[12] = 0x86; // # 86dd is IPv6
   myethtransmitbuffer[13] = 0xdd;
-  /*for (i=0; i<IpRequestLen; i++) {
-    myethtransmitbuffer[14+i] = IpRequest[i];
-  }*/
   myEthTransmit();
 }
 

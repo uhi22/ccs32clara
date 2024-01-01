@@ -119,7 +119,6 @@ void evaluateTcpPacket(void)
       /* This is a data transfer packet. */
       tcp_rxdataLen = tmpPayloadLen;
       /* myethreceivebuffer[74] is the first payload byte. */
-      //memcpy(tcp_rxdata, &myethreceivebuffer[74], tcp_rxdataLen);  /* provide the received data to the application */
       connMgr_TcpOk();
       TcpAckNr = remoteSeqNr+tcp_rxdataLen; /* The ACK number of our next transmit packet is tcp_rxdataLen more than the received seq number. */
       tcp_sendAck();
@@ -190,7 +189,6 @@ void tcp_transmit(void)
       {
           /* The packet fits into our transmit buffer. */
           addToTrace(MOD_TCPTRAFFIC, "TCP will transmit:", tcpPayload, tcpPayloadLen);
-          //memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
           lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */

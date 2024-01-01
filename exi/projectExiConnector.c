@@ -4,7 +4,7 @@
 #include <string.h> /* for memcpy */
 
 
-uint8_t exiTransmitBuffer[EXI_TRANSMIT_BUFFER_SIZE];
+static uint8_t exiTransmitBuffer[EXI_TRANSMIT_BUFFER_SIZE];
 struct dinEXIDocument dinDocEnc;
 struct dinEXIDocument dinDocDec;
 struct appHandEXIDocument aphsDoc;

@@ -7,33 +7,29 @@
 #define TCP_FLAG_SYN 0x02
 #define TCP_FLAG_PSH 0x08
 #define TCP_FLAG_ACK 0x10
+#define TCP_TRANSMIT_PACKET_LEN 200
 
 #define TCP_ACK_TIMEOUT_MS 100 /* if for 100ms no ACK is received, we retry the transmission */
 #define TCP_MAX_NUMBER_OF_RETRANSMISSIONS 10
-
-uint8_t tcpHeaderLen;
-uint8_t tcpPayloadLen;
-uint8_t tcpPayload[TCP_PAYLOAD_LEN];
-uint8_t tcp_rxdataLen=0;
-uint8_t tcp_rxdata[TCP_RX_DATA_LEN];
-
-
 #define TCP_ACTIVITY_TIMER_START (5*33) /* 5 seconds */
-static uint16_t tcpActivityTimer;
-static uint32_t lastUnackTransmissionTime = 0;
-static uint8_t retryCounter = 0;
-
-#define TCP_TRANSMIT_PACKET_LEN 200
-static uint8_t TcpTransmitPacketLen;
-static uint8_t TcpTransmitPacket[TCP_TRANSMIT_PACKET_LEN];
-
-#define TCPIP_TRANSMIT_PACKET_LEN 200
-static uint8_t TcpIpRequestLen;
-static uint8_t TcpIpRequest[TCPIP_TRANSMIT_PACKET_LEN];
 
 #define TCP_STATE_CLOSED 0
 #define TCP_STATE_SYN_SENT 1
 #define TCP_STATE_ESTABLISHED 2
+
+static uint16_t tcpActivityTimer;
+static uint32_t lastUnackTransmissionTime = 0;
+static uint8_t retryCounter = 0;
+static uint8_t TcpIpRequestLen;
+static uint8_t* TcpIpRequest = &myethtransmitbuffer[14];
+static uint8_t TcpTransmitPacketLen;
+static uint8_t* TcpTransmitPacket = &TcpIpRequest[40];
+
+uint8_t tcpHeaderLen;
+uint8_t tcpPayloadLen;
+uint8_t* tcpPayload = &TcpTransmitPacket[20];
+uint8_t tcp_rxdataLen=0;
+uint8_t* tcp_rxdata = &myethreceivebuffer[74];
 
 static uint8_t tcpState = TCP_STATE_CLOSED;
 
@@ -43,11 +39,11 @@ static uint32_t tcp_debug_totalRetryCounter;
 
 /*** local function prototypes ****************************************************/
 
-void tcp_packRequestIntoEthernet(void);
-void tcp_packRequestIntoIp(void);
-void tcp_prepareTcpHeader(uint8_t tcpFlag);
-void tcp_sendAck(void);
-void tcp_sendFirstAck(void);
+static void tcp_packRequestIntoEthernet(void);
+static void tcp_packRequestIntoIp(void);
+static void tcp_prepareTcpHeader(uint8_t tcpFlag);
+static void tcp_sendAck(void);
+static void tcp_sendFirstAck(void);
 
 /*** functions *********************************************************************/
 uint32_t tcp_getTotalNumberOfRetries(void) {
@@ -123,7 +119,6 @@ void evaluateTcpPacket(void)
       /* This is a data transfer packet. */
       tcp_rxdataLen = tmpPayloadLen;
       /* myethreceivebuffer[74] is the first payload byte. */
-      memcpy(tcp_rxdata, &myethreceivebuffer[74], tcp_rxdataLen);  /* provide the received data to the application */
       connMgr_TcpOk();
       TcpAckNr = remoteSeqNr+tcp_rxdataLen; /* The ACK number of our next transmit packet is tcp_rxdataLen more than the received seq number. */
       tcp_sendAck();
@@ -166,7 +161,7 @@ void tcp_connect(void)
    tcpActivityTimer=TCP_ACTIVITY_TIMER_START;
 }
 
-void tcp_sendFirstAck(void)
+static void tcp_sendFirstAck(void)
 {
    addToTrace(MOD_TCP, "[TCP] sending first ACK");
    tcpHeaderLen = 20; /* 20 bytes normal header, no options */
@@ -175,7 +170,7 @@ void tcp_sendFirstAck(void)
    tcp_packRequestIntoIp();
 }
 
-void tcp_sendAck(void)
+static void tcp_sendAck(void)
 {
    addToTrace(MOD_TCP, "[TCP] sending ACK");
    tcpHeaderLen = 20; /* 20 bytes normal header, no options */
@@ -194,7 +189,6 @@ void tcp_transmit(void)
       {
           /* The packet fits into our transmit buffer. */
           addToTrace(MOD_TCPTRAFFIC, "TCP will transmit:", tcpPayload, tcpPayloadLen);
-          memcpy(&TcpTransmitPacket[tcpHeaderLen], tcpPayload, tcpPayloadLen);
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
           lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
@@ -224,7 +218,7 @@ void tcp_testSendData(void)
 }
 
 
-void tcp_prepareTcpHeader(uint8_t tcpFlag)
+static void tcp_prepareTcpHeader(uint8_t tcpFlag)
 {
    uint16_t checksum;
 
@@ -272,7 +266,7 @@ void tcp_prepareTcpHeader(uint8_t tcpFlag)
 }
 
 
-void tcp_packRequestIntoIp(void)
+static void tcp_packRequestIntoIp(void)
 {
    // # embeds the TCP into the lower-layer-protocol: IP, Ethernet
    uint8_t i;
@@ -301,18 +295,13 @@ void tcp_packRequestIntoIp(void)
    {
       TcpIpRequest[24+i] = SeccIp[i]; // destination IP address
    }
-   for (i=0; i<TcpTransmitPacketLen; i++)
-   {
-      TcpIpRequest[40+i] = TcpTransmitPacket[i];
-   }
    //showAsHex(TcpIpRequest, TcpIpRequestLen, "TcpIpRequest");
    tcp_packRequestIntoEthernet();
 }
 
-void tcp_packRequestIntoEthernet(void)
+static void tcp_packRequestIntoEthernet(void)
 {
    //# packs the IP packet into an ethernet packet
-   uint8_t i;
    myethtransmitbufferLen = TcpIpRequestLen + 6 + 6 + 2; // # Ethernet header needs 14 bytes:
    // #  6 bytes destination MAC
    // #  6 bytes source MAC
@@ -322,10 +311,6 @@ void tcp_packRequestIntoEthernet(void)
    fillSourceMac(myMAC, 6); // bytes 6 to 11 are the source MAC
    myethtransmitbuffer[12] = 0x86; // # 86dd is IPv6
    myethtransmitbuffer[13] = 0xdd;
-   for (i=0; i<TcpIpRequestLen; i++)
-   {
-      myethtransmitbuffer[14+i] = TcpIpRequest[i];
-   }
    myEthTransmit();
 }
 

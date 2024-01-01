@@ -11,7 +11,6 @@
 #include "dinEXIDatatypesDecoder.h"
 
 #define EXI_TRANSMIT_BUFFER_SIZE 256
-extern uint8_t exiTransmitBuffer[EXI_TRANSMIT_BUFFER_SIZE]; /* after encoding, here we find the exi byte stream. */
 
 extern struct appHandEXIDocument aphsDoc; /* The application handshake document. */
 extern struct dinEXIDocument dinDocEnc; /* The DIN document. For encoder. */

@@ -63,7 +63,6 @@ const uint8_t myMAC[6] = {0xFE, 0xED, 0xBE, 0xEF, 0xAF, 0xFE};
 uint8_t evseMac[6];
 uint8_t numberOfSoftwareVersionResponses;
 
-static char strVersion[200];
 static uint8_t verLen;
 static uint8_t sourceMac[6];
 static uint8_t NID[7];
@@ -510,6 +509,8 @@ void evaluateGetSwCnf(void)
    verLen = myethreceivebuffer[22];
    if ((verLen>0) && (verLen<0x30))
    {
+      char strVersion[200];
+
       for (i=0; i<verLen; i++)
       {
          x = myethreceivebuffer[23+i];

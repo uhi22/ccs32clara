@@ -8,9 +8,9 @@
 /* Global Variables */
 
 extern uint8_t tcp_rxdataLen;
-extern uint8_t tcp_rxdata[TCP_RX_DATA_LEN];
+extern uint8_t* tcp_rxdata;
 extern uint8_t tcpPayloadLen;
-extern uint8_t tcpPayload[TCP_PAYLOAD_LEN];
+extern uint8_t* tcpPayload;
 
 /* Global Functions */
 #ifdef __cplusplus

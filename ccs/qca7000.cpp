@@ -19,9 +19,9 @@ static uint8_t mySpiTxBuffer[MY_SPI_TX_RX_BUFFER_SIZE];
 static uint32_t nTotalTransmittedBytes;
 uint16_t nTcpPacketsReceived;
 
-uint8_t myethtransmitbuffer[MY_ETH_TRANSMIT_BUFFER_LEN];
+uint8_t myethtransmitbuffer[MY_ETH_TRANSMIT_BUFFER_LEN];// = &mySpiTxBuffer[10];
 uint16_t myethtransmitbufferLen; /* The number of used bytes in the ethernet transmit buffer */
-uint8_t myethreceivebuffer[MY_ETH_RECEIVE_BUFFER_LEN];
+uint8_t myethreceivebuffer[MY_ETH_RECEIVE_BUFFER_LEN];// = &mySpiRxBuffer[12];
 uint16_t myethreceivebufferLen;
 
 uint16_t debugCounter_cutted_myethreceivebufferLen;

@@ -1,6 +1,10 @@
 
 #include "ccs32_globals.h"
 
+#define NEXT_UDP 0x11 /* next protocol is UDP */
+#define NEXT_ICMPv6 0x3a /* next protocol is ICMPv6 */
+#define UDP_PAYLOAD_LEN 100
+
 
 const uint8_t broadcastIPv6[16] = { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
 /* our link-local IPv6 address. Todo: do we need to calculate this from the MAC? Or just use a "random"? */
@@ -8,34 +12,23 @@ const uint8_t broadcastIPv6[16] = { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 const uint8_t EvccIp[16] = {0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0xc6, 0x90, 0x83, 0xf3, 0xfb, 0xcb, 0x98, 0x1e};
 uint8_t SeccIp[16]; /* the IP address of the charger */
 uint16_t seccTcpPort; /* the port number of the charger */
-uint8_t sourceIp[16];
 uint16_t evccPort=59219; /* some "random port" */
-uint16_t sourceport;
-uint16_t destinationport;
-uint16_t udplen;
-uint16_t udpsum;
-uint8_t NeighborsMac[6];
-uint8_t NeighborsIp[16];
 
-#define NEXT_UDP 0x11 /* next protocol is UDP */
-#define NEXT_ICMPv6 0x3a /* next protocol is ICMPv6 */
-
-#define UDP_PAYLOAD_LEN 100
-uint8_t udpPayload[UDP_PAYLOAD_LEN];
-uint16_t udpPayloadLen;
-
-#define V2G_FRAME_LEN 100
-uint8_t v2gtpFrameLen;
-uint8_t v2gtpFrame[V2G_FRAME_LEN];
-
-#define UDP_REQUEST_LEN 100
-uint8_t UdpRequestLen;
-uint8_t UdpRequest[UDP_REQUEST_LEN];
-
-#define IP_REQUEST_LEN 100
-uint8_t IpRequestLen;
-uint8_t IpRequest[IP_REQUEST_LEN];
-
+static uint8_t sourceIp[16];
+static uint16_t sourceport;
+static uint16_t destinationport;
+static uint16_t udplen;
+static uint16_t udpsum;
+static uint8_t NeighborsMac[6];
+static uint8_t NeighborsIp[16];
+static uint8_t* udpPayload = &myethreceivebuffer[62];
+static uint16_t udpPayloadLen;
+static uint8_t IpRequestLen;
+static uint8_t* IpRequest = &myethtransmitbuffer[14];
+static uint8_t UdpRequestLen;
+static uint8_t* UdpRequest = &IpRequest[40];
+static uint8_t v2gtpFrameLen;
+static uint8_t* v2gtpFrame = &UdpRequest[8];
 
 /*** local function prototypes ******************************************/
 void ipv6_packRequestIntoEthernet(void);
@@ -97,8 +90,8 @@ void evaluateUdpPayload(void) {
 void ipv6_evaluateReceivedPacket(void) {
   //# The evaluation function for received ipv6 packages.
   uint16_t nextheader;
-  uint16_t i;
   uint8_t icmpv6type;
+
   if (myethreceivebufferLen>60) {
       //# extract the source ipv6 address
       memcpy(sourceIp, &myethreceivebuffer[22], 16);
@@ -117,9 +110,6 @@ void ipv6_evaluateReceivedPacket(void) {
           }
           if (udplen>8) {
                     udpPayloadLen = udplen-8;
-                    for (i=0; i<udplen-8; i++) {
-                        udpPayload[i] = myethreceivebuffer[62+i];
-                    }
                     sanityCheck("before evaluateUdpPayload");
                     evaluateUdpPayload();
                     sanityCheck("after evaluateUdpPayload");
@@ -168,7 +158,6 @@ void ipv6_initiateSdpRequest(void) {
 void ipv6_packRequestIntoUdp(void) {
         //# embeds the (SDP) request into the lower-layer-protocol: UDP
         //# Reference: wireshark trace of the ioniq car
-        uint8_t i;
         uint16_t lenInclChecksum;
         uint16_t checksum;
         UdpRequestLen = v2gtpFrameLen + 8; // # UDP header needs 8 bytes:
@@ -187,9 +176,6 @@ void ipv6_packRequestIntoUdp(void) {
         // checksum will be calculated afterwards
         UdpRequest[6] = 0;
         UdpRequest[7] = 0;
-        for (i=0; i<v2gtpFrameLen; i++) {
-            UdpRequest[8+i] = v2gtpFrame[i];
-        }
         // The content of buffer is ready. We can calculate the checksum. see https://en.wikipedia.org/wiki/User_Datagram_Protocol
         checksum = calculateUdpAndTcpChecksumForIPv6(UdpRequest, UdpRequestLen, EvccIp, broadcastIPv6, NEXT_UDP);
         UdpRequest[6] = checksum >> 8;
@@ -225,15 +211,11 @@ void ipv6_packRequestIntoIp(void) {
   for (i=0; i<16; i++) {
     IpRequest[24+i] = broadcastIPv6[i]; // destination IP address
   }
-  for (i=0; i<UdpRequestLen; i++) {
-    IpRequest[40+i] = UdpRequest[i];
-  }
   ipv6_packRequestIntoEthernet();
 }
 
 void ipv6_packRequestIntoEthernet(void) {
   //# packs the IP packet into an ethernet packet
-  uint8_t i;
   myethtransmitbufferLen = IpRequestLen + 6 + 6 + 2; // # Ethernet header needs 14 bytes:
                                                   // #  6 bytes destination MAC
                                                   // #  6 bytes source MAC
@@ -248,9 +230,6 @@ void ipv6_packRequestIntoEthernet(void) {
   fillSourceMac(myMAC, 6); // bytes 6 to 11 are the source MAC
   myethtransmitbuffer[12] = 0x86; // # 86dd is IPv6
   myethtransmitbuffer[13] = 0xdd;
-  for (i=0; i<IpRequestLen; i++) {
-    myethtransmitbuffer[14+i] = IpRequest[i];
-  }
   myEthTransmit();
 }
 

@@ -90,7 +90,6 @@ void evaluateUdpPayload(void) {
 void ipv6_evaluateReceivedPacket(void) {
   //# The evaluation function for received ipv6 packages.
   uint16_t nextheader;
-  //uint16_t i;
   uint8_t icmpv6type;
 
   if (myethreceivebufferLen>60) {
@@ -212,9 +211,6 @@ void ipv6_packRequestIntoIp(void) {
   for (i=0; i<16; i++) {
     IpRequest[24+i] = broadcastIPv6[i]; // destination IP address
   }
-  /*for (i=0; i<UdpRequestLen; i++) {
-    IpRequest[40+i] = UdpRequest[i];
-  }*/
   ipv6_packRequestIntoEthernet();
 }
 

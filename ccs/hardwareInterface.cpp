@@ -6,7 +6,7 @@
                                      we do not see PWM interrupts anymore */
 #define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
 
-static uint32_t cpDuty_Percent, cpFrequency_Hz;
+static float cpDuty_Percent;
 static uint8_t cpDutyValidTimer;
 static uint8_t ContactorRequest;
 static uint8_t ContactorOnTimer;
@@ -470,16 +470,15 @@ void hardwareInterface_cyclic(void)
       /* we have a CP PWM capture flag seen not too long ago. Just count the timeout. */
       cpDutyValidTimer--;
       //Divide on-time by period time to arrive at duty cycle
-      cpDuty_Percent = (100 * timer_get_ic_value(CP_TIMER, TIM_IC2)) / timer_get_ic_value(CP_TIMER, TIM_IC1);
+      cpDuty_Percent = (100.0f * timer_get_ic_value(CP_TIMER, TIM_IC2)) / timer_get_ic_value(CP_TIMER, TIM_IC1);
    }
    else
    {
       /* no CP PWM capture flag. The timeout expired. We set the measured PWM and duty to zero. */
       cpDuty_Percent = 0;
-      cpFrequency_Hz = 0;
    }
 
-   Param::SetInt(Param::evsecp, cpDuty_Percent);
+   Param::SetFloat(Param::evsecp, cpDuty_Percent);
 
    //Run actuator test only if we are not connected to a charger
    if (AnaIn::pp.Get() > 4000 && Param::GetInt(Param::opmode) == 0)

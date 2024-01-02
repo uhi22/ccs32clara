@@ -495,7 +495,7 @@ void hardwareInterface_cyclic(void)
    }
 
    //LEDs may be tested, disconnect from application
-   if (testRunning)
+   if (!testRunning)
       handleApplicationRGBLeds();
 
    hwIf_handleContactorRequests();

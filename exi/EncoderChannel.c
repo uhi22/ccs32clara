@@ -35,6 +35,7 @@
 #include "EXITypes.h"
 #include "ErrorCodes.h"
 #include "MethodsBag.h"
+/*#include "v2gEXICoder.h"*/
 
 #ifndef ENCODER_CHANNEL_C
 #define ENCODER_CHANNEL_C
@@ -87,9 +88,6 @@ int encodeUnsignedInteger(bitstream_t* stream, exi_integer_t* iv) {
 
 	return errn;
 }
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
 /**
  * Encode an arbitrary precision non negative integer using a sequence of
@@ -182,7 +180,6 @@ int encodeUnsignedInteger32(bitstream_t* stream, uint32_t n) {
 
 	return errn;
 }
-#pragma GCC diagnostic pop
 
 /**
  * Encode an arbitrary precision non negative integer using a sequence of
@@ -233,9 +230,9 @@ void _shiftRight7(uint8_t* buf, int len) {
  * indicate sequence termination. Only seven bits per octet are used to
  * store the integer's value.
  */
-int encodeUnsignedIntegerBig(bitstream_t* stream, uint32_t, uint8_t* data, uint32_t len) {
+int encodeUnsignedIntegerBig(bitstream_t* stream, uint32_t size, uint8_t* data, uint32_t len) {
 	int errn = 0;
-	uint32_t i;
+	int i;
 	int lenM1 = len - 1;
 	const int MAX_BIGINT_ARRAY = 25;
 	uint8_t lastEncode = 0;
@@ -525,9 +522,6 @@ int encodeBytes(bitstream_t* stream, uint8_t* data, uint32_t len) {
 	return errn;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-
 /**
  * Encode a datetime representation which is a sequence of values
  * representing the individual components of the Date-Time
@@ -596,7 +590,8 @@ int encodeDateTime(bitstream_t* stream, exi_datetime_t* datetime) {
 	return errn;
 }
 
-#pragma GCC diagnostic pop
+
+
 
 int encode(bitstream_t* stream, uint8_t b) {
 #if EXI_OPTION_ALIGNMENT == BIT_PACKED

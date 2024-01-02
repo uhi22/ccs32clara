@@ -900,9 +900,6 @@ int decodeBytes(bitstream_t* stream, uint32_t len, uint8_t* data) {
 	return errn;
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-
 /**
  * Decode Date-Time as sequence of values representing the individual
  * components of the Date-Time.
@@ -982,7 +979,7 @@ int decodeDateTime(bitstream_t* stream, exi_datetime_type_t type, exi_datetime_t
 	return errn;
 }
 
-#pragma GCC diagnostic pop
+
 
 int decode(bitstream_t* stream, uint8_t* b) {
 #if EXI_OPTION_ALIGNMENT == BIT_PACKED

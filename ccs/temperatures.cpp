@@ -45,9 +45,9 @@ static float ohmToCelsius(float rNTC) {
     /* Convert the resistance to a temperature */
     /* Based on: https://learn.adafruit.com/thermistor/using-a-thermistor */
     float steinhart;
-    steinhart = rNTC / THERMISTORNOMINAL;     // (R/Ro)
+    steinhart = rNTC / Param::GetFloat(Param::tmpsnsnom);     // (R/Ro)
     steinhart = log(steinhart);                  // ln(R/Ro)
-    steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
+    steinhart /= Param::GetFloat(Param::tmpsnscoeff); // 1/B * ln(R/Ro)
     steinhart += 1.0f / (TEMPERATURENOMINAL + 273.15f); // + (1/To)
     steinhart = 1.0f / steinhart;                 // Invert
     steinhart -= 273.15f;                         // convert to C
@@ -60,9 +60,9 @@ static uint8_t temperatures_convertFloatToM40(float t_celsius) {
 	 */
 	int16_t intermediate;
 	intermediate = (t_celsius+40);
-    if (intermediate<0) intermediate=0; /* saturate at value 0 == -40°C */
-    if (intermediate>255) intermediate=255; /* saturate at value 255 == 215°C */
-    return (uint8_t)intermediate;
+   if (intermediate<0) intermediate=0; /* saturate at value 0 == -40°C */
+   if (intermediate>255) intermediate=255; /* saturate at value 255 == 215°C */
+   return (uint8_t)intermediate;
 }
 
 void temperatures_calculateTemperatures(void) {
@@ -84,16 +84,5 @@ void temperatures_calculateTemperatures(void) {
     temperatureChannel_3_celsius = ohmToCelsius(temperatureChannel_3_R_NTC);
     temperatureChannel_3_M40 = temperatures_convertFloatToM40(temperatureChannel_3_celsius);
     Param::SetFloat(Param::temp3, temperatureChannel_3_celsius);
-
-    //temperatureCpu_M40 =  temperatures_convertFloatToM40(fCpuTemperature_Celsius);
-
-#ifdef TRACE_THE_TEMPERATURES
-    sprintf(strTmp, "NTC1 %4.1f ohm %4.1f celsius", temperatureChannel_1_R_NTC, temperatureChannel_1_celsius);
-    addToTrace(strTmp);
-    sprintf(strTmp, "NTC2 %4.1f ohm %4.1f celsius", temperatureChannel_2_R_NTC, temperatureChannel_2_celsius);
-    addToTrace(strTmp);
-    sprintf(strTmp, "NTC3 %4.1f ohm %4.1f celsius", temperatureChannel_3_R_NTC, temperatureChannel_3_celsius);
-    addToTrace(strTmp);
-#endif
 }
 

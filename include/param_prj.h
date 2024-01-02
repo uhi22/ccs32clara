@@ -39,11 +39,11 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.29.B
+#define VER 0.30.B
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 26
+//Next param id (increase when adding new parameter!): 28
 //Next value Id: 2019
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
@@ -54,6 +54,8 @@
     PARAM_ENTRY(CAT_HARDWARE,lockruntm,   "ms",      0,      10000,  1500,   13  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   0,      11  ) \
     PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   0,      12  ) \
+    PARAM_ENTRY(CAT_HARDWARE,tmpsnsnom,   "Ohm",     1,      1000000,10000,  26  ) \
+    PARAM_ENTRY(CAT_HARDWARE,tmpsnscoeff, "",        1,      100000, 3900,   27  ) \
     PARAM_ENTRY(CAT_COMM,    nodeid,      "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    canspeed,    CANSPEEDS, 0,      4,      2,      22  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxpower,    "kW",      0,      1000,   100,    17  ) \

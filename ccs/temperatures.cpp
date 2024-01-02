@@ -29,18 +29,6 @@
 
 #define MAX_ADC_VALUE 4095 /* we have 12 bit ADC resolution */
 
-static float temperatureChannel_1_R_NTC;
-static float temperatureChannel_1_celsius;
-static uint8_t temperatureChannel_1_M40;
-
-static float temperatureChannel_2_R_NTC;
-static float temperatureChannel_2_celsius;
-static uint8_t temperatureChannel_2_M40;
-
-static float temperatureChannel_3_R_NTC;
-static float temperatureChannel_3_celsius;
-static uint8_t temperatureChannel_3_M40;
-
 static float ohmToCelsius(float rNTC) {
     /* Convert the resistance to a temperature */
     /* Based on: https://learn.adafruit.com/thermistor/using-a-thermistor */
@@ -54,35 +42,20 @@ static float ohmToCelsius(float rNTC) {
     return steinhart;
 }
 
-static uint8_t temperatures_convertFloatToM40(float t_celsius) {
-	/* converts a float temperature (in celsius) into an uint8 which has
-	 * the offset=-40°C and LSB=1Kelvin.
-	 */
-	int16_t intermediate;
-	intermediate = (t_celsius+40);
-   if (intermediate<0) intermediate=0; /* saturate at value 0 == -40°C */
-   if (intermediate>255) intermediate=255; /* saturate at value 255 == 215°C */
-   return (uint8_t)intermediate;
-}
-
 void temperatures_calculateTemperatures(void) {
-    uint32_t tmp32;
-    tmp32 = AnaIn::temp1.Get();
-    temperatureChannel_1_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
-    temperatureChannel_1_celsius = ohmToCelsius(temperatureChannel_1_R_NTC);
-    temperatureChannel_1_M40 = temperatures_convertFloatToM40(temperatureChannel_1_celsius);
-    Param::SetFloat(Param::temp1, temperatureChannel_1_celsius);
+    float temp = AnaIn::temp1.Get();
+    temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
+    temp = ohmToCelsius(temp);
+    Param::SetFloat(Param::temp1, temp);
 
-    tmp32 = AnaIn::temp2.Get();
-    temperatureChannel_2_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
-    temperatureChannel_2_celsius = ohmToCelsius(temperatureChannel_2_R_NTC);
-    temperatureChannel_2_M40 = temperatures_convertFloatToM40(temperatureChannel_2_celsius);
-    Param::SetFloat(Param::temp2, temperatureChannel_2_celsius);
+    temp = AnaIn::temp2.Get();
+    temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
+    temp = ohmToCelsius(temp);
+    Param::SetFloat(Param::temp2, temp);
 
-    tmp32 = AnaIn::temp3.Get();
-    temperatureChannel_3_R_NTC = SERIESRESISTOR / (((float)MAX_ADC_VALUE / (float)tmp32)  - (float)1);
-    temperatureChannel_3_celsius = ohmToCelsius(temperatureChannel_3_R_NTC);
-    temperatureChannel_3_M40 = temperatures_convertFloatToM40(temperatureChannel_3_celsius);
-    Param::SetFloat(Param::temp3, temperatureChannel_3_celsius);
+    temp = AnaIn::temp3.Get();
+    temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
+    temp = ohmToCelsius(temp);
+    Param::SetFloat(Param::temp3, temp);
 }
 

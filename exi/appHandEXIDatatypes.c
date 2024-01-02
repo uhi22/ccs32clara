@@ -45,7 +45,7 @@ void init_appHandEXIDocument(struct appHandEXIDocument* exiDoc) {
 	exiDoc->supportedAppProtocolRes_isUsed = 0u;
 }
 
-void init_appHandAppProtocolType(struct appHandAppProtocolType* appHandAppProtocolType) {
+void init_appHandAppProtocolType(struct appHandAppProtocolType*) {
 }
 
 void init_appHandAnonType_supportedAppProtocolReq(struct appHandAnonType_supportedAppProtocolReq* appHandAnonType_supportedAppProtocolReq) {

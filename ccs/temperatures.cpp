@@ -41,9 +41,6 @@ static float temperatureChannel_3_R_NTC;
 static float temperatureChannel_3_celsius;
 static uint8_t temperatureChannel_3_M40;
 
-static float fCpuTemperature_Celsius;
-static uint8_t temperatureCpu_M40;
-
 static float ohmToCelsius(float rNTC) {
     /* Convert the resistance to a temperature */
     /* Based on: https://learn.adafruit.com/thermistor/using-a-thermistor */

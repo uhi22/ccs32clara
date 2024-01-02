@@ -106,21 +106,6 @@ static void spiQCA7000DemoReadSignature(void) {
   printf("Hello, sig is %x\r\n", sig); /* should be AA 55  */
 }
 
-
-static void spiQCA7000DemoReadWRBUF_SPC_AVA(void) {
-  /* Demo for reading the available write buffer size from the QCA7000 */
-  int i;
-  i=0;
-  mySpiTxBuffer[i++]=0xC2; /*  */
-  mySpiTxBuffer[i++]=0x00;
-  mySpiTxBuffer[i++]=0x00;
-  mySpiTxBuffer[i++]=0x00;
-  mySpiDataSize = i;
-  mySpiTransmitReceive();
-
-  printf("RBUF_SPC_AVA is %x %x\r\n", mySpiRxBuffer[2], mySpiRxBuffer[3]);
-}
-
 static void spiQCA7000DemoWriteBFR_SIZE(uint16_t n) {
   /* Demo for writing the write buffer size to the QCA7000 */
   int i;

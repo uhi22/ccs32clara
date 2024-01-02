@@ -8,8 +8,6 @@
 
 static uint32_t cpDuty_Percent, cpFrequency_Hz;
 static uint8_t cpDutyValidTimer;
-static uint16_t testmode;
-static uint16_t testmodeTimer;
 static uint8_t ContactorRequest;
 static uint8_t ContactorOnTimer;
 static uint8_t LedBlinkDivider;
@@ -205,93 +203,6 @@ void hardwareInterface_resetSimulation(void)
    hwIf_simulatedSoc_0p01 = 2000; /* 20% */
 }
 
-void hardwareInterface_handleOutputTestMode(void)
-{
-   /* This function is used to test the outputs. */
-
-   testmodeTimer = 10; /* rewind the timer for the next phase */
-   if ((pushButton_getAccumulatedDigits() == 3411) && (testmode==0))
-   {
-      testmode=1;
-   }
-   switch (testmode)
-   {
-   case 0: /* no test. Do not touch the outputs and do not increment the mode. */
-      return;
-   case 1:
-      hardwareInterface_setRGB(1); /* red */
-      break;
-   case 2:
-      hardwareInterface_setRGB(0); /* off */
-      break;
-   case 3:
-      hardwareInterface_setRGB(2); /* green */
-      break;
-   case 4:
-      hardwareInterface_setRGB(0); /* off */
-      break;
-   case 5:
-      hardwareInterface_setRGB(4); /* blue */
-      break;
-   case 6:
-      hardwareInterface_setRGB(0); /* off */
-      break;
-   case 7:
-      hardwareInterface_setRGB(7); /* white */
-      break;
-   case 8:
-      hardwareInterface_setRGB(0); /* off */
-      break;
-   case 9:
-      hardwareInteface_setHBridge(0, 0); /* both low */
-      break;
-   case 10:
-      hardwareInteface_setHBridge(CONTACT_LOCK_PERIOD / 10, 0); /* channel 1 10% */
-      break;
-   case 11:
-      hardwareInteface_setHBridge(CONTACT_LOCK_PERIOD / 2, 0); /* channel 1 50% */
-      break;
-   case 12:
-      hardwareInteface_setHBridge(CONTACT_LOCK_PERIOD, 0); /* channel 1 full */
-      break;
-   case 13:
-      hardwareInteface_setHBridge(0, 0); /* both low */
-      break;
-   case 14:
-      hardwareInteface_setHBridge(0, CONTACT_LOCK_PERIOD / 10); /* channel 2 10% */
-      break;
-   case 15:
-      hardwareInteface_setHBridge(0, CONTACT_LOCK_PERIOD / 2); /* channel 2 50% */
-      break;
-   case 16:
-      hardwareInteface_setHBridge(0, CONTACT_LOCK_PERIOD); /* channel 2 full */
-      break;
-   case 17:
-      hardwareInteface_setHBridge(0, 0); /* both low */
-      break;
-   case 18:
-      hardwareInteface_setContactorPwm(0, 0); /* both off */
-      break;
-   case 19:
-      hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD, 0); /* 1 on */
-      break;
-   case 20:
-      hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD / 2, 0); /* 1 half */
-      break;
-   case 21:
-      hardwareInteface_setContactorPwm(0, CONTACT_LOCK_PERIOD); /* 2 on */
-      break;
-   case 22:
-      hardwareInteface_setContactorPwm(0, CONTACT_LOCK_PERIOD / 2); /* 2 half */
-      break;
-   case 23:
-      hardwareInteface_setContactorPwm(0, 0); /* both off */
-      break;
-   }
-   testmode++;
-   if (testmode>23) testmode=1;
-}
-
 static LockStt hwIf_getLockState()
 {
    static int lastFeedbackValue = 0;
@@ -348,8 +259,6 @@ static LockStt hwIf_getLockState()
 
 static void hwIf_handleContactorRequests(void)
 {
-   if (testmode!=0) return; /* in case of output test mode, decouple the application */
-
    if (ContactorRequest==0)
    {
       /* request is "OFF" -> set PWM immediately to zero for both contactors */
@@ -375,8 +284,6 @@ static void hwIf_handleContactorRequests(void)
 
 static void hwIf_handleLockRequests()
 {
-   if (testmode!=0) return; /* in case of output test mode, decouple the application */
-
    int lockOpenThresh = Param::GetInt(Param::lockopenthr);
    int lockClosedThresh = Param::GetInt(Param::lockclosethr);
    int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - (CONTACT_LOCK_PERIOD * Param::GetInt(Param::lockpwm)) / 100;
@@ -443,7 +350,6 @@ static void hwIf_handleLockRequests()
 
 static void handleApplicationRGBLeds(void)
 {
-   if (testmode!=0) return; /* in case of output test mode, decouple the application */
    LedBlinkDivider++;
    if (checkpointNumber<100)
    {
@@ -595,7 +501,6 @@ void hardwareInterface_cyclic(void)
 
    hwIf_handleContactorRequests();
    hwIf_handleLockRequests();
-   //hardwareInterface_handleOutputTestMode();
 }
 
 void hardwareInterface_init(void)

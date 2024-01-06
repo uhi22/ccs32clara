@@ -69,7 +69,7 @@
     PARAM_ENTRY(CAT_TEST,    demovtg,     "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    democtrl,    DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    actuatortest,ACTEST,    0,      7,      0,      9   ) \
-    TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      511,    DEFAULT_LOGGINGMASK,    15  ) \
+    TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      1023,    DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,      OPMODES,         2000 ) \
     VALUE_ENTRY(version,     VERSTR,          2001 ) \
     VALUE_ENTRY(lasterr,     errorListString, 2002 ) \

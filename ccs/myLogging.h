@@ -19,6 +19,6 @@ enum Module
 };
 
 /* Here we define, which logging data is produced after power-on */
-#define DEFAULT_LOGGINGMASK (MOD_TCPTRAFFIC | MOD_HOMEPLUG | MOD_PEV | MOD_SDP)
+#define DEFAULT_LOGGINGMASK (MOD_TCPTRAFFIC | MOD_HOMEPLUG | MOD_PEV | MOD_SDP | MOD_TCP | MOD_CONNMGR)
 
 #endif

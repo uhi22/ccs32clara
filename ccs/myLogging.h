@@ -14,10 +14,11 @@ enum Module
    MOD_TCP = 32,
    MOD_TCPTRAFFIC = 64,
    MOD_IPV6 = 128,
-   MOD_MODEMFINDER = 256
+   MOD_MODEMFINDER = 256,
+   MOD_SDP = 512
 };
 
 /* Here we define, which logging data is produced after power-on */
-#define DEFAULT_LOGGINGMASK (MOD_TCPTRAFFIC | MOD_HOMEPLUG | MOD_PEV)
+#define DEFAULT_LOGGINGMASK (MOD_TCPTRAFFIC | MOD_HOMEPLUG | MOD_PEV | MOD_SDP)
 
 #endif

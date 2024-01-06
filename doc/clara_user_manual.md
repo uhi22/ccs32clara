@@ -14,7 +14,8 @@ https://github.com/jsphuebner/ccs32clara
 - Green solid: modem awake, waiting for plug
 - Green slow blink: SLAC ongoing
 - Green fast blinking: high-level protocol handshake
-- Blue fast blinking: charge preparation
+- Blue fast blinking: cable check
+- Blue very fast flashing: pre charge
 - Blue solid: charging
 - Green/Blue fast blinking: charge finished
 - Red: Error

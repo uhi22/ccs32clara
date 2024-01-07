@@ -59,7 +59,7 @@ void evaluateUdpPayload(void) {
                               udpPayload[7];
             if (v2gptPayloadLen == 20) {
                //# 20 is the only valid length for a SDP response.
-               addToTrace(MOD_IPV6, "[SDP] Checkpoint203: Received SDP response");
+               addToTrace(MOD_SDP, "[SDP] Checkpoint203: Received SDP response");
                setCheckpoint(203);
                //# at byte 8 of the UDP payload starts the IPv6 address of the charger.
                for (i=0; i<16; i++) {
@@ -70,13 +70,13 @@ void evaluateUdpPayload(void) {
                /* in case we did not yet found out the chargers MAC, because we jumped-over the SLAC,
                   we extract the chargers MAC from the SDP response. */
                if ((evseMac[0]==0) && (evseMac[1]==0)) {
-                  addToTrace(MOD_IPV6, "[SDP] Taking evseMac from SDP response because not yet known.");
+                  addToTrace(MOD_SDP, "[SDP] Taking evseMac from SDP response because not yet known.");
                   for (i=0; i<6; i++) {
                      evseMac[i] = myethreceivebuffer[6+i]; // source MAC starts at offset 6
                   }
                }
                publishStatus("SDP finished", "");
-               addToTrace(MOD_IPV6, "[SDP] Now we know the chargers IP.");
+               addToTrace(MOD_SDP, "[SDP] Now we know the chargers IP.");
                connMgr_SdpOk();
             }
          }
@@ -139,7 +139,7 @@ void ipv6_initiateSdpRequest(void) {
    //# send a SECC Discovery Request.
    //# The payload is just two bytes: 10 00.
    //# First step is, to pack this payload into a V2GTP frame.
-   addToTrace(MOD_IPV6, "[SDP] initiating SDP request");
+   addToTrace(MOD_SDP, "[SDP] initiating SDP request");
    v2gtpFrameLen = 8 + 2; // # 8 byte header plus 2 bytes payload
    v2gtpFrame[0] = 0x01; // # version
    v2gtpFrame[1] = 0xFE; // # version inverted

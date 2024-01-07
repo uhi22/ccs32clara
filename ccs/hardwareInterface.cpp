@@ -384,9 +384,20 @@ static void handleApplicationRGBLeds(void)
          hardwareInterface_setRGB(0); /* off */
       }
    }
-   if ((checkpointNumber>=560 /* CableCheck */) && (checkpointNumber<700 /* charge loop start */))
+   if (checkpointNumber>=560 /* CableCheck */)
    {
       if (LedBlinkDivider & 2)
+      {
+         hardwareInterface_setRGB(4); /* blue */
+      }
+      else
+      {
+         hardwareInterface_setRGB(0); /* off */
+      }
+   }
+   if ((checkpointNumber>=570 /* PreCharge */) && (checkpointNumber<700 /* charge loop start */))
+   {
+      if (LedBlinkDivider & 1) /* very fast flashing during the PreCharge */
       {
          hardwareInterface_setRGB(4); /* blue */
       }

@@ -75,7 +75,7 @@ static const uint8_t exiDemoSupportedApplicationProtocolRequestIoniq[]= {0x80, 0
 
 static uint16_t pev_cyclesInState;
 static uint8_t pev_DelayCycles;
-static uint16_t pev_state=PEV_STATE_NotYetInitialized;
+static pevstates pev_state=PEV_STATE_NotYetInitialized;
 static uint8_t pev_isUserStopRequestOnCarSide=0;
 static uint8_t pev_isUserStopRequestOnChargerSide=0;
 static uint16_t pev_numberOfContractAuthenticationReq;
@@ -91,7 +91,7 @@ static uint8_t numberOfWeldingDetectionRounds;
 /***local function prototypes *****************************************/
 
 static uint8_t pev_isTooLong(void);
-static void pev_enterState(uint16_t n);
+static void pev_enterState(pevstates n);
 
 /*** functions ********************************************************/
 
@@ -1065,7 +1065,7 @@ static void stateFunctionEnd(void)
    /* Just stay here, until we get re-initialized after a new SLAC/SDP. */
 }
 
-static void pev_enterState(uint16_t n)
+static void pev_enterState(pevstates n)
 {
    //printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_ms(), pev_state, n);
    pev_state = n;

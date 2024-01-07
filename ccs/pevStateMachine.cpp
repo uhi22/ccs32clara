@@ -45,7 +45,7 @@ static uint16_t pev_numberOfCableCheckReq;
 static uint8_t pev_wasPowerDeliveryRequestedOn;
 static uint8_t pev_isBulbOn;
 static uint16_t pev_cyclesLightBulbDelay;
-static uint16_t EVSEPresentVoltage;
+static float EVSEPresentVoltage;
 static uint16_t EVSEMinimumVoltage;
 static uint8_t numberOfWeldingDetectionRounds;
 
@@ -56,9 +56,9 @@ static void pev_enterState(uint16_t n);
 
 /*** functions ********************************************************/
 
-static int32_t combineValueAndMultiplier(int32_t val, int8_t multiplier)
+static float combineValueAndMultiplier(int32_t val, int8_t multiplier)
 {
-   int32_t x;
+   float x;
    x = val;
    while (multiplier>0)
    {
@@ -71,6 +71,11 @@ static int32_t combineValueAndMultiplier(int32_t val, int8_t multiplier)
       multiplier++;
    }
    return x;
+}
+
+static float combineValueAndMultiplier(dinPhysicalValueType v)
+{
+   return combineValueAndMultiplier(v.Value, v.Multiplier);
 }
 
 static void addV2GTPHeaderAndTransmit(const uint8_t *exiBuffer, uint8_t exiBufferLen)
@@ -537,15 +542,13 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
          {
             publishStatus("ChargeParams discovered", "");
             addToTrace(MOD_PEV, "Checkpoint550: ChargeParams are discovered.. Will change to state C.");
-            uint16_t evseMaxVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Value,
-                                      dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumVoltageLimit.Multiplier);
-            uint16_t evseMaxCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Value,
-                                      dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMaximumCurrentLimit.Multiplier);
-            EVSEMinimumVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMinimumVoltageLimit.Value,
-                                      dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter.EVSEMinimumVoltageLimit.Multiplier);
-
-            Param::SetInt(Param::evsemaxvtg, evseMaxVoltage);
-            Param::SetInt(Param::evsemaxcur, evseMaxCurrent);
+#define dcparm dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter
+            float evseMaxVoltage = combineValueAndMultiplier(dcparm.EVSEMaximumVoltageLimit);
+            float evseMaxCurrent = combineValueAndMultiplier(dcparm.EVSEMaximumCurrentLimit);
+            EVSEMinimumVoltage = combineValueAndMultiplier(dcparm.EVSEMinimumVoltageLimit);
+#undef dcparm
+            Param::SetFloat(Param::evsemaxvtg, evseMaxVoltage);
+            Param::SetFloat(Param::evsemaxcur, evseMaxCurrent);
 
             setCheckpoint(550);
             // pull the CP line to state C here:
@@ -657,12 +660,7 @@ static void stateFunctionWaitForCableCheckResponse(void)
             {
                // cable check not yet finished or finished with bad result -> try again
                pev_numberOfCableCheckReq += 1;
-#if 0 /* todo: use config item to decide whether we have inlet voltage measurement or not */
-               publishStatus("CbleChck ongoing", String(hardwareInterface_getInletVoltage()) + "V");
-#else
-               /* no inlet voltage measurement available, just show status */
                publishStatus("CbleChck ongoing", "");
-#endif
                addToTrace(MOD_PEV, "Will again send CableCheckReq");
                pev_sendCableCheckReq();
                // stay in the same state
@@ -694,9 +692,8 @@ static void stateFunctionWaitForPreChargeResponse(void)
       if (dinDocDec.V2G_Message.Body.PreChargeRes_isUsed)
       {
          addToTrace(MOD_PEV, "PreCharge aknowledge received.");
-         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Value,
-                              dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage.Multiplier);
-         Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage);
+         Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
 
          uint16_t inletVtg = hardwareInterface_getInletVoltage();
          uint16_t batVtg = hardwareInterface_getAccuVoltage();
@@ -905,10 +902,8 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
          {
             /* continue charging loop */
             hardwareInterface_simulateCharging();
-            EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Value,
-                                 dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage.Multiplier);
-            uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Value,
-                                          dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent.Multiplier);
+            EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage);
+            uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent);
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
             Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
             Param::SetInt(Param::evsecur, evsePresentCurrent);
@@ -956,8 +951,7 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
         /* The charger measured the voltage on the cable, and gives us the value. In the first
            round will show a quite high voltage, because the contactors are just opening. We
            need to repeat the requests, until the voltage is at a non-dangerous level. */
-         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage.Value,
-                              dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage.Multiplier);
+         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
          Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
          if (Param::GetInt(Param::logging) & MOD_PEV) {
              printf("EVSEPresentVoltage %dV\r\n", EVSEPresentVoltage);

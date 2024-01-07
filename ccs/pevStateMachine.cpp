@@ -17,7 +17,7 @@
    STATE_ENTRY(WaitForCableCheckResponse, CableCheck, 30) \
    STATE_ENTRY(WaitForPreChargeResponse, PreCharge, 30) \
    STATE_ENTRY(WaitForContactorsClosed, ContactorsClosed, 5) \
-   STATE_ENTRY(WaitForPowerDeliveryResponse, PowerDelivery, 30) /* PowerDelivery may need some time. Wait at least 6s. On Compleo charger, observed more than 1s until response. specified performance time is 4.5s (ISO) */\
+   STATE_ENTRY(WaitForPowerDeliveryResponse, PowerDelivery, 6) /* PowerDelivery may need some time. Wait at least 6s. On Compleo charger, observed more than 1s until response. specified performance time is 4.5s (ISO) */\
    STATE_ENTRY(WaitForCurrentDemandResponse, CurrentDemand, 5) /* Test with 5s timeout. Just experimental. The specified performance time is 25ms (ISO), the specified timeout 250ms. */\
    STATE_ENTRY(WaitForCurrentDownAfterStateB, WaitCurrentDown, 0) \
    STATE_ENTRY(WaitForWeldingDetectionResponse, WeldingDetection, 2) \

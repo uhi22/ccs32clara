@@ -2,31 +2,70 @@
 #include "projectExiConnector.h"
 
 /* The Charging State Machine for the car */
+//STATE_ENTRY(internalName, friendlyName, timeout in s)
+#define STATE_LIST \
+   STATE_ENTRY(NotYetInitialized, Off, 0) \
+   STATE_ENTRY(Connecting, Connecting, 0) \
+   STATE_ENTRY(Connected, Connected, 0) \
+   STATE_ENTRY(WaitForSupportedApplicationProtocolResponse, NegotiateProtocol, 2) \
+   STATE_ENTRY(WaitForSessionSetupResponse, SessionSetup, 2) \
+   STATE_ENTRY(WaitForServiceDiscoveryResponse, ServiceDiscovery, 2) \
+   STATE_ENTRY(WaitForServicePaymentSelectionResponse, PaymentSelection, 2) \
+   STATE_ENTRY(WaitForContractAuthenticationResponse, ContractAuthentication, 2) \
+   STATE_ENTRY(WaitForChargeParameterDiscoveryResponse, ChargeParameterDiscovery, 5) /* On some charger models, the chargeParameterDiscovery needs more than a second. Wait at least 5s. */ \
+   STATE_ENTRY(WaitForConnectorLock, ConnectorLock, 2) \
+   STATE_ENTRY(WaitForCableCheckResponse, CableCheck, 30) \
+   STATE_ENTRY(WaitForPreChargeResponse, PreCharge, 30) \
+   STATE_ENTRY(WaitForContactorsClosed, ContactorsClosed, 5) \
+   STATE_ENTRY(WaitForPowerDeliveryResponse, PowerDelivery, 30) /* PowerDelivery may need some time. Wait at least 6s. On Compleo charger, observed more than 1s until response. specified performance time is 4.5s (ISO) */\
+   STATE_ENTRY(WaitForCurrentDemandResponse, CurrentDemand, 5) /* Test with 5s timeout. Just experimental. The specified performance time is 25ms (ISO), the specified timeout 250ms. */\
+   STATE_ENTRY(WaitForCurrentDownAfterStateB, WaitCurrentDown, 0) \
+   STATE_ENTRY(WaitForWeldingDetectionResponse, WeldingDetection, 2) \
+   STATE_ENTRY(WaitForSessionStopResponse, SessionStop, 2) \
+   STATE_ENTRY(UnrecoverableError, Error, 0) \
+   STATE_ENTRY(SequenceTimeout, Timeout, 0) \
+   STATE_ENTRY(SafeShutDownWaitForChargerShutdown, WaitForChargerShutdown, 0) \
+   STATE_ENTRY(SafeShutDownWaitForContactorsOpen, WaitForContactorsOpen, 0) \
+   STATE_ENTRY(End, End, 0)
 
-#define PEV_STATE_NotYetInitialized 0
-#define PEV_STATE_Connecting 1
-#define PEV_STATE_Connected 2
-#define PEV_STATE_WaitForSupportedApplicationProtocolResponse 3
-#define PEV_STATE_WaitForSessionSetupResponse 4
-#define PEV_STATE_WaitForServiceDiscoveryResponse 5
-#define PEV_STATE_WaitForServicePaymentSelectionResponse 6
-#define PEV_STATE_WaitForContractAuthenticationResponse 7
-#define PEV_STATE_WaitForChargeParameterDiscoveryResponse 8
-#define PEV_STATE_WaitForConnectorLock 9
-#define PEV_STATE_WaitForCableCheckResponse 10
-#define PEV_STATE_WaitForPreChargeResponse 11
-#define PEV_STATE_WaitForContactorsClosed 12
-#define PEV_STATE_WaitForPowerDeliveryResponse 13
-#define PEV_STATE_WaitForCurrentDemandResponse 14
-#define PEV_STATE_WaitForCurrentDownAfterStateB 15
-#define PEV_STATE_WaitForWeldingDetectionResponse 16
-#define PEV_STATE_WaitForSessionStopResponse 17
-//#define PEV_STATE_ChargingFinished 18
-#define PEV_STATE_UnrecoverableError 88
-#define PEV_STATE_SequenceTimeout 99
-#define PEV_STATE_SafeShutDownWaitForChargerShutdown 111
-#define PEV_STATE_SafeShutDownWaitForContactorsOpen 222
-#define PEV_STATE_End 1000
+//States enum
+#define STATE_ENTRY(name, fname, timeout) PEV_STATE_##name,
+enum pevstates {
+STATE_LIST
+};
+#undef STATE_ENTRY
+
+//state function prototypes
+#define STATE_ENTRY(name, fname, timeout) static void stateFunction##name();
+STATE_LIST
+#undef STATE_ENTRY
+
+//State function array
+#define STATE_ENTRY(name, fname, timeout) stateFunction##name,
+static void(*const stateFunctions[])() = {
+STATE_LIST
+};
+#undef STATE_ENTRY
+
+//Timeout array
+#define STATE_ENTRY(name, fname, timeout) timeout * 33,
+static const uint16_t timeouts[] = {
+STATE_LIST
+};
+#undef STATE_ENTRY
+
+//Enum string for data module
+#define STATE_ENTRY(name, fname, timeout) __COUNTER__=fname,
+const char* pevSttString = STRINGIFY(STATE_LIST);
+#undef STATE_ENTRY
+
+//String array for logging
+#define STATE_ENTRY(name, fname, timeout) #fname,
+const char pevSttLabels[][MAX_LABEL_LEN] = { STATE_LIST };
+#undef STATE_ENTRY
+
+#define MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION 40 /* 40V is considered to be sufficiently low to not harm. The Ioniq already finishes at 65V. */
+#define MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS 10 /* The process time is specified with 1.5s. Ten loops should be fine. */
 
 #define LEN_OF_EVCCID 6 /* The EVCCID is the MAC according to spec. Ioniq uses exactly these 6 byte. */
 
@@ -309,6 +348,9 @@ static void pev_sendWeldingDetectionReq(void)
 }
 
 /**** State functions ***************/
+//Empty functions
+static void stateFunctionNotYetInitialized() {}
+static void stateFunctionConnecting() {}
 
 static void stateFunctionConnected(void)
 {
@@ -371,10 +413,7 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
       }
    }
    if (pev_isTooLong())
-   {
       ErrorMessage::Post(ERR_PLCTIMEOUT);
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForSessionSetupResponse(void)
@@ -403,10 +442,6 @@ static void stateFunctionWaitForSessionSetupResponse(void)
          pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
       }
    }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForServiceDiscoveryResponse(void)
@@ -433,10 +468,6 @@ static void stateFunctionWaitForServiceDiscoveryResponse(void)
          pev_enterState(PEV_STATE_WaitForServicePaymentSelectionResponse);
       }
    }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForServicePaymentSelectionResponse(void)
@@ -460,10 +491,6 @@ static void stateFunctionWaitForServicePaymentSelectionResponse(void)
          pev_numberOfContractAuthenticationReq = 1; // This is the first request.
          pev_enterState(PEV_STATE_WaitForContractAuthenticationResponse);
       }
-   }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
@@ -514,10 +541,6 @@ static void stateFunctionWaitForContractAuthenticationResponse(void)
             }
          }
       }
-   }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
@@ -592,10 +615,6 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
          }
       }
    }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForConnectorLock(void)
@@ -609,10 +628,7 @@ static void stateFunctionWaitForConnectorLock(void)
       pev_enterState(PEV_STATE_WaitForCableCheckResponse);
    }
    if (pev_isTooLong())
-   {
       ErrorMessage::Post(ERR_LOCKTIMEOUT);
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForCableCheckResponse(void)
@@ -668,10 +684,6 @@ static void stateFunctionWaitForCableCheckResponse(void)
             }
          }
       }
-   }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
@@ -730,10 +742,7 @@ static void stateFunctionWaitForPreChargeResponse(void)
       }
    }
    if (pev_isTooLong())
-   {
       ErrorMessage::Post(ERR_PRECTIMEOUT);
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForContactorsClosed(void)
@@ -763,10 +772,6 @@ static void stateFunctionWaitForContactorsClosed(void)
       pev_sendPowerDeliveryReq(1); /* 1 is ON */
       pev_wasPowerDeliveryRequestedOn=1;
       pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
-   }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
@@ -805,10 +810,6 @@ static void stateFunctionWaitForPowerDeliveryResponse(void)
                                                              the current */
          }
       }
-   }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
@@ -929,14 +930,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
          }
       }
    }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
-
-#define MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION 40 /* 40V is considered to be sufficiently low to not harm. The Ioniq already finishes at 65V. */
-#define MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS 10 /* The process time is specified with 1.5s. Ten loops should be fine. */
 
 static void stateFunctionWaitForWeldingDetectionResponse(void)
 {
@@ -987,10 +981,6 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
          }
       }
    }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
-   }
 }
 
 static void stateFunctionWaitForSessionStopResponse(void)
@@ -1009,10 +999,6 @@ static void stateFunctionWaitForSessionStopResponse(void)
          addToTrace(MOD_PEV, "Charging is finished");
          pev_enterState(PEV_STATE_End);
       }
-   }
-   if (pev_isTooLong())
-   {
-      pev_enterState(PEV_STATE_SequenceTimeout);
    }
 }
 
@@ -1084,39 +1070,12 @@ static void pev_enterState(uint16_t n)
    //printf("[%d] [PEV] from %d entering %d\r\n", rtc_get_ms(), pev_state, n);
    pev_state = n;
    pev_cyclesInState = 0;
-   Param::SetInt(Param::opmode, MIN(n, 18));
+   Param::SetInt(Param::opmode, n);
 }
 
 static uint8_t pev_isTooLong(void)
 {
-   uint16_t limit;
-   /* The timeout handling function. */
-   limit = 66; /* number of call cycles until timeout. Default 66 cycles with 30ms, means approx. 2 seconds.
-        This 2s is the specified timeout time for many messages, fitting to the
-        performance time of 1.5s. Exceptions see below. */
-   if (pev_state==PEV_STATE_WaitForChargeParameterDiscoveryResponse)
-   {
-      limit = 5*33; /* On some charger models, the chargeParameterDiscovery needs more than a second. Wait at least 5s. */
-   }
-   if (pev_state==PEV_STATE_WaitForCableCheckResponse)
-   {
-      limit = 30*33; // CableCheck may need some time. Wait at least 30s.
-   }
-   if (pev_state==PEV_STATE_WaitForPreChargeResponse)
-   {
-      limit = 30*33; // PreCharge may need some time. Wait at least 30s.
-   }
-   if (pev_state==PEV_STATE_WaitForPowerDeliveryResponse)
-   {
-      limit = 6*33; /* PowerDelivery may need some time. Wait at least 6s. On Compleo charger, observed more than 1s until response.
-                     specified performance time is 4.5s (ISO) */
-   }
-   if (pev_state==PEV_STATE_WaitForCurrentDemandResponse)
-   {
-      limit = 5*33;  /* Test with 5s timeout. Just experimental.
-                      The specified performance time is 25ms (ISO), the specified timeout 250ms. */
-   }
-   return (pev_cyclesInState > limit);
+   return timeouts[pev_state] > 0 && pev_cyclesInState > timeouts[pev_state];
 }
 
 /******* The statemachine dispatcher *******************/
@@ -1140,72 +1099,11 @@ static void pev_runFsm(void)
       /* We have a TCP connection. This is the trigger for us. */
       if (pev_state==PEV_STATE_NotYetInitialized) pev_enterState(PEV_STATE_Connected);
    }
-   switch (pev_state)
-   {
-   case PEV_STATE_Connected:
-      stateFunctionConnected();
-      break;
-   case PEV_STATE_WaitForSupportedApplicationProtocolResponse:
-      stateFunctionWaitForSupportedApplicationProtocolResponse();
-      break;
-   case PEV_STATE_WaitForSessionSetupResponse:
-      stateFunctionWaitForSessionSetupResponse();
-      break;
-   case PEV_STATE_WaitForServiceDiscoveryResponse:
-      stateFunctionWaitForServiceDiscoveryResponse();
-      break;
-   case PEV_STATE_WaitForServicePaymentSelectionResponse:
-      stateFunctionWaitForServicePaymentSelectionResponse();
-      break;
-   case PEV_STATE_WaitForContractAuthenticationResponse:
-      stateFunctionWaitForContractAuthenticationResponse();
-      break;
-   case PEV_STATE_WaitForChargeParameterDiscoveryResponse:
-      stateFunctionWaitForChargeParameterDiscoveryResponse();
-      break;
-   case PEV_STATE_WaitForConnectorLock:
-      stateFunctionWaitForConnectorLock();
-      break;
-   case PEV_STATE_WaitForCableCheckResponse:
-      stateFunctionWaitForCableCheckResponse();
-      break;
-   case PEV_STATE_WaitForPreChargeResponse:
-      stateFunctionWaitForPreChargeResponse();
-      break;
-   case PEV_STATE_WaitForContactorsClosed:
-      stateFunctionWaitForContactorsClosed();
-      break;
-   case PEV_STATE_WaitForPowerDeliveryResponse:
-      stateFunctionWaitForPowerDeliveryResponse();
-      break;
-   case PEV_STATE_WaitForCurrentDemandResponse:
-      stateFunctionWaitForCurrentDemandResponse();
-      break;
-   case PEV_STATE_WaitForCurrentDownAfterStateB:
-      stateFunctionWaitForCurrentDownAfterStateB();
-      break;
-   case PEV_STATE_WaitForWeldingDetectionResponse:
-      stateFunctionWaitForWeldingDetectionResponse();
-      break;
-   case PEV_STATE_WaitForSessionStopResponse:
-      stateFunctionWaitForSessionStopResponse();
-      break;
-   case PEV_STATE_UnrecoverableError:
-      stateFunctionUnrecoverableError();
-      break;
-   case PEV_STATE_SequenceTimeout:
-      stateFunctionSequenceTimeout();
-      break;
-   case PEV_STATE_SafeShutDownWaitForChargerShutdown:
-      stateFunctionSafeShutDownWaitForChargerShutdown();
-      break;
-   case PEV_STATE_SafeShutDownWaitForContactorsOpen:
-      stateFunctionSafeShutDownWaitForContactorsOpen();
-      break;
-   case PEV_STATE_End:
-      stateFunctionEnd();
-      break;
-   }
+
+   stateFunctions[pev_state](); //call state function
+
+   if (pev_isTooLong())
+      pev_enterState(PEV_STATE_SequenceTimeout);
 }
 
 /************ public interfaces *****************************************/

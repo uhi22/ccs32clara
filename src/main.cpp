@@ -147,24 +147,14 @@ void Param::Change(Param::PARAM_NUM paramNum)
 static void PrintTrace()
 {
    static int lastState = 0;
-   const char states[][25] = { "Off", "Connecting", "Connected", "NegotiateProtocol", "SessionSetup", "ServiceDiscovery",
-   "PaymentSelection", "ContractAuthentication", "ParameterDiscovery", "ConnectorLock", "CableCheck",
-   "Precharge", "ContactorsClosed", "PowerDelivery", "CurrentDemand", "WaitCurrentDown", "WeldingDetection", "SessionStop",
-   "Error" };
-
    static uint32_t lastSttPrint = 0;
    int state = Param::GetInt(Param::opmode);
-   const char* label = state < 19 ? states[state] : "Unknown/Error";
+   const char* label = pevSttLabels[state];
 
    if ((Param::GetInt(Param::logging) & MOD_PEV) && ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state))
    {
       lastSttPrint = rtc_get_counter_val();
-      #define WITH_TCP_VERBOSITY
-      #ifdef WITH_TCP_VERBOSITY
       printf("[%u] In state %s. TcpRetries %u\r\n", rtc_get_ms(), label, tcp_getTotalNumberOfRetries());
-      #else
-      printf("[%u] In state %s\r\n", rtc_get_ms(), label);
-      #endif
       lastState = state;
    }
 }

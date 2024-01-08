@@ -31,6 +31,7 @@
 #include "params.h"
 #include "hwinit.h"
 #include "errormessage.h"
+#include "my_string.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

@@ -37,6 +37,7 @@
 #include "printf.h"
 #include "stm32scheduler.h"
 #include "terminalcommands.h"
+#include "my_string.h"
 
 #include "configuration.h"
 #include "connMgr.h"
@@ -200,6 +201,9 @@ extern "C" int main(void)
    //This is all we need to do to set up a terminal on USART4
    Terminal t(UART4, termCmds);
    TerminalCommands::SetCanMap(canMap);
+   
+   printf("This is Clara version %s\r\n", VERSTR);
+   printf("logging is %d\r\n", Param::GetInt(Param::logging));
 
    s.AddTask(Ms30Task, 30);
    s.AddTask(Ms100Task, 100);

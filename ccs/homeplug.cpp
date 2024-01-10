@@ -484,7 +484,7 @@ static void composeGetKey(void)
    myethtransmitbuffer[35]=0x00; // 17 PMN Protocol message number
 }
 
-void sendTestFrame(void)
+void readModemVersions(void)
 {
    composeGetSwReq();
    myEthTransmit();
@@ -495,16 +495,16 @@ void evaluateGetSwCnf(void)
    /* The GET_SW confirmation. This contains the software version of the homeplug modem.
       Reference: see wireshark interpreted frame from TPlink, Ioniq and Alpitronic charger */
    uint8_t i, x;
-   //char strMac[20];
+   char strMac[20];
    addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received GET_SW.CNF");
    numberOfSoftwareVersionResponses+=1;
    for (i=0; i<6; i++)
    {
       sourceMac[i] = myethreceivebuffer[6+i];
    }
-#if 0
-   strMac = String(sourceMac[0], HEX) + ":" + String(sourceMac[1], HEX) + ":" + String(sourceMac[2], HEX) + ":"
-            + String(sourceMac[3], HEX) + ":" + String(sourceMac[4], HEX) + ":" + String(sourceMac[5], HEX);
+#if 1
+   sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
+   printf("For MAC %s ", strMac);
 #endif
    verLen = myethreceivebuffer[22];
    if ((verLen>0) && (verLen<0x30))
@@ -521,7 +521,6 @@ void evaluateGetSwCnf(void)
          strVersion[i]=x;
       }
       strVersion[i] = 0;
-      //addToTrace(strMac);
       printf("software version %s\r\n", strVersion);
       //addToTrace("For " + strMac + " the software version is " + String(strVersion));
 #ifdef DEMO_SHOW_MODEM_SOFTWARE_VERSION_ON_OLED

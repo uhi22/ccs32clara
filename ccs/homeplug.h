@@ -19,6 +19,7 @@ extern uint16_t getEtherType(uint8_t *messagebufferbytearray);
 extern void evaluateReceivedHomeplugPacket(void);
 extern void runSlacSequencer(void);
 extern void runSdpStateMachine(void);
+extern void readModemVersions(void);
 
 #ifdef __cplusplus
 }

@@ -77,6 +77,7 @@ void evaluateUdpPayload(void) {
                }
                publishStatus("SDP finished", "");
                addToTrace(MOD_SDP, "[SDP] Now we know the chargers IP.");
+               readModemVersions(); /* read the software versions from our modem and from the chargers modem. Just for information/logging. */
                connMgr_SdpOk();
             }
          }

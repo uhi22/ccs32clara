@@ -906,7 +906,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage);
             uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent);
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
-            Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+            Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
             Param::SetInt(Param::evsecur, evsePresentCurrent);
             setCheckpoint(710);
             pev_sendCurrentDemandReq();
@@ -946,9 +946,9 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
            round will show a quite high voltage, because the contactors are just opening. We
            need to repeat the requests, until the voltage is at a non-dangerous level. */
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
-         Param::SetInt(Param::evsevtg, EVSEPresentVoltage);
+         Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
          if (Param::GetInt(Param::logging) & MOD_PEV) {
-             printf("EVSEPresentVoltage %dV\r\n", EVSEPresentVoltage);
+             printf("EVSEPresentVoltage %5.1fV\r\n", EVSEPresentVoltage);
          }
          if (EVSEPresentVoltage<MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION) {
             /* voltage is low, weldingDetection finished successfully. */

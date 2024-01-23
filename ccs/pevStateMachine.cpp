@@ -948,7 +948,7 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
          Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
          if (Param::GetInt(Param::logging) & MOD_PEV) {
-             printf("EVSEPresentVoltage %5.1fV\r\n", EVSEPresentVoltage);
+             printf("EVSEPresentVoltage %dV\r\n", (int)EVSEPresentVoltage);
          }
          if (EVSEPresentVoltage<MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION) {
             /* voltage is low, weldingDetection finished successfully. */

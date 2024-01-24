@@ -84,6 +84,13 @@ int16_t hardwareInterface_getChargingTargetVoltage(void)
 
 int16_t hardwareInterface_getChargingTargetCurrent(void)
 {
+   if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE))
+   {
+      /* for demonstration without an external provided target voltage, we use a fix value for
+         the target current. During demo mode, the charger is in constant voltage mode, so the
+         only important thing is that configured current can drive the load. Let's say 10A is good. */
+      Param::SetInt(Param::chargecur, 10);
+   }
    return Param::GetInt(Param::chargecur);
 }
 

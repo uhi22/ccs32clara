@@ -1,9 +1,21 @@
 
 # ccs32clara
 
-STM32 talks with QCA7005 homeplug modem
+![image](doc/clara_logo_colored.jpg) Hi, I'm Clara. I'm a piece of software, which was born in the OpenInverter forum community, https://openinverter.org/forum/viewtopic.php?t=3727, and I'm loving to grow due to the great people there.
+Im running on an STM32, and I'm talking with a QCA7005 homeplug modem. All this, and some more components, brings my team-mate Foccci to you. Foccci is the hard(-ware) part of our powerful team. Let's charge!
+
+![image](doc/foccci_and_clara_logo_colored.jpg)
 
 ## News / Change History / Functional Status
+
+### 2024-01-24 Mini Light Bulb Demo adaptor works
+Clara configured to demo-mode using the openinverter web interface box (https://github.com/jsphuebner/esp32-web-interface). Clara runs on Foccci in a 3D printed housing, which contains a CCS2 inlet, a German SchuKo outlet, a relay to connect/disconnect the Schuko from the CCS, red-green-blus LEDs for status indication, a stop-button and D-Sub CAN connector, a little arduino to show the hardware status of the CP line (https://github.com/uhi22/arduino-controlpilot-observer) and a 18650 Li-Ion accu including step-up from accu to 5V to supply the complete box.
+![image](doc/2024-01-27_lightbulbdemo_off.jpg)
+![image](doc/2024-01-27_lightbulbdemo_on.jpg)
+
+
+### 2023-12-13 Supercharging works.
+Johu is charging the Touran on the TESLA Supercharger: https://openinverter.org/forum/viewtopic.php?p=64563#p64563 and https://www.youtube.com/watch?v=OKg3VUslol8
 
 ### 2023-12-06 Charging works on ABB triple charger and Compleo
 The liboi port has been tested inside the CCS-to-CHAdeMO adapter and successfully charged a few kWh on said chargers

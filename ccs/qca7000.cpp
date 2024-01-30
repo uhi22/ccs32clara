@@ -178,17 +178,32 @@ void QCA7000checkRxDataAndDistribute(int16_t availbytes) {
             //Serial.println("Its a HomePlug message.");
             addToTrace(MOD_QCA, "Its a HomePlug message.");
             //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
+            /* we log the ethernet traffic, but we stop logging it, when we entered the
+               charging loop, to avoid spamming the log */
+            if (checkpointNumber<700) {
+              addToTrace(MOD_ETHTRAFFIC, "ETH rx HP:", myethreceivebuffer, myethreceivebufferLen);
+            } else {
+              /* We are in the charging loop or beyond. Do not log the ethernet traffic. */
+            }
             evaluateReceivedHomeplugPacket();
           } else if (etherType == 0x86dd) { /* it is an IPv6 frame */
-           addToTrace(MOD_QCA, "Its a IPv6 message.");
+            addToTrace(MOD_QCA, "Its a IPv6 message.");
             //canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
+            /* we log the ethernet traffic, but we stop logging it, when we entered the
+               charging loop, to avoid spamming the log */
+            if (checkpointNumber<700) {
+              addToTrace(MOD_ETHTRAFFIC, "ETH rx IP:", myethreceivebuffer, myethreceivebufferLen);
+            } else {
+              /* We are in the charging loop or beyond. Do not log the ethernet traffic. */
+            }
             ipv6_evaluateReceivedPacket();
           } else {
             //Serial.println("Other message.");
             /* We do not log other messages, to avoid too much logging traffic. If needed, enable the logging,
-            by commenting-in this: canbus_addToBinaryLogging(0xAA5A, myethreceivebuffer, myethreceivebufferLen);
+            by commenting-in this: addToTrace(MOD_ETHTRAFFIC, "ETH rx other:", myethreceivebuffer, myethreceivebufferLen);
             */
           }
+          
           availbytes = availbytes - L1 - 4;
           p+= L1+4;
           //Serial.println("Avail after first run:" + String(availbytes));
@@ -314,6 +329,13 @@ void myEthTransmit(void) {
     showAsHex(myethtransmitbuffer, myethtransmitbufferLen, "myEthTransmit");
   #endif
   //canbus_addToBinaryLogging(0xAA55, myethtransmitbuffer, myethtransmitbufferLen);
+  /* we log the ethernet traffic, but we stop logging it, when we entered the charging loop, to avoid
+  spamming the log */
+  if (checkpointNumber<700) {
+      addToTrace(MOD_ETHTRAFFIC, "ETH will transmit:", myethtransmitbuffer, myethtransmitbufferLen);
+  } else {
+      /* We are in the charging loop or beyond. Do not log the ethernet traffic. */
+  }
   spiQCA7000SendEthFrame();
 }
 

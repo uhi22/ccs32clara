@@ -25,22 +25,32 @@ void pp_evaluateProximityPilot(void) {
     
     /* Step 2: Calculate the PP resistance */
     /* Todo: consider the input circuit variant:
-         - old Foccci has x ohm pull-up to 3V3 and no pull-down
-         - intermediate Foccci has 330 ohm pull-up to 5V and a 3k pull-down
-         - next Foccci has 330 ohm pull-up to 5V and a 3k? pull-down and a certain divider to match the 3V3 ADC input.
+         - old Foccci v4.1 has x ohm pull-up to 3V3 and no pull-down
+         - next Foccci v4.2 has 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider to match the 3V3 ADC input.
          - there could be an additional pull-down in the CCS inlet.
        The parameter ppvariant shall select which hardware circuit is installed. */
-    U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
-    U_pull = 4.5; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
-    U_meas = U_refAdc * temp/4095; /* The measured voltage on the PP. */
-    Rv = 1 / (1/330.0 + 1/3000.0); /* The effective pull-up resistor. In this case 330ohm parallel 3000ohm. */
-    
-    if (U_meas>3.0) {
+       
+    if (Param::GetInt(Param::ppvariant) == 0) {
+        /* The old Foccci (until revision 4.1) */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull = 3.3; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
+        U_meas = U_refAdc * temp/4095; /* The measured voltage on the PP. In this case no divider. */
+        Rv = 1000.0; /* The effective pull-up resistor. In this case 1k. */
+        /* Todo: verify on hardware */
+    } else {
+        /* The newer Foccci with 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull = 4.5; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 1 / (1/330.0 + 1/3000.0); /* The effective pull-up resistor. In this case 330ohm parallel 3000ohm. */
+        /* tested on hand-wired Foccci. Calculation is ok. */
+    }
+    if (U_meas>(U_pull-0.5)) {
         /* The voltage on PP is quite high. We do not calculate the R, because this may lead to overflow. Just
            give a high resistance value. */
         R = 10000.0; /* ohms */
     } else {
-        /* todo: calculate the resistance */
+        /* calculate the resistance of the PP */
         R = Rv / (U_pull/U_meas-1);
     }
     Param::SetFloat(Param::resistanceProximityPilot, R);

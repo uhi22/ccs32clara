@@ -52,6 +52,7 @@
 #include "udpChecksum.h"
 #include "temperatures.h"
 #include "pushbutton.h"
+#include "proximitypilot.h"
 
 
 #define PRINT_JSON 0
@@ -77,7 +78,7 @@ static void Ms100Task(void)
    Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
-   Param::SetInt(Param::pp, AnaIn::pp.Get());
+   pp_evaluateProximityPilot();
    temperatures_calculateTemperatures();
 
    switch (Param::GetInt(Param::inletvtgsrc))

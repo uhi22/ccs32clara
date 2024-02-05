@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.31.B
+#define VER 0.32.B
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 28
-//Next value Id: 2019
+//Next param id (increase when adding new parameter!): 29
+//Next value Id: 2022
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
@@ -56,6 +56,7 @@
     PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   0,      12  ) \
     PARAM_ENTRY(CAT_HARDWARE,tmpsnsnom,   "Ohm",     1,      1000000,10000,  26  ) \
     PARAM_ENTRY(CAT_HARDWARE,tmpsnscoeff, "",        1,      100000, 3900,   27  ) \
+    PARAM_ENTRY(CAT_HARDWARE,ppvariant,   "",        0,      9,      0,      28  ) \
     PARAM_ENTRY(CAT_COMM,    nodeid,      "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    canspeed,    CANSPEEDS, 0,      4,      2,      22  ) \
     PARAM_ENTRY(CAT_CHARGE,  maxpower,    "kW",      0,      1000,   100,    17  ) \
@@ -84,7 +85,10 @@
     VALUE_ENTRY(temp3,       "°C",            2005 ) \
     VALUE_ENTRY(dcsw1dc,     "%",             2013 ) \
     VALUE_ENTRY(lockfb,      "dig",           2011 ) \
-    VALUE_ENTRY(pp,          "dig",           2018 ) \
+    VALUE_ENTRY(adcProximityPilot, "dig",     2018 ) \
+    VALUE_ENTRY(resistanceProximityPilot, "ohm", 2019 ) \
+    VALUE_ENTRY(cableCurrentLimit, "A",       2020 ) \
+    VALUE_ENTRY(evseCurrentLimit, "A",        2021 ) \
     VALUE_ENTRY(lockstt,     LOCK,            2014 ) \
     VALUE_ENTRY(stopreason,  STOPREASONS,     2017 ) \
     VALUE_ENTRY(checkpoint,  "dig",           2015 ) \

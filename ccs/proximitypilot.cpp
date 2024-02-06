@@ -37,19 +37,29 @@ void pp_evaluateProximityPilot(void) {
         U_meas = U_refAdc * temp/4095; /* The measured voltage on the PP. In this case no divider. */
         Rv = 1000.0; /* The effective pull-up resistor. In this case 1k. */
         /* Todo: verify on hardware */
-    } else {
+    } else if (Param::GetInt(Param::ppvariant) == 1) {
         /* The newer Foccci with 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider */
         U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
         U_pull = 4.5; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
         U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
         Rv = 1 / (1/330.0 + 1/3000.0); /* The effective pull-up resistor. In this case 330ohm parallel 3000ohm. */
         /* tested on hand-wired Foccci. Calculation is ok. */
+    } else {
+        /* The newer Foccci with 330 ohm pull-up to 5V and no pull-down and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull = 5.0; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 330.0; /* The effective pull-up resistor. In this case 330ohm. */
+        /* Todo: verify on hardware */
     }
     if (U_meas>(U_pull-0.5)) {
         /* The voltage on PP is quite high. We do not calculate the R, because this may lead to overflow. Just
            give a high resistance value. */
         R = 10000.0; /* ohms */
-    } else {
+    } else if (U_meas<0.05) {
+        /* The voltage on PP is very low. We do not calculate the R, because this may lead to division-by-zero. Just say R=0. */
+        R = 0.0; /* ohms */
+    }else {
         /* calculate the resistance of the PP */
         R = Rv / (U_pull/U_meas-1);
     }

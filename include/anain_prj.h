@@ -22,5 +22,7 @@
    ANA_IN_ENTRY(udc,   GPIOC, 3) \
    ANA_IN_ENTRY(button,GPIOC, 4) \
    ANA_IN_ENTRY(lockfb,GPIOC, 5) \
+   ANA_IN_ENTRY(hwvariant,GPIOA, 2) \
+   ANA_IN_ENTRY(ipropi,GPIOA, 3) \
 
 #endif // ANAIN_PRJ_H_INCLUDED

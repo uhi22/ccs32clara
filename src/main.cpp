@@ -78,6 +78,8 @@ static void Ms100Task(void)
    Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
    Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
+   Param::SetInt(Param::adcHwVariant, AnaIn::hwvariant.Get());
+   Param::SetInt(Param::adcIpropi, AnaIn::ipropi.Get());
    pp_evaluateProximityPilot();
    temperatures_calculateTemperatures();
 

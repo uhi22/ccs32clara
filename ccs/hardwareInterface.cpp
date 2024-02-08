@@ -358,6 +358,11 @@ static void hwIf_handleLockRequests()
 static void handleApplicationRGBLeds(void)
 {
    LedBlinkDivider++;
+   if (acOBC_isBasicAcCharging()) {
+       /* In case of analog AC charging, we take the LED state from the acOBC handler, and do not care for the PLC modem state. */
+       hardwareInterface_setRGB(acOBC_getRGB());
+       return;
+   }
    if (checkpointNumber<100)
    {
       /* modem is sleeping (or defective), or modem search ongoing */
@@ -479,7 +484,6 @@ static bool ActuatorTest()
 void hardwareInterface_cyclic(void)
 {
    static bool testRunning = false;
-   float evseCurrentLimitAC_A;
 
    if (timer_get_flag(CP_TIMER, TIM_SR_CC1IF))
       cpDutyValidTimer = CP_DUTY_VALID_TIMER_MAX;
@@ -498,23 +502,6 @@ void hardwareInterface_cyclic(void)
    }
 
    Param::SetFloat(Param::evsecp, cpDuty_Percent);
-   
-   /* Calculate the EVSE current limit based on the PWM ratio.
-      The scaling is explained here:  https://de.wikipedia.org/wiki/IEC_62196_Typ_2 */
-   if (cpDuty_Percent<8) {
-       evseCurrentLimitAC_A = 0; /* below 8% is reserved for digital communication (nominal 5%). No analog current limit. */
-   } else if (cpDuty_Percent<10) {
-       evseCurrentLimitAC_A = 6; /* from 8% to 10% we have 6A */
-   } else if (cpDuty_Percent<85) {
-       evseCurrentLimitAC_A = (uint8_t)((float)cpDuty_Percent*0.6); /* from 10% to 85% the limit is 0.6A*PWM */
-   } else  if (cpDuty_Percent<=96) {
-       evseCurrentLimitAC_A = (uint8_t)((float)(cpDuty_Percent-64)*2.5); /* from 80% to 96% the limit is 2.5A*(PWM-64) */
-   } else if (cpDuty_Percent<=97) {
-       evseCurrentLimitAC_A = 80; /* 80A */
-   } else {
-       evseCurrentLimitAC_A = 0; /* above 97% PWM no charging allowed */
-   }
-   Param::SetFloat(Param::evseCurrentLimit, evseCurrentLimitAC_A);
    
    //Run actuator test only if we are not connected to a charger
    if (AnaIn::pp.Get() > 4000 && Param::GetInt(Param::opmode) == 0)

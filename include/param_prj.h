@@ -39,11 +39,11 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.33.B
+#define VER 0.34.B
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 29
+//Next param id (increase when adding new parameter!): 30
 //Next value Id: 2024
 /*              category     name         unit       min     max     default id */
 #define PARAM_LIST \
@@ -71,6 +71,7 @@
     PARAM_ENTRY(CAT_TEST,    democtrl,    DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    actuatortest,ACTEST,    0,      7,      0,      9   ) \
     TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      2047,    DEFAULT_LOGGINGMASK,    15  ) \
+    TESTP_ENTRY(CAT_CHARGE,  AcObcState,  "",        0,      15,      0,     29  ) \
     VALUE_ENTRY(opmode,      pevSttString,    2000 ) \
     VALUE_ENTRY(version,     VERSTR,          2001 ) \
     VALUE_ENTRY(lasterr,     errorListString, 2002 ) \

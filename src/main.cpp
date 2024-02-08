@@ -53,6 +53,7 @@
 #include "temperatures.h"
 #include "pushbutton.h"
 #include "proximitypilot.h"
+#include "acOBC.h"
 
 
 #define PRINT_JSON 0
@@ -82,6 +83,7 @@ static void Ms100Task(void)
    Param::SetInt(Param::adcIpropi, AnaIn::ipropi.Get());
    pp_evaluateProximityPilot();
    temperatures_calculateTemperatures();
+   acOBC_mainfunction();
 
    switch (Param::GetInt(Param::inletvtgsrc))
    {

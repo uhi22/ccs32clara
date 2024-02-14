@@ -33,9 +33,9 @@ static float ohmToCelsius(float rNTC) {
     /* Convert the resistance to a temperature */
     /* Based on: https://learn.adafruit.com/thermistor/using-a-thermistor */
     float steinhart;
-    steinhart = rNTC / Param::GetFloat(Param::tmpsnsnom);     // (R/Ro)
+    steinhart = rNTC / Param::GetFloat(Param::TempSensorNomRes);     // (R/Ro)
     steinhart = log(steinhart);                  // ln(R/Ro)
-    steinhart /= Param::GetFloat(Param::tmpsnscoeff); // 1/B * ln(R/Ro)
+    steinhart /= Param::GetFloat(Param::TempSensorBeta); // 1/B * ln(R/Ro)
     steinhart += 1.0f / (TEMPERATURENOMINAL + 273.15f); // + (1/To)
     steinhart = 1.0f / steinhart;                 // Invert
     steinhart -= 273.15f;                         // convert to C
@@ -47,15 +47,19 @@ void temperatures_calculateTemperatures(void) {
     temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
     temp = ohmToCelsius(temp);
     Param::SetFloat(Param::temp1, temp);
+    float tempMax = temp;
 
     temp = AnaIn::temp2.Get();
     temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
     temp = ohmToCelsius(temp);
     Param::SetFloat(Param::temp2, temp);
+    tempMax = MAX(tempMax, temp);
 
     temp = AnaIn::temp3.Get();
     temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
     temp = ohmToCelsius(temp);
     Param::SetFloat(Param::temp3, temp);
+    tempMax = MAX(tempMax, temp);
+    Param::SetFloat(Param::MaxTemp, tempMax);
 }
 

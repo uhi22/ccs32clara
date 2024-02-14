@@ -187,18 +187,18 @@ static void pev_sendChargeParameterDiscoveryReq(void)
    //cp->DC_EVStatus.EVCabinConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
    //cp->DC_EVStatus.RESSConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
    cp->DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
-   cp->EVMaximumCurrentLimit.Value = Param::GetInt(Param::maxcur);
+   cp->EVMaximumCurrentLimit.Value = Param::GetInt(Param::MaxCurrent);
    cp->EVMaximumCurrentLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
    cp->EVMaximumCurrentLimit.Unit_isUsed = 1;
    cp->EVMaximumCurrentLimit.Unit = dinunitSymbolType_A;
 
    cp->EVMaximumPowerLimit_isUsed = 1; /* The Ioniq sends 1 here. */
-   cp->EVMaximumPowerLimit.Value = Param::GetInt(Param::maxpower) * 10; /* maxpower is kW, then x10 x 100 by Multiplier */
+   cp->EVMaximumPowerLimit.Value = Param::GetInt(Param::MaxPower) * 10; /* maxpower is kW, then x10 x 100 by Multiplier */
    cp->EVMaximumPowerLimit.Multiplier = 2; /* 10^2 */
    cp->EVMaximumPowerLimit.Unit_isUsed = 1;
    cp->EVMaximumPowerLimit.Unit = dinunitSymbolType_W; /* Watt */
 
-   cp->EVMaximumVoltageLimit.Value = Param::GetInt(Param::maxvtg);
+   cp->EVMaximumVoltageLimit.Value = Param::GetInt(Param::MaxVoltage);
    cp->EVMaximumVoltageLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
    cp->EVMaximumVoltageLimit.Unit_isUsed = 1;
    cp->EVMaximumVoltageLimit.Unit = dinunitSymbolType_V;
@@ -360,7 +360,7 @@ static void stateFunctionConnected(void)
    setCheckpoint(400);
    addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
    hardwareInterface_resetSimulation();
-   Param::SetInt(Param::stopreason, STOP_REASON_NONE);
+   Param::SetInt(Param::StopReason, STOP_REASON_NONE);
    pev_enterState(PEV_STATE_WaitForSupportedApplicationProtocolResponse);
 }
 
@@ -570,8 +570,8 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
             float evseMaxCurrent = combineValueAndMultiplier(dcparm.EVSEMaximumCurrentLimit);
             EVSEMinimumVoltage = combineValueAndMultiplier(dcparm.EVSEMinimumVoltageLimit);
 #undef dcparm
-            Param::SetFloat(Param::evsemaxvtg, evseMaxVoltage);
-            Param::SetFloat(Param::evsemaxcur, evseMaxCurrent);
+            Param::SetFloat(Param::EvseMaxVoltage, evseMaxVoltage);
+            Param::SetFloat(Param::EvseMaxCurrent, evseMaxCurrent);
 
             setCheckpoint(550);
             // pull the CP line to state C here:
@@ -648,7 +648,7 @@ static void stateFunctionWaitForCableCheckResponse(void)
       {
          rc = dinDocDec.V2G_Message.Body.CableCheckRes.ResponseCode;
          proc = dinDocDec.V2G_Message.Body.CableCheckRes.EVSEProcessing;
-         Param::SetInt(Param::evsevtg, 0);
+         Param::SetInt(Param::EvseVoltage, 0);
          //addToTrace("The CableCheck result is " + String(rc) + " " + String(proc));
          // We have two cases here:
          // 1) The charger says "cable check is finished and cable ok", by setting ResponseCode=OK and EVSEProcessing=Finished.
@@ -705,7 +705,7 @@ static void stateFunctionWaitForPreChargeResponse(void)
       {
          addToTrace(MOD_PEV, "PreCharge aknowledge received.");
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage);
-         Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
+         Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
 
          uint16_t inletVtg = hardwareInterface_getInletVoltage();
          uint16_t batVtg = hardwareInterface_getAccuVoltage();
@@ -861,7 +861,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             addToTrace(MOD_PEV, "Checkpoint790: Charging is terminated from charger side.");
             setCheckpoint(790);
             pev_isUserStopRequestOnChargerSide = 1;
-            Param::SetInt(Param::stopreason, STOP_REASON_CHARGER_SHUTDOWN);
+            Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_SHUTDOWN);
          }
          if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
          {
@@ -871,7 +871,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             setCheckpoint(800);
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
-            Param::SetInt(Param::stopreason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
+            Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
          }
          /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
          pev_isUserStopRequestOnCarSide = hardwareInterface_stopChargeRequested();
@@ -881,7 +881,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             {
                publishStatus("Accu full", "");
                addToTrace(MOD_PEV, "Accu is full. Sending PowerDeliveryReq Stop.");
-               Param::SetInt(Param::stopreason, STOP_REASON_ACCU_FULL);
+               Param::SetInt(Param::StopReason, STOP_REASON_ACCU_FULL);
             }
             else if (pev_isUserStopRequestOnCarSide)
             {
@@ -906,8 +906,8 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage);
             uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent);
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
-            Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
-            Param::SetInt(Param::evsecur, evsePresentCurrent);
+            Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
+            Param::SetInt(Param::EvseCurrent, evsePresentCurrent);
             setCheckpoint(710);
             pev_sendCurrentDemandReq();
             pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
@@ -946,7 +946,7 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
            round will show a quite high voltage, because the contactors are just opening. We
            need to repeat the requests, until the voltage is at a non-dangerous level. */
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
-         Param::SetFloat(Param::evsevtg, EVSEPresentVoltage);
+         Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
          if (Param::GetInt(Param::logging) & MOD_PEV) {
              printf("EVSEPresentVoltage %dV\r\n", (int)EVSEPresentVoltage);
          }

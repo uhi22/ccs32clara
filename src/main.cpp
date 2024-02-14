@@ -78,21 +78,21 @@ static void Ms100Task(void)
    //This sets a fixed point value WITHOUT calling the parm_Change() function
    Param::SetFloat(Param::cpuload, cpuLoad / 10);
    Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
-   Param::SetInt(Param::dcsw1dc, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
-   Param::SetInt(Param::lockfb, AnaIn::lockfb.Get());
-   Param::SetInt(Param::adcHwVariant, AnaIn::hwvariant.Get());
-   Param::SetInt(Param::adcIpropi, AnaIn::ipropi.Get());
+   Param::SetInt(Param::ContactorDuty, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
+   Param::SetInt(Param::AdcLockFeedback, AnaIn::lockfb.Get());
+   Param::SetInt(Param::AdcHwVariant, AnaIn::hwvariant.Get());
+   Param::SetInt(Param::AdcIpropi, AnaIn::ipropi.Get());
    pp_evaluateProximityPilot();
    temperatures_calculateTemperatures();
    acOBC_mainfunction();
 
-   switch (Param::GetInt(Param::inletvtgsrc))
+   switch (Param::GetInt(Param::InletVtgSrc))
    {
       case IVSRC_CHARGER:
-         Param::SetFixed(Param::inletvtg, Param::Get(Param::evsevtg));
+         Param::SetFixed(Param::InletVoltage, Param::Get(Param::EvseVoltage));
          break;
       case IVSRC_ANAIN:
-         Param::SetFloat(Param::inletvtg, AnaIn::udc.Get() / Param::GetFloat(Param::udcdivider));
+         Param::SetFloat(Param::InletVoltage, AnaIn::udc.Get() / Param::GetFloat(Param::UdcDivider));
          break;
       default:
       case IVSRC_CAN:
@@ -101,11 +101,11 @@ static void Ms100Task(void)
    }
 
    //Watchdog
-   int wd = Param::GetInt(Param::canwatchdog);
+   int wd = Param::GetInt(Param::CanWatchdog);
    if (wd < CAN_TIMEOUT) {
-      Param::SetInt(Param::canwatchdog, ++wd);
+      Param::SetInt(Param::CanWatchdog, ++wd);
    }
-   else if ((Param::GetInt(Param::demovtg)>=150) && (Param::GetInt(Param::demovtg)<=250) && (Param::GetInt(Param::democtrl)==DEMOCONTROL_STANDALONE)) {
+   else if ((Param::GetInt(Param::DemoVoltage)>=150) && (Param::GetInt(Param::DemoVoltage)<=250) && (Param::GetInt(Param::DemoControl)==DEMOCONTROL_STANDALONE)) {
       /* we are in demo mode without CAN. Do not set the CAN timeout error indication. */
    }
    else {
@@ -154,11 +154,11 @@ void Param::Change(Param::PARAM_NUM paramNum)
 {
    switch (paramNum)
    {
-      case Param::canspeed:
-         can->SetBaudrate((CanHardware::baudrates)Param::GetInt(Param::canspeed));
+      case Param::CanSpeed:
+         can->SetBaudrate((CanHardware::baudrates)Param::GetInt(Param::CanSpeed));
          break;
-      case Param::nodeid:
-         canSdo->SetNodeId(Param::GetInt(Param::nodeid));
+      case Param::NodeId:
+         canSdo->SetNodeId(Param::GetInt(Param::NodeId));
          break;
       default:
          //Handle general parameter changes here. Add paramNum labels for handling specific parameters
@@ -210,10 +210,10 @@ extern "C" int main(void)
    Stm32Scheduler s(TIM4); //We never exit main so it's ok to put it on stack
    scheduler = &s;
    //Initialize CAN1, including interrupts. Clock must be enabled in clock_setup()
-   Stm32Can c(CAN1, (CanHardware::baudrates)Param::GetInt(Param::canspeed));
+   Stm32Can c(CAN1, (CanHardware::baudrates)Param::GetInt(Param::CanSpeed));
    CanMap cm(&c);
    CanSdo sdo(&c, &cm);
-   sdo.SetNodeId(Param::GetInt(Param::nodeid));
+   sdo.SetNodeId(Param::GetInt(Param::NodeId));
    //store a pointer for easier access
    can = &c;
    canMap = &cm;

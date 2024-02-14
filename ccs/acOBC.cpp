@@ -62,12 +62,12 @@ uint8_t acOBC_getRGB(void) {
     } else {
         if (cycleDivider & 1) { rgb = RED; } else { rgb = 0; } /* everything else: flash red */
     }
-    return rgb; 
+    return rgb;
 }
 
 void acOBC_calculateCurrentLimit(void) {
   float evseCurrentLimitAC_A;
-  uint8_t cpDuty_Percent = (uint8_t)Param::GetFloat(Param::evsecp);
+  uint8_t cpDuty_Percent = (uint8_t)Param::GetFloat(Param::ControlPilotDuty);
   /* Calculate the EVSE current limit based on the PWM ratio.
      The scaling is explained here:  https://de.wikipedia.org/wiki/IEC_62196_Typ_2 */
     if (cpDuty_Percent<8) {
@@ -83,7 +83,7 @@ void acOBC_calculateCurrentLimit(void) {
     } else {
         evseCurrentLimitAC_A = 0; /* above 97% PWM no charging allowed */
     }
-    Param::SetFloat(Param::evseCurrentLimit, evseCurrentLimitAC_A);
+    Param::SetFloat(Param::EvseAcCurrentLimit, evseCurrentLimitAC_A);
     /* for detecting AC charging, we need to debounce. Otherwise the undefined bouncing during plug-in is detected as AC charging PWM. */
     if (evseCurrentLimitAC_A>0) {
         if (debounceCounterUntilAcValid<5) { /* 5 cycles with 100ms */

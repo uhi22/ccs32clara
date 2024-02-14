@@ -39,64 +39,65 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.34.B
+#define VER 0.35.B
 
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 30
-//Next value Id: 2024
-/*              category     name         unit       min     max     default id */
+//Next value Id: 2025
+/*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
-    PARAM_ENTRY(CAT_HARDWARE,udcdivider,  "dig/V",   0,      100,    10,     1   ) \
-    PARAM_ENTRY(CAT_HARDWARE,economizer,  "%",       0,      100,    100,    7   ) \
-    PARAM_ENTRY(CAT_HARDWARE,inletvtgsrc, IVSRC,     0,      2,      0,      8   ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockpwm,     "dig",    -100,    100,    30,     14  ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockruntm,   "ms",      0,      10000,  1500,   13  ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockclosethr,"dig",     0,      4095,   0,      11  ) \
-    PARAM_ENTRY(CAT_HARDWARE,lockopenthr, "dig",     0,      4095,   0,      12  ) \
-    PARAM_ENTRY(CAT_HARDWARE,tmpsnsnom,   "Ohm",     1,      1000000,10000,  26  ) \
-    PARAM_ENTRY(CAT_HARDWARE,tmpsnscoeff, "",        1,      100000, 3900,   27  ) \
-    PARAM_ENTRY(CAT_HARDWARE,ppvariant,   "",        0,      9,      0,      28  ) \
-    PARAM_ENTRY(CAT_COMM,    nodeid,      "",        1,      63,     22,     21  ) \
-    PARAM_ENTRY(CAT_COMM,    canspeed,    CANSPEEDS, 0,      4,      2,      22  ) \
-    PARAM_ENTRY(CAT_CHARGE,  maxpower,    "kW",      0,      1000,   100,    17  ) \
-    PARAM_ENTRY(CAT_CHARGE,  maxvtg,      "V",       0,      1000,   410,    18  ) \
-    PARAM_ENTRY(CAT_CHARGE,  maxcur,      "A",       0,      500,    125,    19  ) \
-    TESTP_ENTRY(CAT_CHARGE,  targetvtg,   "V",       0,      1000,   0,      3   ) \
-    TESTP_ENTRY(CAT_CHARGE,  chargecur,   "A",       0,      500,    0,      4   ) \
-    TESTP_ENTRY(CAT_CHARGE,  soc,         "%",       0,      100,    0,      5   ) \
-    TESTP_ENTRY(CAT_CHARGE,  batvtg,      "V",       0,      1000,   0,      6   ) \
-    TESTP_ENTRY(CAT_CHARGE,  enable,      OFFON,     0,      1,      1,      23  ) \
-    PARAM_ENTRY(CAT_TEST,    demovtg,     "V",       0,      500,    0,      20  ) \
-    PARAM_ENTRY(CAT_TEST,    democtrl,    DEMOCTRL,  0,      511,    0,      25  ) \
-    TESTP_ENTRY(CAT_TEST,    actuatortest,ACTEST,    0,      7,      0,      9   ) \
-    TESTP_ENTRY(CAT_TEST,    logging,     MODULES,   0,      2047,    DEFAULT_LOGGINGMASK,    15  ) \
-    TESTP_ENTRY(CAT_CHARGE,  AcObcState,  "",        0,      15,      0,     29  ) \
-    VALUE_ENTRY(opmode,      pevSttString,    2000 ) \
-    VALUE_ENTRY(version,     VERSTR,          2001 ) \
-    VALUE_ENTRY(lasterr,     errorListString, 2002 ) \
-    VALUE_ENTRY(evsevtg,     "V",             2006 ) \
-    VALUE_ENTRY(evsecur,     "A",             2010 ) \
-    VALUE_ENTRY(inletvtg,    "V",             2007 ) \
-    VALUE_ENTRY(evsemaxcur,  "A",             2008 ) \
-    VALUE_ENTRY(evsemaxvtg,  "V",             2009 ) \
-    VALUE_ENTRY(evsecp,      "%",             2012 ) \
-    VALUE_ENTRY(temp1,       "°C",            2003 ) \
-    VALUE_ENTRY(temp2,       "°C",            2004 ) \
-    VALUE_ENTRY(temp3,       "°C",            2005 ) \
-    VALUE_ENTRY(dcsw1dc,     "%",             2013 ) \
-    VALUE_ENTRY(lockfb,      "dig",           2011 ) \
-    VALUE_ENTRY(adcProximityPilot, "dig",     2018 ) \
-    VALUE_ENTRY(resistanceProximityPilot, "ohm", 2019 ) \
-    VALUE_ENTRY(cableCurrentLimit, "A",       2020 ) \
-    VALUE_ENTRY(evseCurrentLimit, "A",        2021 ) \
-    VALUE_ENTRY(adcHwVariant, "",             2022 ) \
-    VALUE_ENTRY(adcIpropi,    "",             2023 ) \
-    VALUE_ENTRY(lockstt,     LOCK,            2014 ) \
-    VALUE_ENTRY(stopreason,  STOPREASONS,     2017 ) \
-    VALUE_ENTRY(checkpoint,  "dig",           2015 ) \
-    VALUE_ENTRY(canwatchdog, "dig",           2016 ) \
-    VALUE_ENTRY(cpuload,     "%",             2094 )
+    PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
+    PARAM_ENTRY(CAT_HARDWARE,EconomizerDuty,       "%",       0,      100,    100,    7   ) \
+    PARAM_ENTRY(CAT_HARDWARE,InletVtgSrc,          IVSRC,     0,      2,      0,      8   ) \
+    PARAM_ENTRY(CAT_HARDWARE,LockDuty,             "%",      -100,    100,    30,     14  ) \
+    PARAM_ENTRY(CAT_HARDWARE,LockRunTime,          "ms",      0,      10000,  1500,   13  ) \
+    PARAM_ENTRY(CAT_HARDWARE,LockClosedThresh,     "dig",     0,      4095,   0,      11  ) \
+    PARAM_ENTRY(CAT_HARDWARE,LockOpenThresh,       "dig",     0,      4095,   0,      12  ) \
+    PARAM_ENTRY(CAT_HARDWARE,TempSensorNomRes,     "Ohm",     1,      1000000,10000,  26  ) \
+    PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
+    PARAM_ENTRY(CAT_HARDWARE,ppvariant,            "",        0,      9,      0,      28  ) \
+    PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
+    PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
+    PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
+    PARAM_ENTRY(CAT_CHARGE,  MaxVoltage,           "V",       0,      1000,   410,    18  ) \
+    PARAM_ENTRY(CAT_CHARGE,  MaxCurrent,           "A",       0,      500,    125,    19  ) \
+    TESTP_ENTRY(CAT_CHARGE,  TargetVoltage,        "V",       0,      1000,   0,      3   ) \
+    TESTP_ENTRY(CAT_CHARGE,  ChargeCurrent,        "A",       0,      500,    0,      4   ) \
+    TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
+    TESTP_ENTRY(CAT_CHARGE,  BatteryVoltage,       "V",       0,      1000,   0,      6   ) \
+    TESTP_ENTRY(CAT_CHARGE,  enable,               OFFON,     0,      1,      1,      23  ) \
+    PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
+    PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
+    TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
+    TESTP_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,    DEFAULT_LOGGINGMASK,    15  ) \
+    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           "",        0,      15,      0,     29  ) \
+    VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
+    VALUE_ENTRY(version,            VERSTR,          2001 ) \
+    VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
+    VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
+    VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
+    VALUE_ENTRY(InletVoltage,       "V",             2007 ) \
+    VALUE_ENTRY(EvseMaxCurrent,     "A",             2008 ) \
+    VALUE_ENTRY(EvseMaxVoltage,     "V",             2009 ) \
+    VALUE_ENTRY(ControlPilotDuty,   "%",             2012 ) \
+    VALUE_ENTRY(temp1,              "°C",            2003 ) \
+    VALUE_ENTRY(temp2,              "°C",            2004 ) \
+    VALUE_ENTRY(temp3,              "°C",            2005 ) \
+    VALUE_ENTRY(MaxTemp,            "°C",            2024 ) \
+    VALUE_ENTRY(ContactorDuty,      "%",             2013 ) \
+    VALUE_ENTRY(AdcLockFeedback,    "dig",           2011 ) \
+    VALUE_ENTRY(AdcProximityPilot,  "dig",           2018 ) \
+    VALUE_ENTRY(ResistanceProxPilot,"ohm",     2019 ) \
+    VALUE_ENTRY(CableCurrentLimit,  "A",             2020 ) \
+    VALUE_ENTRY(EvseAcCurrentLimit, "A",             2021 ) \
+    VALUE_ENTRY(AdcHwVariant,       "",              2022 ) \
+    VALUE_ENTRY(AdcIpropi,          "",              2023 ) \
+    VALUE_ENTRY(LockState,          LOCK,            2014 ) \
+    VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \
+    VALUE_ENTRY(checkpoint,         "dig",           2015 ) \
+    VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
+    VALUE_ENTRY(cpuload,            "%",             2094 )
 
 
 /***** Enum String definitions *****/

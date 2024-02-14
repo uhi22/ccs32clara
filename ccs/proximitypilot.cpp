@@ -19,17 +19,17 @@ void pp_evaluateProximityPilot(void) {
     float temp = AnaIn::pp.Get();
     float U_refAdc, U_pull, U_meas, Rv, R;
     float iLimit;
-    
+
     /* Step 1: Provide the raw AD value (0 to 4095) for analysis purposes. */
-    Param::SetFloat(Param::adcProximityPilot, temp);
-    
+    Param::SetFloat(Param::AdcProximityPilot, temp);
+
     /* Step 2: Calculate the PP resistance */
     /* Todo: consider the input circuit variant:
          - old Foccci v4.1 has x ohm pull-up to 3V3 and no pull-down
          - next Foccci v4.2 has 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider to match the 3V3 ADC input.
          - there could be an additional pull-down in the CCS inlet.
        The parameter ppvariant shall select which hardware circuit is installed. */
-       
+
     if (Param::GetInt(Param::ppvariant) == 0) {
         /* The old Foccci (until revision 4.1) */
         U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
@@ -63,8 +63,8 @@ void pp_evaluateProximityPilot(void) {
         /* calculate the resistance of the PP */
         R = Rv / (U_pull/U_meas-1);
     }
-    Param::SetFloat(Param::resistanceProximityPilot, R);
-    
+    Param::SetFloat(Param::ResistanceProxPilot, R);
+
     /* Step 3: Calculate the cable current limit */
     /* Reference: https://www.goingelectric.de/wiki/Typ2-Signalisierung-und-Steckercodierung/ */
     iLimit = 0;
@@ -72,7 +72,7 @@ void pp_evaluateProximityPilot(void) {
     if ((R>680*0.8) &&  (R<680*1.2)) { iLimit = 20; /* 680ohm is 20A */ }
     if ((R>220*0.8) && (R<220*1.2)) { iLimit = 32; /* 220ohm is 32A */ }
     if ((R>100*0.8) && (R<100*1.2)) { iLimit = 63; /* 100ohm is 63A */ }
-    Param::SetFloat(Param::cableCurrentLimit, iLimit);
+    Param::SetFloat(Param::CableCurrentLimit, iLimit);
 
 }
 

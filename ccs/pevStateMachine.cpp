@@ -405,7 +405,7 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
             is the best way. */
          for (i=0; i<LEN_OF_EVCCID; i++)
          {
-            dinDocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytes[i] = myMAC[i];
+            dinDocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytes[i] = getOurMac()[i];
          }
          dinDocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytesLen = LEN_OF_EVCCID;
          encodeAndTransmit();

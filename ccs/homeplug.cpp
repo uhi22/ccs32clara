@@ -59,7 +59,7 @@
 #define iAmEvse 0
 
 static const uint8_t MAC_BROADCAST[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-const uint8_t myMAC[6] = {0xFE, 0xED, 0xBE, 0xEF, 0xAF, 0xFE};
+uint8_t myMAC[6] = {0xFE, 0xED, 0xBE, 0xEF, 0xAF, 0xFE};
 uint8_t evseMac[6];
 uint8_t numberOfSoftwareVersionResponses;
 
@@ -842,6 +842,17 @@ void evaluateReceivedHomeplugPacket(void)
       evaluateGetSwCnf();
       break;
    }
+}
+
+void setOurMac(uint8_t* newMac)
+{
+   for (int i = 0; i < 6; i++)
+      myMAC[i] = newMac[i];
+}
+
+const uint8_t* getOurMac()
+{
+   return myMAC;
 }
 
 int homeplug_sanityCheck(void)

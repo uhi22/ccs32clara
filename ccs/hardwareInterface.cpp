@@ -504,9 +504,9 @@ void hardwareInterface_cyclic(void)
    Param::SetFloat(Param::ControlPilotDuty, cpDuty_Percent);
 
    //Run actuator test only if we are not connected to a charger
-   if (AnaIn::pp.Get() > 4000 && Param::GetInt(Param::opmode) == 0)
+   if ((Param::GetFloat(Param::ResistanceProxPilot)>2000) && (Param::GetInt(Param::opmode) == 0))
       testRunning = ActuatorTest();
-   else if ((AnaIn::pp.Get() < 4000 || Param::GetInt(Param::opmode) != 0) && testRunning)
+   else if (((Param::GetFloat(Param::ResistanceProxPilot)<2000) || Param::GetInt(Param::opmode) != 0) && testRunning)
    {
       Param::SetInt(Param::ActuatorTest, 0);
       testRunning = ActuatorTest(); //Run once to disable all tested outputs

@@ -22,6 +22,7 @@
 #include <libopencm3/stm32/rtc.h>
 #include <libopencm3/stm32/can.h>
 #include <libopencm3/stm32/iwdg.h>
+#include <libopencm3/stm32/desig.h>
 #include "stm32_can.h"
 #include "canmap.h"
 #include "cansdo.h"
@@ -133,6 +134,21 @@ static void Ms30Task()
    ErrorMessage::SetTime(rtc_get_counter_val());
 }
 
+static void SetMacAddress()
+{
+   uint8_t mac[6];
+
+   mac[0] = 2; //locally administered
+   mac[1] = DESIG_UNIQUE_ID0 & 0xFF;
+   *((uint32_t*)&mac[2]) = DESIG_UNIQUE_ID2;
+
+   addToTrace(MOD_HOMEPLUG, "Our MAC address: ", mac, 6);
+
+   //more info: https://community.st.com/t5/stm32-mcus/how-to-obtain-and-use-the-stm32-96-bit-uid/ta-p/621443
+
+   setOurMac(mac);
+}
+
 /** This function is called when the user changes a parameter */
 void Param::Change(Param::PARAM_NUM paramNum)
 {
@@ -206,9 +222,10 @@ extern "C" int main(void)
    //This is all we need to do to set up a terminal on USART4
    Terminal t(UART4, termCmds);
    TerminalCommands::SetCanMap(canMap);
-   
+
    printf("This is Clara version %s\r\n", VERSTR);
    printf("logging is %d\r\n", Param::GetInt(Param::logging));
+   SetMacAddress();
 
    s.AddTask(Ms30Task, 30);
    s.AddTask(Ms100Task, 100);

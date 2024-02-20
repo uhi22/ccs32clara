@@ -29,7 +29,7 @@ uint8_t tcpHeaderLen;
 uint8_t tcpPayloadLen;
 uint8_t* tcpPayload = &TcpTransmitPacket[20];
 uint8_t tcp_rxdataLen=0;
-uint8_t* tcp_rxdata = &myethreceivebuffer[74];
+uint8_t tcp_rxdata[TCP_RX_DATA_LEN]; /* dedicated receive buffer for TCP data with correct ports */
 
 static uint8_t tcpState = TCP_STATE_CLOSED;
 
@@ -119,6 +119,12 @@ void evaluateTcpPacket(void)
       /* This is a data transfer packet. */
       tcp_rxdataLen = tmpPayloadLen;
       /* myethreceivebuffer[74] is the first payload byte. */
+      /* Fix for https://github.com/uhi22/ccs32clara/issues/15. We explicitely need to copy the data here,
+      because the application will look asynchronously on the tcp_rxdata, and if in between some other received
+      data would end up in the myethreceivebuffer (e.g. neighbour solicitation, or TCP traffic with other ports),
+      the overwritten myethreceivebuffer would lead to not seeing the tcp_rxdata anymore, if this would be just
+      a pointer to myethreceivebuffer[74]. */
+      memcpy(tcp_rxdata, &myethreceivebuffer[74], tcp_rxdataLen);  /* provide the received data to the application */
       connMgr_TcpOk();
       TcpAckNr = remoteSeqNr+tcp_rxdataLen; /* The ACK number of our next transmit packet is tcp_rxdataLen more than the received seq number. */
       tcp_sendAck();

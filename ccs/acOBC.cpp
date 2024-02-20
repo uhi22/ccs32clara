@@ -29,6 +29,7 @@ static uint8_t stateBasicAcCharging = 0; /* invalid */
 #define ACOBC_STATE_CHARGEERROR 5
 
 static uint8_t debounceCounterUntilAcValid = 0;
+static uint8_t debounceCounterFivePercentPwm = 0;
 
 void acOBC_activateBasicAcCharging(void) {
   /* This function shall be called if we detect a CP PWM in the "analog range". */
@@ -72,16 +73,26 @@ void acOBC_calculateCurrentLimit(void) {
      The scaling is explained here:  https://de.wikipedia.org/wiki/IEC_62196_Typ_2 */
     if (cpDuty_Percent<8) {
         evseCurrentLimitAC_A = 0; /* below 8% is reserved for digital communication (nominal 5%). No analog current limit. */
+        if (debounceCounterFivePercentPwm<5) { /* 5 cycles with 100ms */
+            debounceCounterFivePercentPwm++;
+        } else {
+            acOBC_deactivateBasicAcCharging(); /* in case we have stable 5% PWM, this is no basic AC charging. */
+        }
     } else if (cpDuty_Percent<10) {
         evseCurrentLimitAC_A = 6; /* from 8% to 10% we have 6A */
+        debounceCounterFivePercentPwm=0;
     } else if (cpDuty_Percent<85) {
         evseCurrentLimitAC_A = (uint8_t)((float)cpDuty_Percent*0.6); /* from 10% to 85% the limit is 0.6A*PWM */
+        debounceCounterFivePercentPwm=0;
     } else  if (cpDuty_Percent<=96) {
         evseCurrentLimitAC_A = (uint8_t)((float)(cpDuty_Percent-64)*2.5); /* from 80% to 96% the limit is 2.5A*(PWM-64) */
+        debounceCounterFivePercentPwm=0;
     } else if (cpDuty_Percent<=97) {
         evseCurrentLimitAC_A = 80; /* 80A */
+        debounceCounterFivePercentPwm=0;
     } else {
         evseCurrentLimitAC_A = 0; /* above 97% PWM no charging allowed */
+        debounceCounterFivePercentPwm=0;
     }
     Param::SetFloat(Param::EvseAcCurrentLimit, evseCurrentLimitAC_A);
     /* for detecting AC charging, we need to debounce. Otherwise the undefined bouncing during plug-in is detected as AC charging PWM. */

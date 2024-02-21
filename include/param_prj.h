@@ -67,11 +67,11 @@
     TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  BatteryVoltage,       "V",       0,      1000,   0,      6   ) \
     TESTP_ENTRY(CAT_CHARGE,  enable,               OFFON,     0,      1,      1,      23  ) \
+    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           "",        0,      15,      0,     29  ) \
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
-    TESTP_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,    DEFAULT_LOGGINGMASK,    15  ) \
-    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           "",        0,      15,      0,     29  ) \
+    TESTP_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
@@ -88,7 +88,7 @@
     VALUE_ENTRY(ContactorDuty,      "%",             2013 ) \
     VALUE_ENTRY(AdcLockFeedback,    "dig",           2011 ) \
     VALUE_ENTRY(AdcProximityPilot,  "dig",           2018 ) \
-    VALUE_ENTRY(ResistanceProxPilot,"ohm",     2019 ) \
+    VALUE_ENTRY(ResistanceProxPilot,"ohm",           2019 ) \
     VALUE_ENTRY(CableCurrentLimit,  "A",             2020 ) \
     VALUE_ENTRY(EvseAcCurrentLimit, "A",             2021 ) \
     VALUE_ENTRY(AdcHwVariant,       "",              2022 ) \

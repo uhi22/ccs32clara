@@ -38,9 +38,6 @@
  * IDs are 16 bit, so 65535 is the maximum
  */
 
- //Define a version string of your firmware here
-#define VER 0.35.B
-
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 30

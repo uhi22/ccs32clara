@@ -27,11 +27,14 @@ LD		      = $(PREFIX)-gcc
 OBJCOPY		= $(PREFIX)-objcopy
 OBJDUMP		= $(PREFIX)-objdump
 MKDIR_P     = mkdir -p
+GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 CFLAGS		= -Os -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
              -fno-common -fno-builtin -DSTM32F1 \
+			-DVER=$(GIT_VERSION) \
 				 -mcpu=cortex-m3 -mthumb -std=gnu99 -ffunction-sections -fdata-sections
 CPPFLAGS    = -Og -ggdb -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
             -fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 \
+			-DVER=$(GIT_VERSION) \
 				-ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 LDSCRIPT	  = linker.ld
 LDFLAGS    = -Llibopencm3/lib -T$(LDSCRIPT) -march=armv7 -nostartfiles -Wl,--gc-sections,-Map,linker.map

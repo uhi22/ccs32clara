@@ -24,7 +24,7 @@ jobs:
           echo "Number of processors:" `nproc`
           make get-deps -j `nproc`
 
-      - name: Build SINE firmware
+      - name: Build CCS32Clara firmware
         run: |
           make clean all
 

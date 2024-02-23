@@ -160,6 +160,12 @@ void Param::Change(Param::PARAM_NUM paramNum)
       case Param::NodeId:
          canSdo->SetNodeId(Param::GetInt(Param::NodeId));
          break;
+      case Param::ChargeCurrent:
+         //Charge current is the single most important item that must be constantly updated
+         //by the BMS or VCU. Whenever it is updated we feed the dog
+         //When it is no longer updated the dog will bark and stop the charge session
+         Param::SetInt(Param::CanWatchdog, 0);
+         break;
       default:
          //Handle general parameter changes here. Add paramNum labels for handling specific parameters
          break;

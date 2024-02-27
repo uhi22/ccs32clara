@@ -15,6 +15,7 @@ static LockStt lockRequest;
 static LockStt lockState;
 static LockStt lockTarget;
 static uint16_t lockTimer;
+static bool actuatorTestRunning = false;
 
 void hardwareInterface_showOnDisplay(char*, char*, char*)
 {
@@ -443,9 +444,9 @@ static void handleApplicationRGBLeds(void)
    }
 }
 
-static bool ActuatorTest()
+static void ActuatorTest()
 {
-   bool testRunning = true;
+   bool blTestOngoing = true;
 
    switch (Param::GetInt(Param::ActuatorTest))
    {
@@ -470,21 +471,27 @@ static bool ActuatorTest()
    case TEST_LEDBLUE:
       hardwareInterface_setRGB(4);
       break;
-   case TEST_NONE:
-      //Return everything to default state. LEDs are reset anyway as soon as we leave test mode
-      hardwareInterface_setPowerRelayOff();
-      hardwareInterface_setStateB();
-      hardwareInterface_triggerConnectorUnlocking();
-      testRunning = false;
+   default: /* all cases including TEST_NONE are stopping the actuator test */
+      blTestOngoing = false;
+      if (actuatorTestRunning) {
+        /* If the actuator test is just ending, then perform a clean up:
+           Return everything to default state. LEDs are reset anyway as soon as we leave test mode. */
+        hardwareInterface_setPowerRelayOff();
+        hardwareInterface_setStateB();
+        hardwareInterface_triggerConnectorUnlocking();
+        actuatorTestRunning = false;
+      } else {
+        /* actuator test was not ongoing and is not requested -> nothing to do */
+      }
       break;
    }
-   return testRunning;
+   actuatorTestRunning = blTestOngoing;
 }
 
 void hardwareInterface_cyclic(void)
 {
-   static bool testRunning = false;
-
+   uint8_t blActuatorTestAllowed;
+   
    if (timer_get_flag(CP_TIMER, TIM_SR_CC1IF))
       cpDutyValidTimer = CP_DUTY_VALID_TIMER_MAX;
 
@@ -503,22 +510,22 @@ void hardwareInterface_cyclic(void)
 
    Param::SetFloat(Param::ControlPilotDuty, cpDuty_Percent);
 
-   //Run actuator test only if we are not connected to a charger
-   if ((Param::GetFloat(Param::ResistanceProxPilot)>2000) && (Param::GetInt(Param::opmode) == 0))
-      testRunning = ActuatorTest();
-   else if (((Param::GetFloat(Param::ResistanceProxPilot)<2000) || Param::GetInt(Param::opmode) != 0) && testRunning)
-   {
-      Param::SetInt(Param::ActuatorTest, 0);
-      testRunning = ActuatorTest(); //Run once to disable all tested outputs
-   }
-   else
-   {
-      //Keep test selection reset while tests are not allowed
+   /* Run actuator test only if we are not connected to a charger */
+   blActuatorTestAllowed = (Param::GetFloat(Param::ResistanceProxPilot)>2000) && (Param::GetInt(Param::opmode) == 0);
+   if (blActuatorTestAllowed) {
+       /* actuator test is allowed -> run it */
+       ActuatorTest();
+   } else if (!blActuatorTestAllowed && actuatorTestRunning) {
+       /* not allowed, but running. We cancel the actuator test. */
+       Param::SetInt(Param::ActuatorTest, 0);
+       ActuatorTest(); /* Run once to disable all tested outputs */
+   } else {
+      /* not allowed and not running -> Keep test selection reset */
       Param::SetInt(Param::ActuatorTest, 0);
    }
 
    //LEDs may be tested, disconnect from application
-   if (!testRunning)
+   if (!actuatorTestRunning)
       handleApplicationRGBLeds();
 
    hwIf_handleContactorRequests();

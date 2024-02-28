@@ -118,7 +118,6 @@ static void Ms100Task(void)
 
 static void Ms30Task()
 {
-   DigIo::tp8_out.Set();
    spiQCA7000checkForReceivedData();
    connMgr_Mainfunction(); /* ConnectionManager */
    modemFinder_Mainfunction();
@@ -130,7 +129,6 @@ static void Ms30Task()
    //cyclicLcdUpdate();
    hardwareInterface_cyclic();
    pushbutton_handlePushbutton();
-   DigIo::tp8_out.Clear();
    ErrorMessage::SetTime(rtc_get_counter_val());
 }
 

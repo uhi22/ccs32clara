@@ -54,6 +54,7 @@
 #include "temperatures.h"
 #include "pushbutton.h"
 #include "proximitypilot.h"
+#include "hardwareVariants.h"
 #include "acOBC.h"
 
 
@@ -80,9 +81,9 @@ static void Ms100Task(void)
    Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
    Param::SetInt(Param::ContactorDuty, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::AdcLockFeedback, AnaIn::lockfb.Get());
-   Param::SetInt(Param::AdcHwVariant, AnaIn::hwvariant.Get());
    Param::SetInt(Param::AdcIpropi, AnaIn::ipropi.Get());
    pp_evaluateProximityPilot();
+   hw_evaluateHardwareVariants();
    temperatures_calculateTemperatures();
    acOBC_mainfunction();
 

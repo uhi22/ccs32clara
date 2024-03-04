@@ -41,7 +41,7 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
              picontroller.o terminalcommands.o \
              ipv6.o tcp.o \
 				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o proximitypilot.o acOBC.o \
-				 hardwareInterface.o pushbutton.o udpChecksum.o \
+				 hardwareInterface.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
 				 appHandEXIDatatypesDecoder.o ByteStream.o EncoderChannel.o \
 				 appHandEXIDatatypesEncoder.o DecoderChannel.o EXIHeaderDecoder.o \

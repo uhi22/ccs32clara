@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.35.B
+#define VER 0.36.B
 
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 30
-//Next value Id: 2025
+//Next value Id: 2026
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
@@ -92,6 +92,7 @@
     VALUE_ENTRY(CableCurrentLimit,  "A",             2020 ) \
     VALUE_ENTRY(EvseAcCurrentLimit, "A",             2021 ) \
     VALUE_ENTRY(AdcHwVariant,       "",              2022 ) \
+    VALUE_ENTRY(HardwareVariant,    "",              2025 ) \
     VALUE_ENTRY(AdcIpropi,          "",              2023 ) \
     VALUE_ENTRY(LockState,          LOCK,            2014 ) \
     VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \

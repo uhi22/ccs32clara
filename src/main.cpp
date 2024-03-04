@@ -85,7 +85,6 @@ static void Ms100Task(void)
    Param::SetInt(Param::AdcLockFeedback, AnaIn::lockfb.Get());
    Param::SetInt(Param::AdcIpropi, AnaIn::ipropi.Get());
    pp_evaluateProximityPilot();
-   hw_evaluateHardwareVariants();
    temperatures_calculateTemperatures();
    acOBC_mainfunction();
 
@@ -212,13 +211,12 @@ extern "C" int main(void)
    DIG_IO_CONFIGURE(DIG_IO_LIST);
    AnaIn::Start(); //Starts background ADC conversion via DMA
    write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
-   hardwareInterface_setStateB();
-
    gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
    DigIo::supply_out.Set();
-
-   tim_setup(); //Initialize CP duty cycle measurement and lock/contactor PWM
+   hardwareInterface_setStateB();
+   hw_evaluateHardwareVariants();
+   tim_setup(Param::GetInt(Param::HardwareVariant)); //Initialize CP duty cycle measurement and lock/contactor PWM
    nvic_setup(); //Set up some interrupts
    parm_load(); //Load stored parameters
    qca7000setup();

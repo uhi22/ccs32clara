@@ -30,7 +30,7 @@ void clock_setup(void);
 void nvic_setup(void);
 void rtc_setup(void);
 uint32_t rtc_get_ms(void);
-void tim_setup(void);
+void tim_setup(int variant);
 void write_bootloader_pininit();
 
 #ifdef __cplusplus

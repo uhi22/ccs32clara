@@ -140,8 +140,11 @@ uint32_t rtc_get_ms(void) {
 * and the charge port lock motor
 * Setup CP_TIMER to measure the pulse width of the CP signal
 */
-void tim_setup()
+void tim_setup(int variant)
 {
+   //The slow switching NCV8402 forces us to switch at 500 Hz
+   //Later revisions can be switched at 17.6 kHz
+   int prescaler = variant <= 4003 ? 34 : 0;
    /*** Setup over/undercurrent and PWM output timer */
    timer_disable_counter(CONTACT_LOCK_TIMER);
    //edge aligned PWM
@@ -166,7 +169,7 @@ void tim_setup()
    timer_enable_oc_output(CONTACT_LOCK_TIMER, TIM_OC3);
    timer_enable_oc_output(CONTACT_LOCK_TIMER, TIM_OC4);
    timer_generate_event(CONTACT_LOCK_TIMER, TIM_EGR_UG);
-   timer_set_prescaler(CONTACT_LOCK_TIMER, 0);
+   timer_set_prescaler(CONTACT_LOCK_TIMER, prescaler);
    /* PWM frequency */
    timer_set_period(CONTACT_LOCK_TIMER, CONTACT_LOCK_PERIOD);
    timer_enable_counter(CONTACT_LOCK_TIMER);

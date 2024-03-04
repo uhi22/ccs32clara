@@ -70,6 +70,8 @@ static CanSdo* canSdo;
 
 static void Ms100Task(void)
 {
+   static uint32_t lastValidCp = 0;
+
    DigIo::led_out.Toggle();
    //The boot loader enables the watchdog, we have to reset it
    //at least every 2s or otherwise the controller is hard reset.
@@ -113,6 +115,13 @@ static void Ms100Task(void)
       /* we rely on the CAN input, so we set the error indication if the CAN messages timed out. */
       ErrorMessage::Post(ERR_CANTIMEOUT);
    }
+
+   if (Param::GetInt(Param::ControlPilotDuty) > 3)
+      lastValidCp = rtc_get_counter_val();
+
+   //If no frequency on CP shut down after 10s
+   if ((rtc_get_counter_val() - lastValidCp) > 1000)
+      DigIo::supply_out.Clear();
 
    canMap->SendAll();
 }
@@ -206,6 +215,8 @@ extern "C" int main(void)
    hardwareInterface_setStateB();
 
    gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
+
+   DigIo::supply_out.Set();
 
    tim_setup(); //Initialize CP duty cycle measurement and lock/contactor PWM
    nvic_setup(); //Set up some interrupts

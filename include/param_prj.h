@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.36.B
+#define VER 0.37.B
 
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 30
-//Next value Id: 2026
+//Next value Id: 2027
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
@@ -74,6 +74,7 @@
     TESTP_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
+    VALUE_ENTRY(githubRunNumber,    "",              2026 ) \
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
     VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \

@@ -237,7 +237,10 @@ extern "C" int main(void)
    Terminal t(UART4, termCmds);
    TerminalCommands::SetCanMap(canMap);
 
+   Param::SetInt(Param::githubRunNumber, GITHUB_RUN_NUMBER);
+
    printf("This is Clara version %s\r\n", VERSTR);
+   printf("githubRunNumber %d\r\n", Param::GetInt(Param::githubRunNumber));
    printf("logging is %d\r\n", Param::GetInt(Param::logging));
    SetMacAddress();
 
@@ -247,7 +250,6 @@ extern "C" int main(void)
    //backward compatibility, version 4 was the first to support the "stream" command
    Param::SetInt(Param::version, 4);
    Param::Change(Param::PARAM_LAST); //Call callback one for general parameter propagation
-
    //Now all our main() does is running the terminal
    //All other processing takes place in the scheduler or other interrupt service routines
    //The terminal has lowest priority, so even loading it down heavily will not disturb

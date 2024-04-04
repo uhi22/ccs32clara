@@ -57,7 +57,7 @@
     PARAM_ENTRY(CAT_HARDWARE,TempSensorNomRes,     "Ohm",     1,      1000000,10000,  26  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
     PARAM_ENTRY(CAT_HARDWARE,ppvariant,            "",        0,      9,      0,      28  ) \
-    PARAM_ENTRY(CAT_HARDWARE,WakeupPinFunc,        WAKEUP,    0,      3,      0,      30  ) \
+    PARAM_ENTRY(CAT_HARDWARE,WakeupPinFunc,        WAKEUP,    0,      4,      0,      30  ) \
     PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
@@ -68,7 +68,7 @@
     TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  BatteryVoltage,       "V",       0,      1000,   0,      6   ) \
     TESTP_ENTRY(CAT_CHARGE,  enable,               OFFON,     0,      1,      1,      23  ) \
-    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           "",        0,      15,      0,     29  ) \
+    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           "",        0,      15,     0,      29  ) \
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
@@ -112,7 +112,7 @@
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
 #define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency"
-#define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp"
+#define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp, 4=LevelOnValidPP"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
@@ -126,7 +126,8 @@ enum _wakeupfuncs
 {
    WAKEUP_LEVEL = 0,
    WAKEUP_PULSE = 1,
-   WAKEUP_ONVALIDCP = 2
+   WAKEUP_ONVALIDCP = 2,
+   WAKEUP_ONVALIDPP = 4
 };
 
 enum _inletsources

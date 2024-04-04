@@ -120,8 +120,14 @@ static void Ms100Task(void)
       lastValidCp = rtc_get_counter_val();
 
    //If no frequency on CP shut down after 10s
-   if ((rtc_get_counter_val() - lastValidCp) > 1000)
-      DigIo::supply_out.Clear();
+   if ((rtc_get_counter_val() - lastValidCp) > 1000) {
+      bool ppValid = Param::GetInt(Param::ResistanceProxPilot) < 2000;
+
+      //WAKEUP_ONVALIDPP implies that we use PP for wakeup. So as long as PP is valid
+      //Do not clear the supply pin as that will skew the PP measurement and we can't turn off anyway
+      if ((Param::GetInt(Param::WakeupPinFunc) & WAKEUP_ONVALIDPP) == 0 || !ppValid)
+         DigIo::supply_out.Clear();
+   }
 
    canMap->SendAll();
 }

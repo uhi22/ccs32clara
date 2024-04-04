@@ -498,14 +498,17 @@ void hardwareInterface_WakeupOtherPeripherals()
 {
    static int wakeUpPulseLength = 10;
    bool dutyValid = Param::GetInt(Param::ControlPilotDuty) > 3;
+   bool ppValid = Param::GetInt(Param::ResistanceProxPilot) < 2000;
+   int wakeupPinFunc = Param::GetInt(Param::WakeupPinFunc);
 
    if (!DigIo::supply_out.Get()) {
       //Make sure we don't wake ourself up
+      //Unless we monitor PP
       DigIo::wakeup_out.Clear();
       return;
    }
 
-   switch (Param::GetInt(Param::WakeupPinFunc)) {
+   switch (wakeupPinFunc) {
    case WAKEUP_LEVEL:
       DigIo::wakeup_out.Set(); //Wake up other peripherals
       break;
@@ -518,6 +521,10 @@ void hardwareInterface_WakeupOtherPeripherals()
       break;
    case WAKEUP_LEVEL | WAKEUP_ONVALIDCP:
       if (dutyValid) DigIo::wakeup_out.Set();
+      else DigIo::wakeup_out.Clear();
+      break;
+   case WAKEUP_LEVEL | WAKEUP_ONVALIDPP:
+      if (ppValid || dutyValid) DigIo::wakeup_out.Set();
       else DigIo::wakeup_out.Clear();
       break;
    case WAKEUP_PULSE | WAKEUP_ONVALIDCP:

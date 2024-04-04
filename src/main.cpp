@@ -87,6 +87,7 @@ static void Ms100Task(void)
    pp_evaluateProximityPilot();
    temperatures_calculateTemperatures();
    acOBC_mainfunction();
+   hardwareInterface_WakeupOtherPeripherals();
 
    switch (Param::GetInt(Param::InletVtgSrc))
    {
@@ -213,7 +214,8 @@ extern "C" int main(void)
    write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
    gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
-   DigIo::supply_out.Set();
+   DigIo::supply_out.Set(); //Make sure board stays awake
+
    hardwareInterface_setStateB();
    hw_evaluateHardwareVariants();
    tim_setup(Param::GetInt(Param::HardwareVariant)); //Initialize CP duty cycle measurement and lock/contactor PWM

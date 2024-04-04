@@ -494,6 +494,48 @@ static void ActuatorTest()
    actuatorTestRunning = blTestOngoing;
 }
 
+void hardwareInterface_WakeupOtherPeripherals()
+{
+   static int wakeUpPulseLength = 10;
+   bool dutyValid = Param::GetInt(Param::ControlPilotDuty) > 3;
+
+   if (!DigIo::supply_out.Get()) {
+      //Make sure we don't wake ourself up
+      DigIo::wakeup_out.Clear();
+      return;
+   }
+
+   switch (Param::GetInt(Param::WakeupPinFunc)) {
+   case WAKEUP_LEVEL:
+      DigIo::wakeup_out.Set(); //Wake up other peripherals
+      break;
+   case WAKEUP_PULSE:
+      if (wakeUpPulseLength > 0) {
+         wakeUpPulseLength--;
+         DigIo::wakeup_out.Set();
+      }
+      else DigIo::wakeup_out.Clear();
+      break;
+   case WAKEUP_LEVEL | WAKEUP_ONVALIDCP:
+      if (dutyValid) DigIo::wakeup_out.Set();
+      else DigIo::wakeup_out.Clear();
+      break;
+   case WAKEUP_PULSE | WAKEUP_ONVALIDCP:
+      if (dutyValid && wakeUpPulseLength > 0) {
+         wakeUpPulseLength--;
+         DigIo::wakeup_out.Set();
+      }
+      else if (!dutyValid) {
+         wakeUpPulseLength = 10; //allow pulsing again when PWM returns
+         DigIo::wakeup_out.Clear();
+      }
+      else {
+         DigIo::wakeup_out.Clear();
+      }
+      break;
+   }
+}
+
 void hardwareInterface_cyclic(void)
 {
    uint8_t blActuatorTestAllowed;

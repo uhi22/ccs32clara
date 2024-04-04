@@ -39,11 +39,11 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.37.B
+#define VER 0.38.B
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 30
+//Next param id (increase when adding new parameter!): 31
 //Next value Id: 2027
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
@@ -57,6 +57,7 @@
     PARAM_ENTRY(CAT_HARDWARE,TempSensorNomRes,     "Ohm",     1,      1000000,10000,  26  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
     PARAM_ENTRY(CAT_HARDWARE,ppvariant,            "",        0,      9,      0,      28  ) \
+    PARAM_ENTRY(CAT_HARDWARE,WakeupPinFunc,        WAKEUP,    0,      3,      0,      30  ) \
     PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
@@ -111,6 +112,7 @@
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
 #define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency"
+#define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
@@ -119,6 +121,13 @@
 #define VERSTR STRINGIFY(4=VER)
 
 /***** enums ******/
+
+enum _wakeupfuncs
+{
+   WAKEUP_LEVEL = 0,
+   WAKEUP_PULSE = 1,
+   WAKEUP_ONVALIDCP = 2
+};
 
 enum _inletsources
 {

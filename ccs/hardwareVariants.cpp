@@ -17,6 +17,7 @@
 #define ADC_FOR_VERSION_4_2 718
 #define ADC_FOR_VERSION_4_3 833
 #define ADC_FOR_VERSION_4_4 991
+#define ADC_FOR_VERSION_4_5 1134
 
 uint8_t isNear(uint16_t x, uint16_t y) {
     #define TOLERANCE 30 /* ADC steps in each direction */
@@ -42,6 +43,7 @@ void hw_evaluateHardwareVariants(void) {
     if (isNear(adc, ADC_FOR_VERSION_4_2)) nHardwareVariant = 4002;
     if (isNear(adc, ADC_FOR_VERSION_4_3)) nHardwareVariant = 4003;
     if (isNear(adc, ADC_FOR_VERSION_4_4)) nHardwareVariant = 4004;
+    if (isNear(adc, ADC_FOR_VERSION_4_5)) nHardwareVariant = 4005;
 
     Param::SetInt(Param::HardwareVariant, nHardwareVariant);
 

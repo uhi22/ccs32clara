@@ -162,6 +162,12 @@ static void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_
 
 static void hardwareInteface_setContactorPwm(uint16_t out1duty_4k, uint16_t out2duty_4k)
 {
+   //Enable or disable contactor driver
+   if (out1duty_4k > 0 || out2duty_4k > 0)
+      DigIo::contact_out.Set();
+   else
+      DigIo::contact_out.Clear();
+
    /*Assign the new dutyCycle count to the capture compare register.*/
    timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT1_CHAN, out1duty_4k);
    timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT2_CHAN, out2duty_4k);
@@ -491,7 +497,7 @@ static void ActuatorTest()
 void hardwareInterface_cyclic(void)
 {
    uint8_t blActuatorTestAllowed;
-   
+
    if (timer_get_flag(CP_TIMER, TIM_SR_CC1IF))
       cpDutyValidTimer = CP_DUTY_VALID_TIMER_MAX;
 

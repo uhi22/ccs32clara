@@ -79,16 +79,26 @@ void write_bootloader_pininit()
 
    memset32((int*)&commands, 0, PINDEF_NUMWORDS);
 
-   //!!! Customize this to match your project !!!
-   //Make sure stateC, contactor and lock doesn't float
+   //Make sure wakeup and stateC output is low
+   commands.pindef[0].port = GPIOB;
+   commands.pindef[0].pin = GPIO0 | GPIO4;
+   commands.pindef[0].inout = PIN_OUT;
+   commands.pindef[0].level = 0;
+   //Make sure device doesn't turn off during upgrade
    commands.pindef[1].port = GPIOB;
-   commands.pindef[1].pin = GPIO4;
+   commands.pindef[1].pin = GPIO1;
    commands.pindef[1].inout = PIN_OUT;
-   commands.pindef[1].level = 0;
-   commands.pindef[1].port = GPIOC;
-   commands.pindef[1].pin = GPIO6 | GPIO7 | GPIO8 | GPIO9;
-   commands.pindef[1].inout = PIN_OUT;
-   commands.pindef[1].level = 0;
+   commands.pindef[1].level = 1;
+   //Make sure contactor and lock doesn't float
+   commands.pindef[2].port = GPIOC;
+   commands.pindef[2].pin = GPIO6 | GPIO7 | GPIO8 | GPIO9;
+   commands.pindef[2].inout = PIN_OUT;
+   commands.pindef[2].level = 0;
+   //Make sure contactor driver enable doesn't float
+   commands.pindef[3].port = GPIOA;
+   commands.pindef[3].pin = GPIO1;
+   commands.pindef[3].inout = PIN_OUT;
+   commands.pindef[3].level = 0;
 
    crc_reset();
    uint32_t crc = crc_calculate_block(((uint32_t*)&commands), PINDEF_NUMWORDS);

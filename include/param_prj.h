@@ -72,7 +72,7 @@
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
-    TESTP_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
+    PARAM_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
     VALUE_ENTRY(githubRunNumber,    "",              2026 ) \

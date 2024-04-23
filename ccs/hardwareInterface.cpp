@@ -543,6 +543,12 @@ void hardwareInterface_WakeupOtherPeripherals()
    }
 }
 
+/* send the measured CP duty cycle to the serial console for debugging. */
+void hardwareInterface_LogTheCpDuty(void) {
+      int16_t cpDuty_Percent = (uint8_t)Param::GetInt(Param::ControlPilotDuty);
+      addToTrace(MOD_HWIF, "cpDuty [%] ", cpDuty_Percent);
+}
+
 void hardwareInterface_cyclic(void)
 {
    uint8_t blActuatorTestAllowed;

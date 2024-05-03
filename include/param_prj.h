@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VER 0.38.B
+#define VERSION 0.39
 
 #include "myLogging.h"
 
@@ -75,7 +75,6 @@
     PARAM_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
-    VALUE_ENTRY(githubRunNumber,    "",              2026 ) \
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
     VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
@@ -118,7 +117,17 @@
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
 
-#define VERSTR STRINGIFY(4=VER)
+#define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
+
+#if GITHUB_RUN_NUMBER == 0 //local build
+#define VER(G) VERSION.R
+#else //github runner build
+#define VER(G) VERSION.##G.B
+#endif
+
+#define VER2(G) VER(G)
+
+#define VERSTR STRINGIFY(4=VER2(GITHUB_RUN_NUMBER))
 
 /***** enums ******/
 

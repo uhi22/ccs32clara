@@ -245,10 +245,8 @@ extern "C" int main(void)
    Terminal t(UART4, termCmds);
    TerminalCommands::SetCanMap(canMap);
 
-   Param::SetInt(Param::githubRunNumber, GITHUB_RUN_NUMBER);
-
    printf("This is Clara version %s\r\n", VERSTR);
-   printf("githubRunNumber %d\r\n", Param::GetInt(Param::githubRunNumber));
+   printf("githubRunNumber %d\r\n", GITHUB_RUN_NUMBER);
    printf("logging is %d\r\n", Param::GetInt(Param::logging));
    SetMacAddress();
 

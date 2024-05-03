@@ -28,25 +28,25 @@ OBJCOPY		= $(PREFIX)-objcopy
 OBJDUMP		= $(PREFIX)-objdump
 MKDIR_P     = mkdir -p
 CFLAGS		= -Os -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
-             -fno-common -fno-builtin -DSTM32F1 \
+				 -fno-common -fno-builtin -DSTM32F1 \
 				 -mcpu=cortex-m3 -mthumb -std=gnu99 -ffunction-sections -fdata-sections
 CPPFLAGS    = -Og -ggdb -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
-            -fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 \
+				-fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 \
 				-ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 # Check if the variable GITHUB_RUN_NUMBER exists. When running on the github actions running, this
 # variable is automatically available.
-# Create a compiler define with the content of the variable. Or, if it does not exist, use replacement value 99999.
+# Create a compiler define with the content of the variable. Or, if it does not exist, use replacement value 0.
 EXTRACOMPILERFLAGS  = $(shell \
-    if [ -z "$$GITHUB_RUN_NUMBER" ]; then echo "-DGITHUB_RUN_NUMBER=99999"; else echo "-DGITHUB_RUN_NUMBER=$$GITHUB_RUN_NUMBER"; fi \
-    )
+	 if [ -z "$$GITHUB_RUN_NUMBER" ]; then echo "-DGITHUB_RUN_NUMBER=0"; else echo "-DGITHUB_RUN_NUMBER=$$GITHUB_RUN_NUMBER"; fi \
+	 )
 
 LDSCRIPT	  = linker.ld
 LDFLAGS    = -Llibopencm3/lib -T$(LDSCRIPT) -march=armv7 -nostartfiles -Wl,--gc-sections,-Map,linker.map
 OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
-             my_string.o digio.o my_fp.o printf.o anain.o \
-             param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
-             picontroller.o terminalcommands.o \
-             ipv6.o tcp.o \
+				 my_string.o digio.o my_fp.o printf.o anain.o \
+				 param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
+				 picontroller.o terminalcommands.o \
+				 ipv6.o tcp.o \
 				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o proximitypilot.o acOBC.o \
 				 hardwareInterface.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
@@ -140,12 +140,12 @@ flash: images
 	@printf "  FLASH   $(BINARY).bin\n"
 	@# IMPORTANT: Don't use "resume", only "reset" will work correctly!
 	$(Q)$(OPENOCD) -s $(OPENOCD_SCRIPTS) \
-		       -f $(OPENOCD_FLASHER) \
-		       -f $(OPENOCD_BOARD) \
-		       -c "init" -c "reset halt" \
-		       -c "flash write_image erase $(BINARY).hex" \
-		       -c "reset" \
-		       -c "shutdown" $(NULL)
+				 -f $(OPENOCD_FLASHER) \
+				 -f $(OPENOCD_BOARD) \
+				 -c "init" -c "reset halt" \
+				 -c "flash write_image erase $(BINARY).hex" \
+				 -c "reset" \
+				 -c "shutdown" $(NULL)
 
 .PHONY: directories images clean
 

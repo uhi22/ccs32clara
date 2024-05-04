@@ -240,6 +240,7 @@ static void pev_sendCableCheckReq(void)
       that we enter the safe shutdown sequence as intended.
       (This is a takeover from https://github.com/uhi22/pyPLC/commit/08af8306c60d57c4c33221a0dbb25919371197f9 ) */
    connMgr_ApplOk(31);
+   hardwareInterface_LogTheCpPpPhysicalData(); /* for trouble shooting, log some physical values to the console */
 }
 
 static void pev_sendPreChargeReq(void)

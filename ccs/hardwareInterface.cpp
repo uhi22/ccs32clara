@@ -543,10 +543,12 @@ void hardwareInterface_WakeupOtherPeripherals()
    }
 }
 
-/* send the measured CP duty cycle to the serial console for debugging. */
-void hardwareInterface_LogTheCpDuty(void) {
-      int16_t cpDuty_Percent = (uint8_t)Param::GetInt(Param::ControlPilotDuty);
-      addToTrace(MOD_HWIF, "cpDuty [%] ", cpDuty_Percent);
+/* send the measured CP duty cycle and PP resistance etc to the serial console for debugging. */
+void hardwareInterface_LogTheCpPpPhysicalData(void) {
+      addToTrace(MOD_HWIF, "cpDuty [%] ", (int16_t)Param::GetInt(Param::ControlPilotDuty));
+      addToTrace(MOD_HWIF, "AdcProximityPilot ", (int16_t)Param::GetInt(Param::AdcProximityPilot));
+      addToTrace(MOD_HWIF, "ResistanceProxPilot [ohm] ", (int16_t)Param::GetInt(Param::ResistanceProxPilot));
+      addToTrace(MOD_HWIF, "HardwareVariant ", (int16_t)Param::GetInt(Param::HardwareVariant));
 }
 
 void hardwareInterface_cyclic(void)

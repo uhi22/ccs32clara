@@ -35,7 +35,7 @@ extern int16_t hardwareInterface_getInletVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetCurrent(void);
 extern void hardwareInterface_WakeupOtherPeripherals();
-extern void hardwareInterface_LogTheCpDuty();
+extern void hardwareInterface_LogTheCpPpPhysicalData();
 extern void hardwareInterface_cyclic(void);
 extern void hardwareInterface_init(void);
 

@@ -41,14 +41,14 @@ void connMgr_printDebugInfos(void)
    if (Param::GetInt(Param::logging) & MOD_CONNMGR)
       printf("[%u] [CONNMGR] %d %d %d %d %d %d %d --> %d\r\n",
              rtc_get_ms(),
-             connMgr_timerEthLink,
-             connMgr_timerModemLocal,
-             connMgr_timerModemRemote,
-             connMgr_timerSlac,
-             connMgr_timerSDP,
-             connMgr_timerTCP,
-             connMgr_timerAppl,
-             connMgr_ConnectionLevel
+             connMgr_timerEthLink,  /* the timeout counter for "ethernet is up". Not meaningful, because Foccci modem is hardwired via SPI. */
+             connMgr_timerModemLocal, /* the timeout counter for the local QCA modem */
+             connMgr_timerModemRemote, /* the timeout counter for the remote modem */
+             connMgr_timerSlac, /* the timeout counter for the SLAC procedure */
+             connMgr_timerSDP, /* the timeout counter for successfull ServiceDiscoveryResponse */
+             connMgr_timerTCP, /* the timeout counter for successful TCP connection */
+             connMgr_timerAppl, /* the timeout counter for application communication */
+             connMgr_ConnectionLevel /* the connection level, calculated based on the timeout counters */
             );
 }
 

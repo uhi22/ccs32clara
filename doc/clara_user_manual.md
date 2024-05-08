@@ -38,6 +38,26 @@ after around 30s, the modem will go to sleep:
 
 The amount of logged data can be configured with the parameter "logging" using the web interface (see below).
 
+### Connection Manager Messages
+
+The Connection Manager (short: CONNMGR) is a piece of software, which coordinates the different software layers, with the goal
+to have a consistent state of all layers. It calculates a ConnectionLevel, based on the feedback of the layers and based
+on timeout counters.
+The log messages of the connection manager, e.g. `[CONNMGR] 165 0 0 0 0 0 0 --> 5` show the seven timeout counters and the resulting ConnectionLevel `--> 5`.
+The meaning of the ConnectionLevels is
+```
+    CONNLEVEL_100_APPL_RUNNING Application messages are exchanged between the charger and clara.
+    CONNLEVEL_80_TCP_RUNNING The TCP connection is established.
+    CONNLEVEL_50_SDP_DONE The service discovery protocol has found a charger.
+    CONNLEVEL_20_TWO_MODEMS_FOUND Two modems (the foccci QCA and the chargers modem) have formed a private network.
+    CONNLEVEL_15_SLAC_ONGOING The SLAC sequence is ongoing.
+    CONNLEVEL_10_ONE_MODEM_FOUND The STM controller on Foccci found the Focccis QCA modem.
+    CONNLEVEL_5_ETH_LINK_PRESENT (No meaning. The physical SPI connection to the QCA modem is always present.)
+```
+
+The meaning of the seven timeout counters of the connection manager is explained here:
+https://github.com/uhi22/ccs32clara/blob/main/ccs/connMgr.cpp#L44C14-L44C34
+
 ## How to setup the build chain?
 
 There are two totally different tool chains for Clara: The old one, until November 2023, uses the STM32 CubeIDE. The new one comes with a classical make file, and offers full flexibility regarding which editor/IDE is used. The description below is valid for the new variant.

@@ -21,6 +21,7 @@
 #include "modemFinder.h"
 #include "myHelpers.h"
 #include "pevStateMachine.h"
+#include "pevStateMachineISO2.h"
 #include "qca7000.h"
 #include "tcp.h"
 #include "udpChecksum.h"

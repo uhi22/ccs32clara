@@ -47,12 +47,13 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
 				 picontroller.o terminalcommands.o \
 				 ipv6.o tcp.o \
-				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o proximitypilot.o acOBC.o \
+				 connMgr.o modemFinder.o pevStateMachine.o pevStateMachineISO2.o temperatures.o proximitypilot.o acOBC.o \
 				 hardwareInterface.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
 				 appHandEXIDatatypesDecoder.o ByteStream.o EncoderChannel.o \
 				 appHandEXIDatatypesEncoder.o DecoderChannel.o EXIHeaderDecoder.o \
 				 appHandEXIDatatypes.o dinEXIDatatypesDecoder.o EXIHeaderEncoder.o \
+				 iso2EXIDatatypesDecoder.o iso2EXIDatatypesEncoder.o iso2EXIDatatypes.o \
 				 BitInputStream.o dinEXIDatatypesEncoder.o MethodsBag.o \
 				 BitOutputStream.o dinEXIDatatypes.o projectExiConnector.o
 

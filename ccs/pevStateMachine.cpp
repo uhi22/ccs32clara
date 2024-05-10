@@ -359,7 +359,16 @@ static void stateFunctionConnected(void)
    // We just use the initial request message from the Ioniq. It contains one entry: DIN.
    addToTrace(MOD_PEV, "Checkpoint400: Sending the initial SupportedApplicationProtocolReq");
    setCheckpoint(400);
-   addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
+   if (Param::GetInt(Param::PlcSchema) == 0) { /* DIN protocol */
+     addToTrace(MOD_PEV, "Announcing DIN schema");
+     addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
+   } else if (Param::GetInt(Param::PlcSchema) == 1) { /* ISO protocol */
+     addToTrace(MOD_PEV, "Announcing ISO schema");
+        /* todo: find out how the SupportedApplicationProtocolRequest for ISO looks like. */
+   } else { /* DIN and ISO protocol */
+     addToTrace(MOD_PEV, "Anncouncing DIN and ISO schema");
+        /* todo: find out how the SupportedApplicationProtocolRequest for DIN+ISO looks like. */
+   }
    hardwareInterface_resetSimulation();
    Param::SetInt(Param::StopReason, STOP_REASON_NONE);
    pev_enterState(PEV_STATE_WaitForSupportedApplicationProtocolResponse);
@@ -382,6 +391,7 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
                 aphsDoc.supportedAppProtocolRes.ResponseCode,
                 aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                 aphsDoc.supportedAppProtocolRes.SchemaID);
+         /* todo: distinguish between DIN and ISO */
          publishStatus("Schema negotiated", "");
          addToTrace(MOD_PEV, "Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
          setCheckpoint(500);

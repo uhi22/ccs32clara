@@ -39,11 +39,11 @@
  */
 
  //Define a version string of your firmware here
-#define VERSION 0.39
+#define VERSION 0.40
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 31
+//Next param id (increase when adding new parameter!): 32
 //Next value Id: 2027
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
@@ -60,6 +60,7 @@
     PARAM_ENTRY(CAT_HARDWARE,WakeupPinFunc,        WAKEUP,    0,      4,      0,      30  ) \
     PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
+    PARAM_ENTRY(CAT_CHARGE,  PlcSchema,            PLCSCHEMAS,0,      2,      0,      31  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxVoltage,           "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxCurrent,           "A",       0,      500,    125,    19  ) \
@@ -116,6 +117,7 @@
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
+#define PLCSCHEMAS   "0=DIN, 1=ISO, 2=DINandISO"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 

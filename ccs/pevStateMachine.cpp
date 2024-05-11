@@ -73,6 +73,41 @@ const char pevSttLabels[][MAX_LABEL_LEN] = { STATE_LIST };
 static const uint8_t exiDemoSupportedApplicationProtocolRequestIoniq[]= {0x80, 0x00, 0xdb, 0xab, 0x93, 0x71, 0xd3, 0x23, 0x4b, 0x71, 0xd1, 0xb9, 0x81, 0x89, 0x91, 0x89, 0xd1, 0x91, 0x81, 0x89, 0x91, 0xd2, 0x6b, 0x9b, 0x3a, 0x23, 0x2b, 0x30, 0x02, 0x00, 0x00, 0x04, 0x00, 0x40 };
 
 
+/* From mhpev_EVSE_Kia_Ev6_20230921_02.log we can take a SupportedApplicationProtocolRequest which announces
+   DIN and ISO 2013 (aka ISO 1, according to https://openv2g.sourceforge.net/)
+[13188ms] [EVSE] In state WaitForSupportedApplicationProtocolRequest, received (76bytes) = 01 FE 80 01 00 00 00 44 80 00 DB AB 93 71 D3 23 4B 71 D1 B9 81 89 91 89 D1 91 81 89 91 D2 6B 9B 3A 23 2B 30 02 00 00 04 00 01 D7 57 26 E3 A6 97 36 F3 A3 13 53 13 13 83 A3 23 A3 23 03 13 33 A4 D7 36 74 46 56 60 04 00 00 10 08 80 
+[13217ms] [EVSE] {
+"msgName": "supportedAppProtocolReq",
+"info": "68 bytes to convert", 
+"error": "",
+"result": "Vehicle supports 2 protocols. ProtocolEntry#1 ProtocolNamespace=urn:din:70121:2012:MsgDef Version=2.0 SchemaID=1 Priority=1 ProtocolEntry#2 ProtocolNamespace=urn:iso:15118:2:2013:MsgDef Version=2.0 SchemaID=2 Priority=2 ",
+"schema": "appHandshake",
+"AppProtocol_arrayLen": "2",
+"NameSpace_0": "urn:din:70121:2012:MsgDef",
+"Version_0": "2.0",
+"SchemaID_0": "1",
+"Priority_0": "1",
+"NameSpace_1": "urn:iso:15118:2:2013:MsgDef",
+"Version_1": "2.0",
+"SchemaID_1": "2",
+"Priority_1": "2",
+"debug": ""
+}
+[13218ms] [EVSE] The car supports 2 schemas.
+[13218ms] [EVSE] The NameSpace urn:din:70121:2012:MsgDef has SchemaID 1
+[13218ms] [EVSE] The NameSpace urn:iso:15118:2:2013:MsgDef has SchemaID 2
+*/
+static const uint8_t exiSupportedApplicationProtocolRequestDinAndIso2013[]= {
+    0x80, 0x00, 0xDB, 0xAB, 0x93, 0x71, 0xD3, 0x23,
+    0x4B, 0x71, 0xD1, 0xB9, 0x81, 0x89, 0x91, 0x89,
+    0xD1, 0x91, 0x81, 0x89, 0x91, 0xD2, 0x6B, 0x9B,
+    0x3A, 0x23, 0x2B, 0x30, 0x02, 0x00, 0x00, 0x04,
+    0x00, 0x01, 0xD7, 0x57, 0x26, 0xE3, 0xA6, 0x97,
+    0x36, 0xF3, 0xA3, 0x13, 0x53, 0x13, 0x13, 0x83,
+    0xA3, 0x23, 0xA3, 0x23, 0x03, 0x13, 0x33, 0xA4,
+    0xD7, 0x36, 0x74, 0x46, 0x56, 0x60, 0x04, 0x00,
+    0x00, 0x10, 0x08, 0x80 };
+
 static uint16_t pev_cyclesInState;
 static uint8_t pev_DelayCycles;
 static pevstates pev_state=PEV_STATE_NotYetInitialized;
@@ -179,19 +214,19 @@ static void routeDecoderInputData(void)
 static void pev_sendSessionSetupRequest(void) {
     uint8_t i;
     projectExiConnector_prepare_DinExiDocument();
-    dinDocEnc.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
-    init_dinSessionSetupReqType(&dinDocEnc.V2G_Message.Body.SessionSetupReq);
+    ExiDocEnc.dinD.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
+    init_dinSessionSetupReqType(&ExiDocEnc.dinD.V2G_Message.Body.SessionSetupReq);
     /* In the session setup request, the session ID zero means: create a new session.
      The format (len 8, all zero) is taken from the original Ioniq behavior. */
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[0] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[1] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[2] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[3] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[4] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[5] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[6] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytes[7] = 0;
-    dinDocEnc.V2G_Message.Header.SessionID.bytesLen = 8;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[0] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[1] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[2] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[3] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[4] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[5] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[6] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes[7] = 0;
+    ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytesLen = 8;
     /* Takeover from https://github.com/uhi22/OpenV2Gx/commit/fc46c3ca802f08c57120a308f69fb4d1ce14f6b6 */
     /* The EVCCID. In the ISO they write, that this shall be the EVCC MAC. But the DIN
     reserves 8 bytes (dinSessionSetupReqType_EVCCID_BYTES_SIZE is 8). This does not match.
@@ -199,9 +234,9 @@ static void pev_sendSessionSetupRequest(void) {
     is the best way. */
     for (i=0; i<LEN_OF_EVCCID; i++)
     {
-    dinDocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytes[i] = getOurMac()[i];
+    ExiDocEnc.dinD.V2G_Message.Body.SessionSetupReq.EVCCID.bytes[i] = getOurMac()[i];
     }
-    dinDocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytesLen = LEN_OF_EVCCID;
+    ExiDocEnc.dinD.V2G_Message.Body.SessionSetupReq.EVCCID.bytesLen = LEN_OF_EVCCID;
     encodeAndTransmit();
 }
 
@@ -210,10 +245,10 @@ static void pev_sendChargeParameterDiscoveryReq(void)
 {
    struct dinDC_EVChargeParameterType *cp;
    projectExiConnector_prepare_DinExiDocument();
-   dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq_isUsed = 1u;
-   init_dinChargeParameterDiscoveryReqType(&dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq);
-   dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq.EVRequestedEnergyTransferType = dinEVRequestedEnergyTransferType_DC_extended;
-   cp = &dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter;
+   ExiDocEnc.dinD.V2G_Message.Body.ChargeParameterDiscoveryReq_isUsed = 1u;
+   init_dinChargeParameterDiscoveryReqType(&ExiDocEnc.dinD.V2G_Message.Body.ChargeParameterDiscoveryReq);
+   ExiDocEnc.dinD.V2G_Message.Body.ChargeParameterDiscoveryReq.EVRequestedEnergyTransferType = dinEVRequestedEnergyTransferType_DC_extended;
+   cp = &ExiDocEnc.dinD.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter;
    cp->DC_EVStatus.EVReady = 0;  /* What ever this means. The Ioniq sends 0 here in the ChargeParameterDiscoveryReq message. */
    //cp->DC_EVStatus.EVCabinConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
    //cp->DC_EVStatus.RESSConditioning_isUsed /* The Ioniq sends this with 1, but let's assume it is not mandatory. */
@@ -251,16 +286,16 @@ static void pev_sendChargeParameterDiscoveryReq(void)
    cp->BulkSOC_isUsed = 1;
    cp->BulkSOC = 80;
 
-   dinDocEnc.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter_isUsed = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter_isUsed = 1;
    encodeAndTransmit();
 }
 
 static void pev_sendCableCheckReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
-   dinDocEnc.V2G_Message.Body.CableCheckReq_isUsed = 1u;
-   init_dinCableCheckReqType(&dinDocEnc.V2G_Message.Body.CableCheckReq);
-#define st dinDocEnc.V2G_Message.Body.CableCheckReq.DC_EVStatus
+   ExiDocEnc.dinD.V2G_Message.Body.CableCheckReq_isUsed = 1u;
+   init_dinCableCheckReqType(&ExiDocEnc.dinD.V2G_Message.Body.CableCheckReq);
+#define st ExiDocEnc.dinD.V2G_Message.Body.CableCheckReq.DC_EVStatus
    st.EVReady = 1; /* 1 means true. We are ready. */
    st.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
    st.EVRESSSOC = hardwareInterface_getSoc(); /* Scaling is 1%. */
@@ -277,20 +312,20 @@ static void pev_sendCableCheckReq(void)
 static void pev_sendPreChargeReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
-   dinDocEnc.V2G_Message.Body.PreChargeReq_isUsed = 1u;
-   init_dinPreChargeReqType(&dinDocEnc.V2G_Message.Body.PreChargeReq);
-#define st dinDocEnc.V2G_Message.Body.PreChargeReq.DC_EVStatus
+   ExiDocEnc.dinD.V2G_Message.Body.PreChargeReq_isUsed = 1u;
+   init_dinPreChargeReqType(&ExiDocEnc.dinD.V2G_Message.Body.PreChargeReq);
+#define st ExiDocEnc.dinD.V2G_Message.Body.PreChargeReq.DC_EVStatus
    st.EVReady = 1; /* 1 means true. We are ready. */
    st.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
    st.EVRESSSOC = hardwareInterface_getSoc(); /* The SOC. Scaling is 1%. */
 #undef st
-#define tvolt dinDocEnc.V2G_Message.Body.PreChargeReq.EVTargetVoltage
+#define tvolt ExiDocEnc.dinD.V2G_Message.Body.PreChargeReq.EVTargetVoltage
    tvolt.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
    tvolt.Unit = dinunitSymbolType_V;
    tvolt.Unit_isUsed = 1;
    tvolt.Value = hardwareInterface_getAccuVoltage(); /* The precharge target voltage. Scaling is 1V. */
 #undef tvolt
-#define tcurr dinDocEnc.V2G_Message.Body.PreChargeReq.EVTargetCurrent
+#define tcurr ExiDocEnc.dinD.V2G_Message.Body.PreChargeReq.EVTargetCurrent
    tcurr.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
    tcurr.Unit = dinunitSymbolType_A;
    tcurr.Unit_isUsed = 1;
@@ -302,76 +337,76 @@ static void pev_sendPreChargeReq(void)
 static void pev_sendPowerDeliveryReq(uint8_t isOn)
 {
    projectExiConnector_prepare_DinExiDocument();
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq_isUsed = 1u;
-   init_dinPowerDeliveryReqType(&dinDocEnc.V2G_Message.Body.PowerDeliveryReq);
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.ReadyToChargeState = isOn; /* 1=ON, 0=OFF */
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter_isUsed = 1;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVReady = 1; /* 1 means true. We are ready. */
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.ChargingComplete = 0; /* boolean. Charging not finished. */
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq_isUsed = 1u;
+   init_dinPowerDeliveryReqType(&ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq);
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.ReadyToChargeState = isOn; /* 1=ON, 0=OFF */
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter_isUsed = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVReady = 1; /* 1 means true. We are ready. */
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.ChargingComplete = 0; /* boolean. Charging not finished. */
    /* some "optional" fields seem to be mandatory, at least the Ioniq sends them, and the Compleo charger ignores the message if too short.
       See https://github.com/uhi22/OpenV2Gx/commit/db2c7addb0cae0e16175d666e736efd551f3e14d#diff-333579da65917bc52ef70369b576374d0ee5dbca47d2b1e3bedb6f062decacff
       Let's fill them:
    */
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning_isUsed = 1;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning = 0;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning_isUsed = 1;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning = 0;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed  = 1;
-   dinDocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete = 0;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning_isUsed = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning = 0;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning_isUsed = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning = 0;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed  = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete = 0;
    encodeAndTransmit();
 }
 
 static void pev_sendCurrentDemandReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq_isUsed = 1u;
-   init_dinCurrentDemandReqType(&dinDocEnc.V2G_Message.Body.CurrentDemandReq);
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq_isUsed = 1u;
+   init_dinCurrentDemandReqType(&ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq);
    // DC_EVStatus
-#define st dinDocEnc.V2G_Message.Body.CurrentDemandReq.DC_EVStatus
+#define st ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.DC_EVStatus
    st.EVReady = 1; /* 1 means true. We are ready. */
    st.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
    st.EVRESSSOC = hardwareInterface_getSoc();
 #undef st
    // EVTargetVoltage
-#define tvolt dinDocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetVoltage
+#define tvolt ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.EVTargetVoltage
    tvolt.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
    tvolt.Unit = dinunitSymbolType_V;
    tvolt.Unit_isUsed = 1;
    tvolt.Value = hardwareInterface_getChargingTargetVoltage(); /* The charging target. Scaling is 1V. */
 #undef tvolt
    // EVTargetCurrent
-#define tcurr dinDocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetCurrent
+#define tcurr ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.EVTargetCurrent
    tcurr.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
    tcurr.Unit = dinunitSymbolType_A;
    tcurr.Unit_isUsed = 1;
    tcurr.Value = hardwareInterface_getChargingTargetCurrent(); /* The charging target current. Scaling is 1A. */
 #undef tcurr
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.ChargingComplete = 0; /* boolean. Todo: Do we need to take this from command line? Or is it fine
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.ChargingComplete = 0; /* boolean. Todo: Do we need to take this from command line? Or is it fine
     that the PEV just sends a PowerDeliveryReq with STOP, if it decides to stop the charging? */
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete_isUsed = 1u;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete = 0u; /* not complete */
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC_isUsed = 1u;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit = dinunitSymbolType_s;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit_isUsed = 1;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Value = 1200; /* seconds */
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete_isUsed = 1u;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete = 0u; /* not complete */
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC_isUsed = 1u;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit = dinunitSymbolType_s;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit_isUsed = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Value = 1200; /* seconds */
 
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC_isUsed = 1u;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit = dinunitSymbolType_s;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit_isUsed = 1;
-   dinDocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Value = 600; /* seconds */
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC_isUsed = 1u;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit = dinunitSymbolType_s;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit_isUsed = 1;
+   ExiDocEnc.dinD.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Value = 600; /* seconds */
    encodeAndTransmit();
 }
 
 static void pev_sendWeldingDetectionReq(void)
 {
    projectExiConnector_prepare_DinExiDocument();
-   dinDocEnc.V2G_Message.Body.WeldingDetectionReq_isUsed = 1u;
-   init_dinWeldingDetectionReqType(&dinDocEnc.V2G_Message.Body.WeldingDetectionReq);
-#define st dinDocEnc.V2G_Message.Body.WeldingDetectionReq.DC_EVStatus
+   ExiDocEnc.dinD.V2G_Message.Body.WeldingDetectionReq_isUsed = 1u;
+   init_dinWeldingDetectionReqType(&ExiDocEnc.dinD.V2G_Message.Body.WeldingDetectionReq);
+#define st ExiDocEnc.dinD.V2G_Message.Body.WeldingDetectionReq.DC_EVStatus
    st.EVReady = 1; /* 1 means true. We are ready. */
    st.EVErrorCode = dinDC_EVErrorCodeType_NO_ERROR;
    st.EVRESSSOC = hardwareInterface_getSoc();
@@ -396,9 +431,14 @@ static void stateFunctionConnected(void)
    } else if (Param::GetInt(Param::PlcSchema) == 1) { /* ISO protocol */
      addToTrace(MOD_PEV, "Announcing ISO schema");
         /* todo: find out how the SupportedApplicationProtocolRequest for ISO looks like. */
+        #ifdef USE_ISO1
+        #endif
+        #ifdef USE_ISO2
+        #endif
    } else { /* DIN and ISO protocol */
-     addToTrace(MOD_PEV, "Anncouncing DIN and ISO schema");
-        /* todo: find out how the SupportedApplicationProtocolRequest for DIN+ISO looks like. */
+        /* the SupportedApplicationProtocolRequest for DIN+ISO */
+        addToTrace(MOD_PEV, "Announcing DIN and ISO2013 (aka ISO1) schema");
+        addV2GTPHeaderAndTransmit(exiSupportedApplicationProtocolRequestDinAndIso2013, sizeof(exiSupportedApplicationProtocolRequestDinAndIso2013));
    }
    hardwareInterface_resetSimulation();
    Param::SetInt(Param::StopReason, STOP_REASON_NONE);
@@ -430,13 +470,19 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
             pev_sendSessionSetupRequest();
             pev_enterState(PEV_STATE_WaitForSessionSetupResponse);
          } else if ((Param::GetInt(Param::PlcSchema) == 1) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 1)) {
-             /* ISO2 only was requested and confirmed */
+             /* ISO only was requested and confirmed */
             publishStatus("Schema negotiated", "");
-            addToTrace(MOD_PEV, "Checkpoint403: Schema ISO2 negotiated.");
-            pevStateMachineISO2_Start(); /* Start the ISO2 state machine */
+            #ifdef USE_ISO1
+              addToTrace(MOD_PEV, "Checkpoint403: Schema ISO1 negotiated.");
+              pevStateMachineISO1_Start(); /* Start the ISO1 state machine */
+            #endif
+            #ifdef USE_ISO2
+              addToTrace(MOD_PEV, "Checkpoint403: Schema ISO2 negotiated.");
+              pevStateMachineISO2_Start(); /* Start the ISO2 state machine */
+            #endif
             pev_enterState(PEV_STATE_End); /* nothing more to do here */
          } else if ((Param::GetInt(Param::PlcSchema) == 2) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1)) {
-             /* we requested DIN+ISO2, and the charger should decide for one of those. */
+             /* we requested DIN+ISO, and the charger should decide for one of those. */
              /* todo: evaluate the SchemaID */
             addToTrace(MOD_PEV, "Todo:select the intended schema");
          }
@@ -456,17 +502,17 @@ static void stateFunctionWaitForSessionSetupResponse(void)
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
       //addToTrace("after decoding: g_errn=" + String(g_errn));
       //addToTrace("global_streamDecPos=" + String(global_streamDecPos));
-      if (dinDocDec.V2G_Message.Body.SessionSetupRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.SessionSetupRes_isUsed)
       {
-         memcpy(sessionId, dinDocDec.V2G_Message.Header.SessionID.bytes, SESSIONID_LEN);
-         sessionIdLen = dinDocDec.V2G_Message.Header.SessionID.bytesLen; /* store the received SessionID, we will need it later. */
+         memcpy(sessionId, ExiDocDec.dinD.V2G_Message.Header.SessionID.bytes, SESSIONID_LEN);
+         sessionIdLen = ExiDocDec.dinD.V2G_Message.Header.SessionID.bytesLen; /* store the received SessionID, we will need it later. */
          addToTrace(MOD_PEV, "Checkpoint506: The Evse decided for SessionId", sessionId, sessionIdLen);
          setCheckpoint(506);
          publishStatus("Session established", "");
          addToTrace(MOD_PEV, "Will send ServiceDiscoveryReq");
          projectExiConnector_prepare_DinExiDocument();
-         dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq_isUsed = 1u;
-         init_dinServiceDiscoveryReqType(&dinDocEnc.V2G_Message.Body.ServiceDiscoveryReq);
+         ExiDocEnc.dinD.V2G_Message.Body.ServiceDiscoveryReq_isUsed = 1u;
+         init_dinServiceDiscoveryReqType(&ExiDocEnc.dinD.V2G_Message.Body.ServiceDiscoveryReq);
          setCheckpoint(510);
          encodeAndTransmit();
          pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
@@ -482,17 +528,17 @@ static void stateFunctionWaitForServiceDiscoveryResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.ServiceDiscoveryRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.ServiceDiscoveryRes_isUsed)
       {
          publishStatus("ServDisc done", "");
          addToTrace(MOD_PEV, "Will send ServicePaymentSelectionReq");
          projectExiConnector_prepare_DinExiDocument();
-         dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq_isUsed = 1u;
-         init_dinServicePaymentSelectionReqType(&dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq);
+         ExiDocEnc.dinD.V2G_Message.Body.ServicePaymentSelectionReq_isUsed = 1u;
+         init_dinServicePaymentSelectionReqType(&ExiDocEnc.dinD.V2G_Message.Body.ServicePaymentSelectionReq);
          /* the mandatory fields in ISO are SelectedPaymentOption and SelectedServiceList. Same in DIN. */
-         dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedPaymentOption = dinpaymentOptionType_ExternalPayment; /* not paying per car */
-         dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
-         dinDocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */
+         ExiDocEnc.dinD.V2G_Message.Body.ServicePaymentSelectionReq.SelectedPaymentOption = dinpaymentOptionType_ExternalPayment; /* not paying per car */
+         ExiDocEnc.dinD.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
+         ExiDocEnc.dinD.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */
          setCheckpoint(520);
          encodeAndTransmit();
          pev_enterState(PEV_STATE_WaitForServicePaymentSelectionResponse);
@@ -508,14 +554,14 @@ static void stateFunctionWaitForServicePaymentSelectionResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.ServicePaymentSelectionRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.ServicePaymentSelectionRes_isUsed)
       {
          publishStatus("ServPaySel done", "");
          addToTrace(MOD_PEV, "Checkpoint530: Will send ContractAuthenticationReq");
          setCheckpoint(530);
          projectExiConnector_prepare_DinExiDocument();
-         dinDocEnc.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
-         init_dinContractAuthenticationReqType(&dinDocEnc.V2G_Message.Body.ContractAuthenticationReq);
+         ExiDocEnc.dinD.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
+         init_dinContractAuthenticationReqType(&ExiDocEnc.dinD.V2G_Message.Body.ContractAuthenticationReq);
          /* no other fields are manatory */
          encodeAndTransmit();
          pev_numberOfContractAuthenticationReq = 1; // This is the first request.
@@ -536,12 +582,12 @@ static void stateFunctionWaitForContractAuthenticationResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.ContractAuthenticationRes_isUsed)
       {
          // In normal case, we can have two results here: either the Authentication is needed (the user
          // needs to authorize by RFID card or app, or something like this.
          // Or, the authorization is finished. This is shown by EVSEProcessing=Finished.
-         if (dinDocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished)
+         if (ExiDocDec.dinD.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == dinEVSEProcessingType_Finished)
          {
             publishStatus("Auth finished", "");
             addToTrace(MOD_PEV, "Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
@@ -586,16 +632,16 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.ChargeParameterDiscoveryRes_isUsed)
       {
          // We can have two cases here:
          // (A) The charger needs more time to show the charge parameters.
          // (B) The charger finished to tell the charge parameters.
-         if (dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.EVSEProcessing == dinEVSEProcessingType_Finished)
+         if (ExiDocDec.dinD.V2G_Message.Body.ChargeParameterDiscoveryRes.EVSEProcessing == dinEVSEProcessingType_Finished)
          {
             publishStatus("ChargeParams discovered", "");
             addToTrace(MOD_PEV, "Checkpoint550: ChargeParams are discovered.. Will change to state C.");
-#define dcparm dinDocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter
+#define dcparm ExiDocDec.dinD.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter
             float evseMaxVoltage = combineValueAndMultiplier(dcparm.EVSEMaximumVoltageLimit);
             float evseMaxCurrent = combineValueAndMultiplier(dcparm.EVSEMaximumCurrentLimit);
             EVSEMinimumVoltage = combineValueAndMultiplier(dcparm.EVSEMinimumVoltageLimit);
@@ -674,10 +720,10 @@ static void stateFunctionWaitForCableCheckResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.CableCheckRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.CableCheckRes_isUsed)
       {
-         rc = dinDocDec.V2G_Message.Body.CableCheckRes.ResponseCode;
-         proc = dinDocDec.V2G_Message.Body.CableCheckRes.EVSEProcessing;
+         rc = ExiDocDec.dinD.V2G_Message.Body.CableCheckRes.ResponseCode;
+         proc = ExiDocDec.dinD.V2G_Message.Body.CableCheckRes.EVSEProcessing;
          Param::SetInt(Param::EvseVoltage, 0);
          //addToTrace("The CableCheck result is " + String(rc) + " " + String(proc));
          // We have two cases here:
@@ -731,10 +777,10 @@ static void stateFunctionWaitForPreChargeResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.PreChargeRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.PreChargeRes_isUsed)
       {
          addToTrace(MOD_PEV, "PreCharge aknowledge received.");
-         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage);
+         EVSEPresentVoltage = combineValueAndMultiplier(ExiDocDec.dinD.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage);
          Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
 
          uint16_t inletVtg = hardwareInterface_getInletVoltage();
@@ -814,7 +860,7 @@ static void stateFunctionWaitForPowerDeliveryResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.PowerDeliveryRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.PowerDeliveryRes_isUsed)
       {
          if (pev_wasPowerDeliveryRequestedOn)
          {
@@ -878,11 +924,11 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
       //printf("[%d] step2 %d %d\r\n", rtc_get_ms(), g_errn, global_streamDecPos);
 
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.CurrentDemandRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.CurrentDemandRes_isUsed)
       {
          /* as long as the accu is not full and no stop-demand from the user, we continue charging */
          pev_isUserStopRequestOnChargerSide=0;
-         if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_Shutdown)
+         if (ExiDocDec.dinD.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_Shutdown)
          {
             /* https://github.com/uhi22/pyPLC#example-flow, checkpoint 790: If the user stops the
                charging session on the charger, we get a CurrentDemandResponse with
@@ -893,7 +939,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             pev_isUserStopRequestOnChargerSide = 1;
             Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_SHUTDOWN);
          }
-         if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
+         if (ExiDocDec.dinD.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
          {
             /* If the charger reports an emergency, we stop the charging. */
             addToTrace(MOD_PEV, "Charger reported EmergencyShutdown.");
@@ -933,8 +979,8 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
          {
             /* continue charging loop */
             hardwareInterface_simulateCharging();
-            EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage);
-            uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent);
+            EVSEPresentVoltage = combineValueAndMultiplier(ExiDocDec.dinD.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage);
+            uint16_t evsePresentCurrent = combineValueAndMultiplier(ExiDocDec.dinD.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent);
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
             Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
             Param::SetInt(Param::EvseCurrent, evsePresentCurrent);
@@ -970,12 +1016,12 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.WeldingDetectionRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.WeldingDetectionRes_isUsed)
       {
         /* The charger measured the voltage on the cable, and gives us the value. In the first
            round will show a quite high voltage, because the contactors are just opening. We
            need to repeat the requests, until the voltage is at a non-dangerous level. */
-         EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
+         EVSEPresentVoltage = combineValueAndMultiplier(ExiDocDec.dinD.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
          Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
          if (Param::GetInt(Param::logging) & MOD_PEV) {
              printf("EVSEPresentVoltage %dV\r\n", (int)EVSEPresentVoltage);
@@ -985,8 +1031,8 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
             publishStatus("WeldingDet done", "");
             addToTrace(MOD_PEV, "WeldingDetection successfully finished. Sending SessionStopReq");
             projectExiConnector_prepare_DinExiDocument();
-            dinDocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
-            init_dinSessionStopType(&dinDocEnc.V2G_Message.Body.SessionStopReq);
+            ExiDocEnc.dinD.V2G_Message.Body.SessionStopReq_isUsed = 1u;
+            init_dinSessionStopType(&ExiDocEnc.dinD.V2G_Message.Body.SessionStopReq);
             /* no other fields are mandatory */
             setCheckpoint(900);
             encodeAndTransmit();
@@ -1021,7 +1067,7 @@ static void stateFunctionWaitForSessionStopResponse(void)
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (dinDocDec.V2G_Message.Body.SessionStopRes_isUsed)
+      if (ExiDocDec.dinD.V2G_Message.Body.SessionStopRes_isUsed)
       {
          // req -508
          // Todo: close the TCP connection here.

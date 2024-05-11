@@ -5,14 +5,12 @@
 
 static uint8_t exiTransmitBuffer[EXI_TRANSMIT_BUFFER_SIZE];
 
-/* DIN */
-struct dinEXIDocument dinDocEnc;
-struct dinEXIDocument dinDocDec;
-
-/* ISO2 */
-struct iso2EXIDocument iso2DocEnc;
-struct iso2EXIDocument iso2DocDec;
-
+#ifdef USE_SAME_DOC_FOR_ENCODER_AND_DECODER
+  union ExiDocUnion_type ExiDoc; /* The EXI document. For encoder and decoder. */
+#else
+  union ExiDocUnion_type ExiDocDec; /* The EXI document. For decoder. */
+  union ExiDocUnion_type ExiDocEnc; /* The EXI document. For encoder. */
+#endif
 
 struct appHandEXIDocument aphsDoc;
 bitstream_t global_streamEnc;
@@ -43,39 +41,65 @@ void projectExiConnector_decode_DinExiDocument(void) {
 
    global_streamDec.pos = &global_streamDecPos;
    *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */
-   g_errn = decode_dinExiDocument(&global_streamDec, &dinDocDec);
+   g_errn = decode_dinExiDocument(&global_streamDec, &ExiDocDec.dinD);
 }
 
+#ifdef USE_ISO1
+void projectExiConnector_decode_Iso1ExiDocument(void) {
+   /* precondition: The global_streamDec.size and global_streamDec.data have been set to the byte array with EXI data. */
+
+   global_streamDec.pos = &global_streamDecPos;
+   *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */
+   g_errn = decode_iso1ExiDocument(&global_streamDec, &ExiDocDec.iso1D);
+}
+#endif
+
+#ifdef USE_ISO2
 void projectExiConnector_decode_Iso2ExiDocument(void) {
    /* precondition: The global_streamDec.size and global_streamDec.data have been set to the byte array with EXI data. */
 
    global_streamDec.pos = &global_streamDecPos;
    *(global_streamDec.pos) = 0; /* the decoder shall start at the byte 0 */
-   g_errn = decode_iso2ExiDocument(&global_streamDec, &iso2DocDec);
+   g_errn = decode_iso2ExiDocument(&global_streamDec, &ExiDocDec.iso2D);
 }
+#endif
 
 void projectExiConnector_prepare_DinExiDocument(void) {
    /* before filling and encoding the dinDocEnc, we initialize here all its content. */
-   init_dinEXIDocument(&dinDocEnc);
-   dinDocEnc.V2G_Message_isUsed = 1u;
-   init_dinMessageHeaderType(&dinDocEnc.V2G_Message.Header);
-   init_dinBodyType(&dinDocEnc.V2G_Message.Body);
+   init_dinEXIDocument(&ExiDocEnc.dinD);
+   ExiDocEnc.dinD.V2G_Message_isUsed = 1u;
+   init_dinMessageHeaderType(&ExiDocEnc.dinD.V2G_Message.Header);
+   init_dinBodyType(&ExiDocEnc.dinD.V2G_Message.Body);
    /* take the sessionID from the global variable: */
-   memcpy(dinDocEnc.V2G_Message.Header.SessionID.bytes, sessionId, SESSIONID_LEN);
-   dinDocEnc.V2G_Message.Header.SessionID.bytesLen = sessionIdLen;
+   memcpy(ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytes, sessionId, SESSIONID_LEN);
+   ExiDocEnc.dinD.V2G_Message.Header.SessionID.bytesLen = sessionIdLen;
 }
 
+#ifdef USE_ISO1
+void projectExiConnector_prepare_Iso1ExiDocument(void) {
+   /* before filling and encoding the iso1DocEnc, we initialize here all its content. */
+   init_iso1EXIDocument(&ExiDocEnc.iso1D);
+   ExiDocEnc.iso1D.V2G_Message_isUsed = 1u;
+   init_iso1MessageHeaderType(&ExiDocEnc.iso1D.V2G_Message.Header);
+   init_iso1BodyType(&ExiDocEnc.iso1D.V2G_Message.Body);
+   /* take the sessionID from the global variable: */
+   memcpy(ExiDocEnc.iso1D.V2G_Message.Header.SessionID.bytes, sessionId, SESSIONID_LEN);
+   ExiDocEnc.iso1D.V2G_Message.Header.SessionID.bytesLen = sessionIdLen;
+}
+#endif
+
+#ifdef USE_ISO2
 void projectExiConnector_prepare_Iso2ExiDocument(void) {
    /* before filling and encoding the iso2DocEnc, we initialize here all its content. */
-   init_iso2EXIDocument(&iso2DocEnc);
-   iso2DocEnc.V2G_Message_isUsed = 1u;
-   init_iso2MessageHeaderType(&iso2DocEnc.V2G_Message.Header);
-   init_iso2BodyType(&iso2DocEnc.V2G_Message.Body);
+   init_iso2EXIDocument(&ExiDocEnc.iso2D);
+   ExiDocEnc.iso2D.V2G_Message_isUsed = 1u;
+   init_iso2MessageHeaderType(&ExiDocEnc.iso2D.V2G_Message.Header);
+   init_iso2BodyType(&ExiDocEnc.iso2D.V2G_Message.Body);
    /* take the sessionID from the global variable: */
-   memcpy(iso2DocEnc.V2G_Message.Header.SessionID.bytes, sessionId, SESSIONID_LEN);
-   iso2DocEnc.V2G_Message.Header.SessionID.bytesLen = sessionIdLen;
+   memcpy(ExiDocEnc.iso2D.V2G_Message.Header.SessionID.bytes, sessionId, SESSIONID_LEN);
+   ExiDocEnc.iso2D.V2G_Message.Header.SessionID.bytesLen = sessionIdLen;
 }
-
+#endif
 
 void projectExiConnector_encode_DinExiDocument(void) {
    /* precondition: dinDocEnc structure is filled. Output: global_stream.data and global_stream.pos. */
@@ -83,15 +107,28 @@ void projectExiConnector_encode_DinExiDocument(void) {
    global_streamEnc.data = exiTransmitBuffer;
    global_streamEnc.pos = &global_streamEncPos;
    *(global_streamEnc.pos) = 0; /* start adding data at position 0 */
-   g_errn = encode_dinExiDocument(&global_streamEnc, &dinDocEnc);
+   g_errn = encode_dinExiDocument(&global_streamEnc, &ExiDocEnc.dinD);
 
 }
 
+#ifdef USE_ISO1
+void projectExiConnector_encode_Iso1ExiDocument(void) {
+   /* precondition: iso2DocEnc structure is filled. Output: global_stream.data and global_stream.pos. */
+   global_streamEnc.size = EXI_TRANSMIT_BUFFER_SIZE;
+   global_streamEnc.data = exiTransmitBuffer;
+   global_streamEnc.pos = &global_streamEncPos;
+   *(global_streamEnc.pos) = 0; /* start adding data at position 0 */
+   g_errn = encode_iso1ExiDocument(&global_streamEnc, &ExiDocEnc.iso1D);
+}
+#endif
+
+#ifdef USE_ISO2
 void projectExiConnector_encode_Iso2ExiDocument(void) {
    /* precondition: iso2DocEnc structure is filled. Output: global_stream.data and global_stream.pos. */
    global_streamEnc.size = EXI_TRANSMIT_BUFFER_SIZE;
    global_streamEnc.data = exiTransmitBuffer;
    global_streamEnc.pos = &global_streamEncPos;
    *(global_streamEnc.pos) = 0; /* start adding data at position 0 */
-   g_errn = encode_iso2ExiDocument(&global_streamEnc, &iso2DocEnc);
+   g_errn = encode_iso2ExiDocument(&global_streamEnc, &ExiDocEnc.iso2D);
 }
+#endif

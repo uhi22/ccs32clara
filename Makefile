@@ -33,6 +33,9 @@ CFLAGS		= -Os -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
 CPPFLAGS    = -Og -ggdb -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
 				-fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 \
 				-ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
+# Here we configure some compile-time features of the software:
+CONFIGURATIONFLAGS  = -DUSE_ISO1 -DUSE_SAME_DOC_FOR_ENCODER_AND_DECODER
+                 
 # Check if the variable GITHUB_RUN_NUMBER exists. When running on the github actions running, this
 # variable is automatically available.
 # Create a compiler define with the content of the variable. Or, if it does not exist, use replacement value 0.
@@ -40,19 +43,26 @@ EXTRACOMPILERFLAGS  = $(shell \
 	 if [ -z "$$GITHUB_RUN_NUMBER" ]; then echo "-DGITHUB_RUN_NUMBER=0"; else echo "-DGITHUB_RUN_NUMBER=$$GITHUB_RUN_NUMBER"; fi \
 	 )
 
+# For testing what causes the out-of-memory, we can use a linker file with a big memory:
+#LDSCRIPT	  = linkerBigForTestOnly.ld
+# The original for the STM32RET with the correct memory sizes:
 LDSCRIPT	  = linker.ld
+
 LDFLAGS    = -Llibopencm3/lib -T$(LDSCRIPT) -march=armv7 -nostartfiles -Wl,--gc-sections,-Map,linker.map
 OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 my_string.o digio.o my_fp.o printf.o anain.o \
 				 param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
 				 picontroller.o terminalcommands.o \
 				 ipv6.o tcp.o \
-				 connMgr.o modemFinder.o pevStateMachine.o pevStateMachineISO2.o temperatures.o proximitypilot.o acOBC.o \
+				 connMgr.o modemFinder.o \
+				 pevStateMachine.o pevStateMachineISO1.o pevStateMachineISO2.o\
+				 temperatures.o proximitypilot.o acOBC.o \
 				 hardwareInterface.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
 				 appHandEXIDatatypesDecoder.o ByteStream.o EncoderChannel.o \
 				 appHandEXIDatatypesEncoder.o DecoderChannel.o EXIHeaderDecoder.o \
 				 appHandEXIDatatypes.o dinEXIDatatypesDecoder.o EXIHeaderEncoder.o \
+				 iso1EXIDatatypesDecoder.o iso1EXIDatatypesEncoder.o iso1EXIDatatypes.o \
 				 iso2EXIDatatypesDecoder.o iso2EXIDatatypesEncoder.o iso2EXIDatatypes.o \
 				 BitInputStream.o dinEXIDatatypesEncoder.o MethodsBag.o \
 				 BitOutputStream.o dinEXIDatatypes.o projectExiConnector.o
@@ -117,11 +127,11 @@ $(BINARY): $(OBJS) $(LDSCRIPT)
 
 $(OUT_DIR)/%.o: %.c Makefile
 	@printf "  CC      $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
+	$(Q)$(CC) $(CFLAGS) $(CONFIGURATIONFLAGS) -MMD -MP -o $@ -c $<
 
 $(OUT_DIR)/%.o: %.cpp Makefile
 	@printf "  CPP     $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(CPP) $(CPPFLAGS) $(EXTRACOMPILERFLAGS) -MMD -MP -o $@ -c $<
+	$(Q)$(CPP) $(CPPFLAGS) $(EXTRACOMPILERFLAGS) $(CONFIGURATIONFLAGS) -MMD -MP -o $@ -c $<
 
 clean:
 	@printf "  CLEAN   ${OUT_DIR}\n"

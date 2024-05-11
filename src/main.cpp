@@ -48,6 +48,7 @@
 #include "modemFinder.h"
 #include "myHelpers.h"
 #include "pevStateMachine.h"
+#include "pevStateMachineISO1.h"
 #include "pevStateMachineISO2.h"
 #include "qca7000.h"
 #include "tcp.h"
@@ -142,6 +143,7 @@ static void Ms30Task()
    runSdpStateMachine();
    tcp_Mainfunction();
    pevStateMachine_Mainfunction();
+   pevStateMachineISO1_Mainfunction();
    pevStateMachineISO2_Mainfunction();
 
    //cyclicLcdUpdate();

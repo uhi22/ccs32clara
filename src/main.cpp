@@ -192,6 +192,7 @@ static void PrintTrace()
 {
    static int lastState = 0;
    static uint32_t lastSttPrint = 0;
+   /* Todo: How to combine the state information of the DIN and the ISO state machines? */
    int state = Param::GetInt(Param::opmode);
    const char* label = pevSttLabels[state];
 

@@ -6,7 +6,7 @@
 #define MAX_LABEL_LEN     25
 
 /* Global Variables */
-extern const char pevSttLabelsISO[][MAX_LABEL_LEN];
+extern const char pevSttLabelsIso2[][MAX_LABEL_LEN];
 
 /* Global Functions */
 #ifdef __cplusplus

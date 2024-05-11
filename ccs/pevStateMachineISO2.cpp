@@ -7,8 +7,8 @@
    STATE_ENTRY_ISO2(NotYetInitialized, Off, 0) \
    STATE_ENTRY_ISO2(WaitForSessionSetupResponse, SessionSetup, 2) \
    STATE_ENTRY_ISO2(WaitForServiceDiscoveryResponse, ServiceDiscovery, 2) \
-   STATE_ENTRY_ISO2(WaitForServicePaymentSelectionResponse, PaymentSelection, 2) \
-   STATE_ENTRY_ISO2(WaitForContractAuthenticationResponse, ContractAuthentication, 2) \
+   STATE_ENTRY_ISO2(WaitForPaymentServiceSelectionResponse, PaymentSelection, 2) \
+   STATE_ENTRY_ISO2(WaitForAuthorizationResponse, Authorization, 2) \
    STATE_ENTRY_ISO2(WaitForChargeParameterDiscoveryResponse, ChargeParameterDiscovery, 5) /* On some charger models, the chargeParameterDiscovery needs more than a second. Wait at least 5s. */ \
    STATE_ENTRY_ISO2(WaitForConnectorLock, ConnectorLock, 2) \
    STATE_ENTRY_ISO2(WaitForCableCheckResponse, CableCheck, 30) \
@@ -53,12 +53,12 @@ STATE_LIST_ISO2
 
 //Enum string for data module
 #define STATE_ENTRY_ISO2(name, fname, timeout) __COUNTER__=fname,
-const char* pevSttString = STRINGIFY(STATE_LIST_ISO2);
+const char* pevSttStringIso2 = STRINGIFY(STATE_LIST_ISO2);
 #undef STATE_ENTRY_ISO2
 
 //String array for logging
 #define STATE_ENTRY_ISO2(name, fname, timeout) #fname,
-const char pevSttLabels[][MAX_LABEL_LEN] = { STATE_LIST_ISO2 };
+const char pevSttLabelsIso2[][MAX_LABEL_LEN] = { STATE_LIST_ISO2 };
 #undef STATE_ENTRY_ISO2
 
 #define MAX_VOLTAGE_TO_FINISH_WELDING_DETECTION 40 /* 40V is considered to be sufficiently low to not harm. The Ioniq already finishes at 65V. */
@@ -72,7 +72,7 @@ static uint8_t pev_DelayCycles;
 static pevstatesISO2 pev_state=PEV_STATE_ISO2_NotYetInitialized;
 static uint8_t pev_isUserStopRequestOnCarSide=0;
 static uint8_t pev_isUserStopRequestOnChargerSide=0;
-static uint16_t pev_numberOfContractAuthenticationReq;
+static uint16_t pev_numberOfAuthorizationReq;
 static uint16_t pev_numberOfChargeParameterDiscoveryReq;
 static uint16_t pev_numberOfCableCheckReq;
 static uint8_t pev_wasPowerDeliveryRequestedOn;
@@ -169,6 +169,32 @@ static void routeDecoderInputData(void)
 }
 
 /********* EXI creation functions ************************/
+static void pev_sendSessionSetupRequest(void) {
+    uint8_t i;
+    projectExiConnector_prepare_Iso2ExiDocument();
+    iso2DocEnc.V2G_Message.Body.SessionSetupReq_isUsed = 1u;
+    init_iso2SessionSetupReqType(&iso2DocEnc.V2G_Message.Body.SessionSetupReq);
+    /* In the session setup request, the session ID zero means: create a new session.
+     The format (len 8, all zero) is taken from the original Ioniq behavior. */
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[0] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[1] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[2] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[3] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[4] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[5] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[6] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytes[7] = 0;
+    iso2DocEnc.V2G_Message.Header.SessionID.bytesLen = 8;
+    /* The EVCCID. In the ISO they write, that this shall be the EVCC MAC. This matches
+    with the 6 bytes of iso2SessionSetupReqType_EVCCID_BYTES_SIZE. */
+    for (i=0; i<iso2SessionSetupReqType_EVCCID_BYTES_SIZE; i++)
+    {
+    iso2DocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytes[i] = getOurMac()[i];
+    }
+    iso2DocEnc.V2G_Message.Body.SessionSetupReq.EVCCID.bytesLen = iso2SessionSetupReqType_EVCCID_BYTES_SIZE;
+    encodeAndTransmit();
+}
+
 static void pev_sendChargeParameterDiscoveryReq(void)
 {
    struct iso2DC_EVChargeParameterType *cp;
@@ -183,7 +209,7 @@ static void pev_sendChargeParameterDiscoveryReq(void)
    cp->EVMaximumChargeCurrent.Exponent = 0; /* -3 to 3. The exponent for base of 10. */
 
    cp->EVMaximumChargePower_isUsed = 1;
-   cp->EVMaximumChargePower.Value = Param::GetInt(Param::MaxPower) * 10; /* maxpower is kW, then x10 x 100 by Multiplier */
+   cp->EVMaximumChargePower.Value = Param::GetInt(Param::MaxPower) * 10; /* maxpower is kW, then x10 x 100 by Exponent */
    cp->EVMaximumChargePower.Exponent = 2; /* 10^2 */
 
    cp->EVMaximumVoltage.Value = Param::GetInt(Param::MaxVoltage);
@@ -193,14 +219,10 @@ static void pev_sendChargeParameterDiscoveryReq(void)
    cp->EVMaximumEnergyRequest.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
    cp->EVMaximumEnergyRequest.Exponent = 1;
 
-   cp->EVEnergyRequest_isUsed = 1;
-   cp->EVEnergyRequest.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
-   cp->EVEnergyRequest.Multiplier = 1;
-   cp->EVEnergyRequest.Unit_isUsed = 1;
-   cp->EVEnergyRequest.Unit = iso2unitSymbolType_Wh; /* 9 from Ioniq */
+   cp->EVTargetEnergyRequest_isUsed = 1;
+   cp->EVTargetEnergyRequest.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
+   cp->EVTargetEnergyRequest.Exponent = 1;
 
-   cp->FullSOC_isUsed = 1;
-   cp->FullSOC = 100;
    cp->BulkSOC_isUsed = 1;
    cp->BulkSOC = 80;
 
@@ -213,11 +235,7 @@ static void pev_sendCableCheckReq(void)
    projectExiConnector_prepare_Iso2ExiDocument();
    iso2DocEnc.V2G_Message.Body.CableCheckReq_isUsed = 1u;
    init_iso2CableCheckReqType(&iso2DocEnc.V2G_Message.Body.CableCheckReq);
-#define st iso2DocEnc.V2G_Message.Body.CableCheckReq.DC_EVStatus
-   st.EVReady = 1; /* 1 means true. We are ready. */
-   st.EVErrorCode = iso2DC_EVErrorCodeType_NO_ERROR;
-   st.EVRESSSOC = hardwareInterface_getSoc(); /* Scaling is 1%. */
-#undef st
+   /* The cable check request in iso2 is an empty message. */
    encodeAndTransmit();
    /* Since the response to the CableCheckRequest may need longer, inform the connection manager to be patient.
       This makes sure, that the timeout of the state machine comes before the timeout of the connectionManager, so
@@ -232,21 +250,13 @@ static void pev_sendPreChargeReq(void)
    projectExiConnector_prepare_Iso2ExiDocument();
    iso2DocEnc.V2G_Message.Body.PreChargeReq_isUsed = 1u;
    init_iso2PreChargeReqType(&iso2DocEnc.V2G_Message.Body.PreChargeReq);
-#define st iso2DocEnc.V2G_Message.Body.PreChargeReq.DC_EVStatus
-   st.EVReady = 1; /* 1 means true. We are ready. */
-   st.EVErrorCode = iso2DC_EVErrorCodeType_NO_ERROR;
-   st.EVRESSSOC = hardwareInterface_getSoc(); /* The SOC. Scaling is 1%. */
-#undef st
+
 #define tvolt iso2DocEnc.V2G_Message.Body.PreChargeReq.EVTargetVoltage
-   tvolt.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
-   tvolt.Unit = iso2unitSymbolType_V;
-   tvolt.Unit_isUsed = 1;
+   tvolt.Exponent = 0; /* -3 to 3. The exponent for base of 10. */
    tvolt.Value = hardwareInterface_getAccuVoltage(); /* The precharge target voltage. Scaling is 1V. */
 #undef tvolt
 #define tcurr iso2DocEnc.V2G_Message.Body.PreChargeReq.EVTargetCurrent
-   tcurr.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
-   tcurr.Unit = iso2unitSymbolType_A;
-   tcurr.Unit_isUsed = 1;
+   tcurr.Exponent = 0; /* -3 to 3. The exponent for base of 10. */
    tcurr.Value = 1; /* 1A for precharging */
 #undef tcurr
    encodeAndTransmit();
@@ -254,25 +264,32 @@ static void pev_sendPreChargeReq(void)
 
 static void pev_sendPowerDeliveryReq(uint8_t isOn)
 {
+   iso2chargeProgressType progress;
+   if (isOn) {
+       progress = iso2chargeProgressType_Start;
+   } else {
+       progress = iso2chargeProgressType_Stop;
+       /* the iso would support also a third option, iso2chargeProgressType_Renegotiate, which we do not use here. */
+   }
    projectExiConnector_prepare_Iso2ExiDocument();
    iso2DocEnc.V2G_Message.Body.PowerDeliveryReq_isUsed = 1u;
    init_iso2PowerDeliveryReqType(&iso2DocEnc.V2G_Message.Body.PowerDeliveryReq);
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.ReadyToChargeState = isOn; /* 1=ON, 0=OFF */
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter_isUsed = 1;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVReady = 1; /* 1 means true. We are ready. */
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVErrorCode = iso2DC_EVErrorCodeType_NO_ERROR;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.ChargingComplete = 0; /* boolean. Charging not finished. */
+   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.ChargeProgress = progress;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter_isUsed = 1;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVReady = 1; /* 1 means true. We are ready. */
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVErrorCode = iso2DC_EVErrorCodeType_NO_ERROR;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.ChargingComplete = 0; /* boolean. Charging not finished. */
    /* some "optional" fields seem to be mandatory, at least the Ioniq sends them, and the Compleo charger ignores the message if too short.
       See https://github.com/uhi22/OpenV2Gx/commit/db2c7addb0cae0e16175d666e736efd551f3e14d#diff-333579da65917bc52ef70369b576374d0ee5dbca47d2b1e3bedb6f062decacff
       Let's fill them:
    */
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning_isUsed = 1;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning = 0;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning_isUsed = 1;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning = 0;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed  = 1;
-   iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete = 0;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning_isUsed = 1;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning = 0;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning_isUsed = 1;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning = 0;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed  = 1;
+   //iso2DocEnc.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete = 0;
    encodeAndTransmit();
 }
 
@@ -281,41 +298,28 @@ static void pev_sendCurrentDemandReq(void)
    projectExiConnector_prepare_Iso2ExiDocument();
    iso2DocEnc.V2G_Message.Body.CurrentDemandReq_isUsed = 1u;
    init_iso2CurrentDemandReqType(&iso2DocEnc.V2G_Message.Body.CurrentDemandReq);
-   // DC_EVStatus
-#define st iso2DocEnc.V2G_Message.Body.CurrentDemandReq.DC_EVStatus
-   st.EVReady = 1; /* 1 means true. We are ready. */
-   st.EVErrorCode = iso2DC_EVErrorCodeType_NO_ERROR;
-   st.EVRESSSOC = hardwareInterface_getSoc();
-#undef st
+   
+   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetEnergyRequest.Value = 100; /* let' just say 100kWh */
+   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetEnergyRequest.Exponent = 3;
+   
+   // DisplayParameters
+#define dip iso2DocEnc.V2G_Message.Body.CurrentDemandReq.DisplayParameters
+    dip.CurrentSOC = hardwareInterface_getSoc();
+    dip.CurrentSOC_isUsed = 1;
+    /* There are a lot more of display information which we could send here, e.g. CurrentRange, RemainingTimeToBulkSOC, ... */
+    iso2DocEnc.V2G_Message.Body.CurrentDemandReq.DisplayParameters_isUsed = 1;
+#undef dip
+
    // EVTargetVoltage
 #define tvolt iso2DocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetVoltage
-   tvolt.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
-   tvolt.Unit = iso2unitSymbolType_V;
-   tvolt.Unit_isUsed = 1;
+   tvolt.Exponent = 0;  /* -3 to 3. The exponent for base of 10. */
    tvolt.Value = hardwareInterface_getChargingTargetVoltage(); /* The charging target. Scaling is 1V. */
 #undef tvolt
    // EVTargetCurrent
 #define tcurr iso2DocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetCurrent
-   tcurr.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
-   tcurr.Unit = iso2unitSymbolType_A;
-   tcurr.Unit_isUsed = 1;
+   tcurr.Exponent = 0;  /* -3 to 3. The exponent for base of 10. */
    tcurr.Value = hardwareInterface_getChargingTargetCurrent(); /* The charging target current. Scaling is 1A. */
 #undef tcurr
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.ChargingComplete = 0; /* boolean. Todo: Do we need to take this from command line? Or is it fine
-    that the PEV just sends a PowerDeliveryReq with STOP, if it decides to stop the charging? */
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete_isUsed = 1u;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete = 0u; /* not complete */
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC_isUsed = 1u;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit = iso2unitSymbolType_s;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit_isUsed = 1;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Value = 1200; /* seconds */
-
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC_isUsed = 1u;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit = iso2unitSymbolType_s;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit_isUsed = 1;
-   iso2DocEnc.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Value = 600; /* seconds */
    encodeAndTransmit();
 }
 
@@ -324,18 +328,14 @@ static void pev_sendWeldingDetectionReq(void)
    projectExiConnector_prepare_Iso2ExiDocument();
    iso2DocEnc.V2G_Message.Body.WeldingDetectionReq_isUsed = 1u;
    init_iso2WeldingDetectionReqType(&iso2DocEnc.V2G_Message.Body.WeldingDetectionReq);
-#define st iso2DocEnc.V2G_Message.Body.WeldingDetectionReq.DC_EVStatus
-   st.EVReady = 1; /* 1 means true. We are ready. */
-   st.EVErrorCode = iso2DC_EVErrorCodeType_NO_ERROR;
-   st.EVRESSSOC = hardwareInterface_getSoc();
-#undef st
+   /* in iso2, the welding detection request is an empty message */
    encodeAndTransmit();
 }
 
 /**** State functions ***************/
 //Empty functions
 static void stateFunctionNotYetInitialized() {}
-static void stateFunctionConnecting() {}
+//static void stateFunctionConnecting() {}
 
 
 
@@ -362,7 +362,7 @@ static void stateFunctionWaitForSessionSetupResponse(void)
          init_iso2ServiceDiscoveryReqType(&iso2DocEnc.V2G_Message.Body.ServiceDiscoveryReq);
          setCheckpoint(510);
          encodeAndTransmit();
-         pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
+         pev_enterState(PEV_STATE_ISO2_WaitForServiceDiscoveryResponse);
       }
    }
 }
@@ -378,46 +378,47 @@ static void stateFunctionWaitForServiceDiscoveryResponse(void)
       if (iso2DocDec.V2G_Message.Body.ServiceDiscoveryRes_isUsed)
       {
          publishStatus("ServDisc done", "");
-         addToTrace(MOD_PEV, "Will send ServicePaymentSelectionReq");
+         addToTrace(MOD_PEV, "Will send PaymentServiceSelectionReq");
          projectExiConnector_prepare_Iso2ExiDocument();
-         iso2DocEnc.V2G_Message.Body.ServicePaymentSelectionReq_isUsed = 1u;
-         init_iso2ServicePaymentSelectionReqType(&iso2DocEnc.V2G_Message.Body.ServicePaymentSelectionReq);
+         iso2DocEnc.V2G_Message.Body.PaymentServiceSelectionReq_isUsed = 1u;
+         init_iso2PaymentServiceSelectionReqType(&iso2DocEnc.V2G_Message.Body.PaymentServiceSelectionReq);
          /* the mandatory fields in ISO are SelectedPaymentOption and SelectedServiceList. Same in DIN. */
-         iso2DocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedPaymentOption = iso2paymentOptionType_ExternalPayment; /* not paying per car */
-         iso2DocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
-         iso2DocEnc.V2G_Message.Body.ServicePaymentSelectionReq.SelectedServiceList.SelectedService.arrayLen = 1; /* just one element in the array */
+         iso2DocEnc.V2G_Message.Body.PaymentServiceSelectionReq.SelectedPaymentOption = iso2paymentOptionType_ExternalPayment; /* not paying per car */
+         /* todo: do we need the SelectedVASList? */
+         //iso2DocEnc.V2G_Message.Body.PaymentServiceSelectionReq.SelectedVASList.SelectedService.array[0].ServiceID = 1; /* todo: what ever this means. The Ioniq uses 1. */
+         //iso2DocEnc.V2G_Message.Body.PaymentServiceSelectionReq.SelectedVASList.SelectedService.arrayLen = 1; /* just one element in the array */
          setCheckpoint(520);
          encodeAndTransmit();
-         pev_enterState(PEV_STATE_WaitForServicePaymentSelectionResponse);
+         pev_enterState(PEV_STATE_ISO2_WaitForPaymentServiceSelectionResponse);
       }
    }
 }
 
-static void stateFunctionWaitForServicePaymentSelectionResponse(void)
+static void stateFunctionWaitForPaymentServiceSelectionResponse(void)
 {
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForServicePaymentSelectionResponse");
+      addToTrace(MOD_PEV, "In state WaitForPaymentServiceSelectionResponse");
       routeDecoderInputData();
       projectExiConnector_decode_Iso2ExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (iso2DocDec.V2G_Message.Body.ServicePaymentSelectionRes_isUsed)
+      if (iso2DocDec.V2G_Message.Body.PaymentServiceSelectionRes_isUsed)
       {
-         publishStatus("ServPaySel done", "");
-         addToTrace(MOD_PEV, "Checkpoint530: Will send ContractAuthenticationReq");
+         publishStatus("PaySevSel done", "");
+         addToTrace(MOD_PEV, "Checkpoint530: Will send AuthorizationReq");
          setCheckpoint(530);
          projectExiConnector_prepare_Iso2ExiDocument();
-         iso2DocEnc.V2G_Message.Body.ContractAuthenticationReq_isUsed = 1u;
-         init_iso2ContractAuthenticationReqType(&iso2DocEnc.V2G_Message.Body.ContractAuthenticationReq);
+         iso2DocEnc.V2G_Message.Body.AuthorizationReq_isUsed = 1u;
+         init_iso2AuthorizationReqType(&iso2DocEnc.V2G_Message.Body.AuthorizationReq);
          /* no other fields are manatory */
          encodeAndTransmit();
-         pev_numberOfContractAuthenticationReq = 1; // This is the first request.
-         pev_enterState(PEV_STATE_WaitForContractAuthenticationResponse);
+         pev_numberOfAuthorizationReq = 1; // This is the first request.
+         pev_enterState(PEV_STATE_ISO2_WaitForAuthorizationResponse);
       }
    }
 }
 
-static void stateFunctionWaitForContractAuthenticationResponse(void)
+static void stateFunctionWaitForAuthorizationResponse(void)
 {
    if (pev_cyclesInState<30)   // The first second in the state just do nothing.
    {
@@ -425,42 +426,42 @@ static void stateFunctionWaitForContractAuthenticationResponse(void)
    }
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
-      addToTrace(MOD_PEV, "In state WaitForContractAuthenticationResponse");
+      addToTrace(MOD_PEV, "In state WaitForAuthorizationResponse");
       routeDecoderInputData();
       projectExiConnector_decode_Iso2ExiDocument();
       tcp_rxdataLen = 0; /* mark the input data as "consumed" */
-      if (iso2DocDec.V2G_Message.Body.ContractAuthenticationRes_isUsed)
+      if (iso2DocDec.V2G_Message.Body.AuthorizationRes_isUsed)
       {
-         // In normal case, we can have two results here: either the Authentication is needed (the user
+         // In normal case, we can have two results here: either the Authorization is needed (the user
          // needs to authorize by RFID card or app, or something like this.
          // Or, the authorization is finished. This is shown by EVSEProcessing=Finished.
-         if (iso2DocDec.V2G_Message.Body.ContractAuthenticationRes.EVSEProcessing == iso2EVSEProcessingType_Finished)
+         if (iso2DocDec.V2G_Message.Body.AuthorizationRes.EVSEProcessing == iso2EVSEProcessingType_Finished)
          {
             publishStatus("Auth finished", "");
             addToTrace(MOD_PEV, "Checkpoint538 and 540: Auth is Finished. Will send ChargeParameterDiscoveryReq");
             setCheckpoint(540);
             pev_sendChargeParameterDiscoveryReq();
             pev_numberOfChargeParameterDiscoveryReq = 1; // first message
-            pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForChargeParameterDiscoveryResponse);
          }
          else
          {
             // Not (yet) finished.
-            if (pev_numberOfContractAuthenticationReq>=120)   // approx 120 seconds, maybe the user searches two minutes for his RFID card...
+            if (pev_numberOfAuthorizationReq>=120)   // approx 120 seconds, maybe the user searches two minutes for his RFID card...
             {
-               addToTrace(MOD_PEV, "Authentication lasted too long. Giving up.");
-               pev_enterState(PEV_STATE_SequenceTimeout);
+               addToTrace(MOD_PEV, "Authorization lasted too long. Giving up.");
+               pev_enterState(PEV_STATE_ISO2_SequenceTimeout);
             }
             else
             {
                // Try again.
-               pev_numberOfContractAuthenticationReq += 1; // count the number of tries.
+               pev_numberOfAuthorizationReq += 1; // count the number of tries.
                publishStatus("Waiting f Auth", "");
-               //addToTrace("Not (yet) finished. Will again send ContractAuthenticationReq #" + String(pev_numberOfContractAuthenticationReq));
-               addToTrace(MOD_PEV, "Not (yet) finished. Will again send ContractAuthenticationReq");
+               //addToTrace("Not (yet) finished. Will again send AuthorizationReq #" + String(pev_numberOfAuthorizationReq));
+               addToTrace(MOD_PEV, "Not (yet) finished. Will again send AuthorizationReq");
                encodeAndTransmit();
                // We just stay in the same state, until the timeout elapses.
-               pev_enterState(PEV_STATE_WaitForContractAuthenticationResponse);
+               pev_enterState(PEV_STATE_ISO2_WaitForAuthorizationResponse);
             }
          }
       }
@@ -489,9 +490,9 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
             publishStatus("ChargeParams discovered", "");
             addToTrace(MOD_PEV, "Checkpoint550: ChargeParams are discovered.. Will change to state C.");
 #define dcparm iso2DocDec.V2G_Message.Body.ChargeParameterDiscoveryRes.DC_EVSEChargeParameter
-            float evseMaxVoltage = combineValueAndExponent(dcparm.EVSEMaximumVoltageLimit);
-            float evseMaxCurrent = combineValueAndExponent(dcparm.EVSEMaximumCurrentLimit);
-            EVSEMinimumVoltage = combineValueAndExponent(dcparm.EVSEMinimumVoltageLimit);
+            float evseMaxVoltage = combineValueAndExponent(dcparm.EVSEMaximumVoltage);
+            float evseMaxCurrent = combineValueAndExponent(dcparm.EVSEMaximumChargeCurrent);
+            EVSEMinimumVoltage = combineValueAndExponent(dcparm.EVSEMinimumVoltage);
 #undef dcparm
             Param::SetFloat(Param::EvseMaxVoltage, evseMaxVoltage);
             Param::SetFloat(Param::EvseMaxCurrent, evseMaxCurrent);
@@ -505,11 +506,11 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
             if (hardwareInterface_stopChargeRequested())
             {
                addToTrace(MOD_PEV, "Stopping due to stoprequest.");
-               pev_enterState(PEV_STATE_WaitForServiceDiscoveryResponse);
+               pev_enterState(PEV_STATE_ISO2_WaitForServiceDiscoveryResponse);
             }
             else
             {
-               pev_enterState(PEV_STATE_WaitForConnectorLock);
+               pev_enterState(PEV_STATE_ISO2_WaitForConnectorLock);
             }
          }
          else
@@ -522,7 +523,7 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
                        https://github.com/uhi22/pyPLC/commit/01c7c069fd4e7b500aba544ae4cfce6774f7344a */
                //addToTrace("ChargeParameterDiscovery lasted too long. " + String(pev_numberOfChargeParameterDiscoveryReq) + " Giving up.");
                addToTrace(MOD_PEV, "ChargeParameterDiscovery lasted too long. Giving up.");
-               pev_enterState(PEV_STATE_SequenceTimeout);
+               pev_enterState(PEV_STATE_ISO2_SequenceTimeout);
             }
             else
             {
@@ -533,7 +534,7 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
                addToTrace(MOD_PEV, "Not (yet) finished. Will again send ChargeParameterDiscoveryReq");
                pev_sendChargeParameterDiscoveryReq();
                // we stay in the same state
-               pev_enterState(PEV_STATE_WaitForChargeParameterDiscoveryResponse);
+               pev_enterState(PEV_STATE_ISO2_WaitForChargeParameterDiscoveryResponse);
             }
          }
       }
@@ -548,7 +549,7 @@ static void stateFunctionWaitForConnectorLock(void)
       setCheckpoint(560);
       pev_sendCableCheckReq();
       pev_numberOfCableCheckReq = 1; // This is the first request.
-      pev_enterState(PEV_STATE_WaitForCableCheckResponse);
+      pev_enterState(PEV_STATE_ISO2_WaitForCableCheckResponse);
    }
    if (pev_isTooLong())
       ErrorMessage::Post(ERR_LOCKTIMEOUT);
@@ -585,7 +586,7 @@ static void stateFunctionWaitForCableCheckResponse(void)
             pev_sendPreChargeReq();
             connMgr_ApplOk(31); /* PreChargeResponse may need longer. Inform the connection manager to be patient.
                                 (This is a takeover from https://github.com/uhi22/pyPLC/commit/08af8306c60d57c4c33221a0dbb25919371197f9 ) */
-            pev_enterState(PEV_STATE_WaitForPreChargeResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForPreChargeResponse);
          }
          else
          {
@@ -593,7 +594,7 @@ static void stateFunctionWaitForCableCheckResponse(void)
             {
                //addToTrace("CableCheck lasted too long. " + String(pev_numberOfCableCheckReq) + " Giving up.");
                addToTrace(MOD_PEV, "CableCheck lasted too long. Giving up.");
-               pev_enterState(PEV_STATE_SequenceTimeout);
+               pev_enterState(PEV_STATE_ISO2_SequenceTimeout);
             }
             else
             {
@@ -603,7 +604,7 @@ static void stateFunctionWaitForCableCheckResponse(void)
                addToTrace(MOD_PEV, "Will again send CableCheckReq");
                pev_sendCableCheckReq();
                // stay in the same state
-               pev_enterState(PEV_STATE_WaitForCableCheckResponse);
+               pev_enterState(PEV_STATE_ISO2_WaitForCableCheckResponse);
             }
          }
       }
@@ -653,7 +654,7 @@ static void stateFunctionWaitForPreChargeResponse(void)
             pev_wasPowerDeliveryRequestedOn=1;
             setCheckpoint(600);
             pev_sendPowerDeliveryReq(1); /* 1 is ON */
-            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForPowerDeliveryResponse);
          }
          else
          {
@@ -694,7 +695,7 @@ static void stateFunctionWaitForContactorsClosed(void)
       addToTrace(MOD_PEV, "Sending PowerDeliveryReq.");
       pev_sendPowerDeliveryReq(1); /* 1 is ON */
       pev_wasPowerDeliveryRequestedOn=1;
-      pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+      pev_enterState(PEV_STATE_ISO2_WaitForPowerDeliveryResponse);
    }
 }
 
@@ -715,7 +716,7 @@ static void stateFunctionWaitForPowerDeliveryResponse(void)
             addToTrace(MOD_PEV, "Checkpoint700: Starting the charging loop with CurrentDemandReq");
             setCheckpoint(700);
             pev_sendCurrentDemandReq();
-            pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForCurrentDemandResponse);
          }
          else
          {
@@ -729,7 +730,7 @@ static void stateFunctionWaitForPowerDeliveryResponse(void)
             hardwareInterface_setStateB(); /* ISO Figure 107: The PEV shall set stateB after receiving PowerDeliveryRes and before WeldingDetectionReq */
             addToTrace(MOD_PEV, "Giving the charger some time to detect StateB and ramp down the current.");
             pev_DelayCycles = 10; /* 15*30ms=450ms for charger shutdown. Should be more than sufficient, because somewhere was a requirement with 20ms between StateB until current is down. The Ioniq uses 300ms. */
-            pev_enterState(PEV_STATE_WaitForCurrentDownAfterStateB); /* We give the charger some time to detect the StateB and fully ramp down
+            pev_enterState(PEV_STATE_ISO2_WaitForCurrentDownAfterStateB); /* We give the charger some time to detect the StateB and fully ramp down
                                                              the current */
          }
       }
@@ -754,7 +755,7 @@ static void stateFunctionWaitForCurrentDownAfterStateB(void) {
         some time to open, but this is no problem, the next samples will see decreasing voltage in normal case. */
         numberOfWeldingDetectionRounds = 0;
         pev_sendWeldingDetectionReq();
-        pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
+        pev_enterState(PEV_STATE_ISO2_WaitForWeldingDetectionResponse);
     }
 }
 
@@ -775,26 +776,14 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
       {
          /* as long as the accu is not full and no stop-demand from the user, we continue charging */
          pev_isUserStopRequestOnChargerSide=0;
-         if (iso2DocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == iso2DC_EVSEStatusCodeType_EVSE_Shutdown)
-         {
-            /* https://github.com/uhi22/pyPLC#example-flow, checkpoint 790: If the user stops the
-               charging session on the charger, we get a CurrentDemandResponse with
-               DC_EVSEStatus.EVSEStatusCode = 2 "EVSE_Shutdown" (observed on Compleo. To be tested
-               on other chargers. */
-            addToTrace(MOD_PEV, "Checkpoint790: Charging is terminated from charger side.");
-            setCheckpoint(790);
-            pev_isUserStopRequestOnChargerSide = 1;
-            Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_SHUTDOWN);
-         }
-         if (iso2DocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == iso2DC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
-         {
-            /* If the charger reports an emergency, we stop the charging. */
-            addToTrace(MOD_PEV, "Charger reported EmergencyShutdown.");
-            pev_wasPowerDeliveryRequestedOn=0;
-            setCheckpoint(800);
-            pev_sendPowerDeliveryReq(0);
-            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
-            Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
+         if (iso2DocDec.V2G_Message.Body.CurrentDemandRes.EVSEStatus_isUsed) {
+             if (iso2DocDec.V2G_Message.Body.CurrentDemandRes.EVSEStatus.EVSENotification == iso2EVSENotificationType_StopCharging)
+             {
+                addToTrace(MOD_PEV, "Checkpoint790: Charging is terminated from charger side.");
+                setCheckpoint(790);
+                pev_isUserStopRequestOnChargerSide = 1;
+                Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_SHUTDOWN);
+             }
          }
          /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
          pev_isUserStopRequestOnCarSide = hardwareInterface_stopChargeRequested();
@@ -820,7 +809,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             setCheckpoint(800);
             pev_sendPowerDeliveryReq(0); /* we can immediately send the powerDeliveryStopRequest, while we are under full current.
                                             sequence explained here: https://github.com/uhi22/pyPLC#detailled-investigation-about-the-normal-end-of-the-charging-session */
-            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForPowerDeliveryResponse);
          }
          else
          {
@@ -833,7 +822,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             Param::SetInt(Param::EvseCurrent, evsePresentCurrent);
             setCheckpoint(710);
             pev_sendCurrentDemandReq();
-            pev_enterState(PEV_STATE_WaitForCurrentDemandResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForCurrentDemandResponse);
          }
       }
    }
@@ -879,21 +868,21 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
             addToTrace(MOD_PEV, "WeldingDetection successfully finished. Sending SessionStopReq");
             projectExiConnector_prepare_Iso2ExiDocument();
             iso2DocEnc.V2G_Message.Body.SessionStopReq_isUsed = 1u;
-            init_iso2SessionStopType(&iso2DocEnc.V2G_Message.Body.SessionStopReq);
+            init_iso2SessionStopReqType(&iso2DocEnc.V2G_Message.Body.SessionStopReq);
             /* no other fields are mandatory */
             setCheckpoint(900);
             encodeAndTransmit();
             addToTrace(MOD_PEV, "Unlocking the connector");
             /* unlock the connectore here. Better here than later, to avoid endless locked connector in case of broken SessionStopResponse. */
             hardwareInterface_triggerConnectorUnlocking();
-            pev_enterState(PEV_STATE_WaitForSessionStopResponse);
+            pev_enterState(PEV_STATE_ISO2_WaitForSessionStopResponse);
          } else {
              /* The voltage on the cable is still high, so we make another round with the WeldingDetection. */
              if (numberOfWeldingDetectionRounds<MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS) {
                  /* max number of rounds not yet reached */
                  addToTrace(MOD_PEV, "WeldingDetection: voltage still too high. Sending again WeldingDetectionReq.");
                  pev_sendWeldingDetectionReq();
-                 pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
+                 pev_enterState(PEV_STATE_ISO2_WaitForWeldingDetectionResponse);
              } else {
                  /* even after multiple welding detection requests/responses, the voltage did not fall as expected.
                  This may be due to two hanging/welded contactors or an issue of the charging station. We let the state machine
@@ -920,7 +909,7 @@ static void stateFunctionWaitForSessionStopResponse(void)
          // Todo: close the TCP connection here.
          publishStatus("Stopped normally", "");
          addToTrace(MOD_PEV, "Charging is finished");
-         pev_enterState(PEV_STATE_End);
+         pev_enterState(PEV_STATE_ISO2_End);
       }
    }
 }
@@ -935,7 +924,7 @@ static void stateFunctionSequenceTimeout(void)
    setCheckpoint(1100);
    hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
    pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
-   pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
+   pev_enterState(PEV_STATE_ISO2_SafeShutDownWaitForChargerShutdown);
 }
 
 static void stateFunctionUnrecoverableError(void)
@@ -948,7 +937,7 @@ static void stateFunctionUnrecoverableError(void)
    setCheckpoint(1200);
    hardwareInterface_setStateB(); /* setting CP line to B disables in the charger the current flow. */
    pev_DelayCycles = 66; /* 66*30ms=2s for charger shutdown */
-   pev_enterState(PEV_STATE_SafeShutDownWaitForChargerShutdown);
+   pev_enterState(PEV_STATE_ISO2_SafeShutDownWaitForChargerShutdown);
 }
 
 static void stateFunctionSafeShutDownWaitForChargerShutdown(void)
@@ -964,7 +953,7 @@ static void stateFunctionSafeShutDownWaitForChargerShutdown(void)
    setCheckpoint(1300);
    hardwareInterface_setPowerRelayOff();
    pev_DelayCycles = 33; /* 33*30ms=1s for opening the contactors */
-   pev_enterState(PEV_STATE_SafeShutDownWaitForContactorsOpen);
+   pev_enterState(PEV_STATE_ISO2_SafeShutDownWaitForContactorsOpen);
 }
 
 static void stateFunctionSafeShutDownWaitForContactorsOpen(void)
@@ -980,7 +969,7 @@ static void stateFunctionSafeShutDownWaitForContactorsOpen(void)
    addToTrace(MOD_PEV, "Safe-shutdown-sequence: unlocking the connector");
    hardwareInterface_triggerConnectorUnlocking();
    /* This is the end of the safe-shutdown-sequence. */
-   pev_enterState(PEV_STATE_End);
+   pev_enterState(PEV_STATE_ISO2_End);
 }
 
 static void stateFunctionEnd(void)
@@ -1007,9 +996,9 @@ static void pev_runFsm(void)
    if (connMgr_getConnectionLevel()<CONNLEVEL_80_TCP_RUNNING)
    {
       /* If we have no TCP to the charger, nothing to do here. Just wait for the link. */
-      if (pev_state!=PEV_STATE_NotYetInitialized)
+      if (pev_state!=PEV_STATE_ISO2_NotYetInitialized)
       {
-         pev_enterState(PEV_STATE_NotYetInitialized);
+         pev_enterState(PEV_STATE_ISO2_NotYetInitialized);
          hardwareInterface_setStateB();
          hardwareInterface_setPowerRelayOff();
          pev_isBulbOn = 0;
@@ -1017,16 +1006,11 @@ static void pev_runFsm(void)
       }
       return;
    }
-   if (connMgr_getConnectionLevel()==CONNLEVEL_80_TCP_RUNNING)
-   {
-      /* We have a TCP connection. This is the trigger for us. */
-      if (pev_state==PEV_STATE_NotYetInitialized) pev_enterState(PEV_STATE_Connected);
-   }
 
    stateFunctions[pev_state](); //call state function
 
    if (pev_isTooLong())
-      pev_enterState(PEV_STATE_SequenceTimeout);
+      pev_enterState(PEV_STATE_ISO2_SequenceTimeout);
 }
 
 /************ public interfaces *****************************************/
@@ -1046,5 +1030,5 @@ void pevStateMachineISO2_Start(void) {
     addToTrace(MOD_PEV, "Checkpoint500: Will send SessionSetupReq");
     setCheckpoint(500);
     pev_sendSessionSetupRequest();
-    pev_enterState(PEV_STATE_WaitForSessionSetupResponse);
+    pev_enterState(PEV_STATE_ISO2_WaitForSessionSetupResponse);
 }

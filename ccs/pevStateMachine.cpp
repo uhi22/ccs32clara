@@ -107,6 +107,17 @@ static const uint8_t exiSupportedApplicationProtocolRequestDinAndIso2013[]= {
     0xA3, 0x23, 0xA3, 0x23, 0x03, 0x13, 0x33, 0xA4,
     0xD7, 0x36, 0x74, 0x46, 0x56, 0x60, 0x04, 0x00,
     0x00, 0x10, 0x08, 0x80 };
+    
+    
+static const uint8_t exiIso2013only[] = {
+   /* ISO2013 only, "urn:iso:15118:2:2013:MsgDef".
+     Created with openV2Gx, $ ./OpenV2G.exe EH__1
+   */
+    0x80, 0x00, 0xeb, 0xab, 0x93, 0x71, 0xd3, 0x4b,
+    0x9b, 0x79, 0xd1, 0x89, 0xa9, 0x89, 0x89, 0xc1,
+    0xd1, 0x91, 0xd1, 0x91, 0x81, 0x89, 0x99, 0xd2,
+    0x6b, 0x9b, 0x3a, 0x23, 0x2b, 0x30, 0x02, 0x00,
+    0x00, 0x00, 0x00, 0x40 };
 
 static uint16_t pev_cyclesInState;
 static uint8_t pev_DelayCycles;
@@ -429,9 +440,11 @@ static void stateFunctionConnected(void)
      addToTrace(MOD_PEV, "Announcing DIN schema");
      addV2GTPHeaderAndTransmit(exiDemoSupportedApplicationProtocolRequestIoniq, sizeof(exiDemoSupportedApplicationProtocolRequestIoniq));
    } else if (Param::GetInt(Param::PlcSchema) == 1) { /* ISO protocol */
-     addToTrace(MOD_PEV, "Announcing ISO schema");
-        /* todo: find out how the SupportedApplicationProtocolRequest for ISO looks like. */
+        addToTrace(MOD_PEV, "Announcing ISO schema");
+        /* SupportedApplicationProtocolRequest for ISO 2013 */
         #ifdef USE_ISO1
+          addToTrace(MOD_PEV, "Announcing ISO2013 (aka ISO1) schema");
+          addV2GTPHeaderAndTransmit(exiIso2013only, sizeof(exiIso2013only));
         #endif
         #ifdef USE_ISO2
         #endif
@@ -462,14 +475,14 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
                 aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                 aphsDoc.supportedAppProtocolRes.SchemaID);
          /* Here we distinguish between DIN and ISO */
-         if ((Param::GetInt(Param::PlcSchema) == 0) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 1)) {
+         if ((Param::GetInt(Param::PlcSchema) == 0) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 0)) {
              /* DIN only was requested and confirmed */
             publishStatus("Schema negotiated", "");
             addToTrace(MOD_PEV, "Checkpoint403: Schema DIN negotiated. And Checkpoint500: Will send SessionSetupReq");
             setCheckpoint(500);
             pev_sendSessionSetupRequest();
             pev_enterState(PEV_STATE_WaitForSessionSetupResponse);
-         } else if ((Param::GetInt(Param::PlcSchema) == 1) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 1)) {
+         } else if ((Param::GetInt(Param::PlcSchema) == 1) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 0)) {
              /* ISO only was requested and confirmed */
             publishStatus("Schema negotiated", "");
             #ifdef USE_ISO1

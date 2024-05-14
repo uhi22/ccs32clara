@@ -117,6 +117,7 @@ void evaluateTcpPacket(void)
    if ((tmpPayloadLen>0) && (tmpPayloadLen<TCP_RX_DATA_LEN))
    {
       /* This is a data transfer packet. */
+      //addToTrace(MOD_TCPTRAFFIC, "Got TCP Data");
       tcp_rxdataLen = tmpPayloadLen;
       /* myethreceivebuffer[74] is the first payload byte. */
       /* Fix for https://github.com/uhi22/ccs32clara/issues/15. We explicitely need to copy the data here,

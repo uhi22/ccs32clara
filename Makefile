@@ -35,6 +35,8 @@ CPPFLAGS    = -Og -ggdb -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopenc
 				-ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 # Here we configure some compile-time features of the software:
 CONFIGURATIONFLAGS  = -DUSE_ISO1 -DUSE_SAME_DOC_FOR_ENCODER_AND_DECODER
+#CONFIGURATIONFLAGS  = -DUSE_SAME_DOC_FOR_ENCODER_AND_DECODER
+
                  
 # Check if the variable GITHUB_RUN_NUMBER exists. When running on the github actions running, this
 # variable is automatically available.

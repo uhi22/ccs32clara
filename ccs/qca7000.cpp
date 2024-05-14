@@ -337,6 +337,7 @@ void myEthTransmit(void) {
       /* We are in the charging loop or beyond. Do not log the ethernet traffic. */
   }
   spiQCA7000SendEthFrame();
+  //addToTrace(MOD_ETHTRAFFIC, "ETH transmission done");
 }
 
 

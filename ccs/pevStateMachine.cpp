@@ -475,15 +475,15 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
                 aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                 aphsDoc.supportedAppProtocolRes.SchemaID);
          /* Here we distinguish between DIN and ISO */
-         if ((Param::GetInt(Param::PlcSchema) == 0) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 0)) {
-             /* DIN only was requested and confirmed */
+         if ((Param::GetInt(Param::PlcSchema) == 0) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 1)) {
+             /* DIN only was requested and confirmed. We used the request from the Ioniq, which in DIN only and uses SchemaID 1 */
             publishStatus("Schema negotiated", "");
             addToTrace(MOD_PEV, "Checkpoint403: Schema DIN negotiated. And Checkpoint500: Will send SessionSetupReq");
             setCheckpoint(500);
             pev_sendSessionSetupRequest();
             pev_enterState(PEV_STATE_WaitForSessionSetupResponse);
          } else if ((Param::GetInt(Param::PlcSchema) == 1) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1) && (aphsDoc.supportedAppProtocolRes.SchemaID == 0)) {
-             /* ISO only was requested and confirmed */
+             /* ISO only was requested and confirmed. The self-made request uses SchemaID 0 */
             publishStatus("Schema negotiated", "");
             #ifdef USE_ISO1
               addToTrace(MOD_PEV, "Checkpoint403: Schema ISO1 negotiated.");

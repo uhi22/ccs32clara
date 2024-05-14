@@ -59,6 +59,8 @@
 #include "hardwareVariants.h"
 #include "acOBC.h"
 
+/* Common symbols exported by the linker script(s): */
+extern unsigned _ebss, _stack;
 
 #define PRINT_JSON 0
 
@@ -145,8 +147,6 @@ static void Ms30Task()
    pevStateMachine_Mainfunction();
    pevStateMachineISO1_Mainfunction();
    pevStateMachineISO2_Mainfunction();
-
-   //cyclicLcdUpdate();
    hardwareInterface_cyclic();
    pushbutton_handlePushbutton();
    ErrorMessage::SetTime(rtc_get_counter_val());
@@ -190,6 +190,28 @@ void Param::Change(Param::PARAM_NUM paramNum)
    }
 }
 
+void measureStackUsage(void) {
+    /* measures the unused stack size.
+       How does it work? The startup code uses "stack painting", this means, it fills
+       the stack with a fix pattern. The stack begins at the end of RAM (linker symbol _stack)
+       and is allowed to grow downwards to the end of the used RAM (linker symbol _ebss).
+       To find out, which part of the stack is unused, we start at _ebss and run
+       until we find something different than the fill pattern. The range, which contains
+       the fill pattern, was never used by the stack, so it is the unused stack. */
+    uint16_t nBytesStackFree, nBytesStackTotal;
+    uint8_t *p;
+    #define STACK_FILL_PATTERN 0xA5
+    nBytesStackTotal = (uint32_t)&_stack - (uint32_t)&_ebss; /* the total amount of stack */
+    p = (uint8_t*)&_ebss; /* start at the end of the used RAM */
+    nBytesStackFree=0;
+    while ((*p == STACK_FILL_PATTERN) && (p<(uint8_t*)&_stack)) {
+        /* as long as the fill pattern is found, run upwards */
+        p++;
+        nBytesStackFree++;
+    }
+    printf("Stack usage: %d of %d bytes free\r\n", nBytesStackFree, nBytesStackTotal);
+}
+
 static void PrintTrace()
 {
    static int lastState = 0;
@@ -203,8 +225,12 @@ static void PrintTrace()
       lastSttPrint = rtc_get_counter_val();
       printf("[%u] In state %s. TcpRetries %u\r\n", rtc_get_ms(), label, tcp_getTotalNumberOfRetries());
       lastState = state;
+      measureStackUsage();
    }
 }
+
+
+
 
 //Whichever timer(s) you use for the scheduler, you have to
 //implement their ISRs here and call into the respective scheduler
@@ -216,7 +242,9 @@ extern "C" void tim4_isr(void)
 extern "C" int main(void)
 {
    extern const TERM_CMD termCmds[];
-
+   uint8_t x=123;
+   uint32_t addressOfX=(uint32_t)&x;
+   
    clock_setup(); //Must always come first
    rtc_setup();
    ANA_IN_CONFIGURE(ANA_IN_LIST);
@@ -252,6 +280,8 @@ extern "C" int main(void)
 
    printf("This is Clara version %s\r\n", VERSTR);
    printf("githubRunNumber %d\r\n", GITHUB_RUN_NUMBER);
+   printf("stacktest %d %x\n", x, addressOfX);
+   measureStackUsage();
    printf("logging is %d\r\n", Param::GetInt(Param::logging));
    SetMacAddress();
 

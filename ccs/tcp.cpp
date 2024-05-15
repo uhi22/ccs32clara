@@ -179,7 +179,7 @@ static void tcp_sendFirstAck(void)
 
 static void tcp_sendAck(void)
 {
-   addToTrace(MOD_TCP, "[TCP] sending ACK");
+   //addToTrace(MOD_TCP, "[TCP] sending ACK");
    tcpHeaderLen = 20; /* 20 bytes normal header, no options */
    tcpPayloadLen = 0;   /* only the TCP header, no data is in the first ACK message. */
    tcp_prepareTcpHeader(TCP_FLAG_ACK);
@@ -195,7 +195,7 @@ void tcp_transmit(void)
       if (tcpPayloadLen+tcpHeaderLen<TCP_TRANSMIT_PACKET_LEN)
       {
           /* The packet fits into our transmit buffer. */
-          addToTrace(MOD_TCPTRAFFIC, "TCP will transmit:", tcpPayload, tcpPayloadLen);
+          //addToTrace(MOD_TCPTRAFFIC, "TCP will transmit:", tcpPayload, tcpPayloadLen);
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
           lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */

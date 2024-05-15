@@ -496,8 +496,22 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
             pev_enterState(PEV_STATE_End); /* nothing more to do here */
          } else if ((Param::GetInt(Param::PlcSchema) == 2) && (aphsDoc.supportedAppProtocolRes.SchemaID_isUsed==1)) {
              /* we requested DIN+ISO, and the charger should decide for one of those. */
-             /* todo: evaluate the SchemaID */
-            addToTrace(MOD_PEV, "Todo:select the intended schema");
+             if (aphsDoc.supportedAppProtocolRes.SchemaID == 1) {
+                /* The charger decided to use Schema 1, which we announced as DIN */
+                addToTrace(MOD_PEV, "Checkpoint403: Schema DIN negotiated (decided by charger). And Checkpoint500: Will send SessionSetupReq");
+                setCheckpoint(500);
+                pev_sendSessionSetupRequest();
+                pev_enterState(PEV_STATE_WaitForSessionSetupResponse);
+             } else if (aphsDoc.supportedAppProtocolRes.SchemaID == 2) {
+                /* The charger decided to use Schema 2, which we announced as ISO */
+                #ifdef USE_ISO1
+                  addToTrace(MOD_PEV, "Checkpoint403: Schema ISO1 negotiated (decided by charger).");
+                  pevStateMachineISO1_Start(); /* Start the ISO1 state machine */
+                #endif
+                pev_enterState(PEV_STATE_End); /* nothing more to do here */
+             } else {
+                addToTrace(MOD_PEV, "Error: Charger decided for a schema which we did not announce.");
+             }
          }
       }
    }

@@ -203,24 +203,35 @@ static void pev_sendChargeParameterDiscoveryReq(void)
    projectExiConnector_prepare_Iso1ExiDocument();
    ExiDocEnc.iso1D.V2G_Message.Body.ChargeParameterDiscoveryReq_isUsed = 1u;
    init_iso1ChargeParameterDiscoveryReqType(&ExiDocEnc.iso1D.V2G_Message.Body.ChargeParameterDiscoveryReq);
-   //todo ExiDocEnc.iso1D.V2G_Message.Body.ChargeParameterDiscoveryReq = iso1EVRequestedEnergyTransferType_DC_extended;
+   ExiDocEnc.iso1D.V2G_Message.Body.ChargeParameterDiscoveryReq.RequestedEnergyTransferMode = iso1EnergyTransferModeType_DC_extended;
    cp = &ExiDocEnc.iso1D.V2G_Message.Body.ChargeParameterDiscoveryReq.DC_EVChargeParameter;
-   //todo cp->CurrentSOC = hardwareInterface_getSoc();
-   //todo cp->CurrentSOC_isUsed = 1;
-   //todo cp->EVMaximumChargeCurrent.Value = Param::GetInt(Param::MaxCurrent);
-   //todo cp->EVMaximumChargeCurrent.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
+   cp->DC_EVStatus.EVReady = 0;  /* What ever this means. The Ioniq sends 0 here in the ChargeParameterDiscoveryReq message. */
+   cp->DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
+   cp->EVMaximumCurrentLimit.Value = Param::GetInt(Param::MaxCurrent);
+   cp->EVMaximumCurrentLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
+   cp->EVMaximumCurrentLimit.Unit = iso1unitSymbolType_A;
 
-   //todo cp->EVMaximumChargePower_isUsed = 1;
-   //todo cp->EVMaximumChargePower.Value = Param::GetInt(Param::MaxPower) * 10; /* maxpower is kW, then x10 x 100 by Multiplier */
-   //todo cp->EVMaximumChargePower.Multiplier = 2; /* 10^2 */
+   cp->EVMaximumPowerLimit_isUsed = 1; /* The Ioniq sends 1 here. */
+   cp->EVMaximumPowerLimit.Value = Param::GetInt(Param::MaxPower) * 10; /* maxpower is kW, then x10 x 100 by Multiplier */
+   cp->EVMaximumPowerLimit.Multiplier = 2; /* 10^2 */
+   cp->EVMaximumPowerLimit.Unit = iso1unitSymbolType_W; /* Watt */
 
    cp->EVMaximumVoltageLimit.Value = Param::GetInt(Param::MaxVoltage);
    cp->EVMaximumVoltageLimit.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
+   cp->EVMaximumVoltageLimit.Unit = iso1unitSymbolType_V;
+
+   cp->EVEnergyCapacity_isUsed = 1;
+   cp->EVEnergyCapacity.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
+   cp->EVEnergyCapacity.Multiplier = 1;
+   cp->EVEnergyCapacity.Unit = iso1unitSymbolType_Wh; /* from Ioniq */
 
    cp->EVEnergyRequest_isUsed = 1;
    cp->EVEnergyRequest.Value = 10000; /* Lets make it 100 kWh so it doesn't get in the way */
    cp->EVEnergyRequest.Multiplier = 1;
+   cp->EVEnergyRequest.Unit = iso1unitSymbolType_Wh; /* 9 from Ioniq */
 
+   cp->FullSOC_isUsed = 1;
+   cp->FullSOC = 100;
    cp->BulkSOC_isUsed = 1;
    cp->BulkSOC = 80;
 
@@ -233,7 +244,12 @@ static void pev_sendCableCheckReq(void)
    projectExiConnector_prepare_Iso1ExiDocument();
    ExiDocEnc.iso1D.V2G_Message.Body.CableCheckReq_isUsed = 1u;
    init_iso1CableCheckReqType(&ExiDocEnc.iso1D.V2G_Message.Body.CableCheckReq);
-   /* The cable check request in iso1 is an empty message. */
+   /* The cable check request in iso1 contains only DC_EVStatus. */
+#define st ExiDocEnc.iso1D.V2G_Message.Body.CableCheckReq.DC_EVStatus
+   st.EVReady = 1; /* 1 means true. We are ready. */
+   st.EVErrorCode = iso1DC_EVErrorCodeType_NO_ERROR;
+   st.EVRESSSOC = hardwareInterface_getSoc(); /* Scaling is 1%. */
+#undef st
    encodeAndTransmit();
    /* Since the response to the CableCheckRequest may need longer, inform the connection manager to be patient.
       This makes sure, that the timeout of the state machine comes before the timeout of the connectionManager, so
@@ -248,13 +264,19 @@ static void pev_sendPreChargeReq(void)
    projectExiConnector_prepare_Iso1ExiDocument();
    ExiDocEnc.iso1D.V2G_Message.Body.PreChargeReq_isUsed = 1u;
    init_iso1PreChargeReqType(&ExiDocEnc.iso1D.V2G_Message.Body.PreChargeReq);
-
+#define st ExiDocEnc.iso1D.V2G_Message.Body.PreChargeReq.DC_EVStatus
+   st.EVReady = 1; /* 1 means true. We are ready. */
+   st.EVErrorCode = iso1DC_EVErrorCodeType_NO_ERROR;
+   st.EVRESSSOC = hardwareInterface_getSoc(); /* The SOC. Scaling is 1%. */
+#undef st
 #define tvolt ExiDocEnc.iso1D.V2G_Message.Body.PreChargeReq.EVTargetVoltage
    tvolt.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
+   tvolt.Unit = iso1unitSymbolType_V;
    tvolt.Value = hardwareInterface_getAccuVoltage(); /* The precharge target voltage. Scaling is 1V. */
 #undef tvolt
 #define tcurr ExiDocEnc.iso1D.V2G_Message.Body.PreChargeReq.EVTargetCurrent
    tcurr.Multiplier = 0; /* -3 to 3. The exponent for base of 10. */
+   tcurr.Unit = iso1unitSymbolType_A;
    tcurr.Value = 1; /* 1A for precharging */
 #undef tcurr
    encodeAndTransmit();
@@ -273,21 +295,17 @@ static void pev_sendPowerDeliveryReq(uint8_t isOn)
    ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq_isUsed = 1u;
    init_iso1PowerDeliveryReqType(&ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq);
    ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.ChargeProgress = progress;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter_isUsed = 1;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVReady = 1; /* 1 means true. We are ready. */
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVErrorCode = iso1DC_EVErrorCodeType_NO_ERROR;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.ChargingComplete = 0; /* boolean. Charging not finished. */
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter_isUsed = 1;
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVReady = 1; /* 1 means true. We are ready. */
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVErrorCode = iso1DC_EVErrorCodeType_NO_ERROR;
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSSOC = hardwareInterface_getSoc();
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.ChargingComplete = 0; /* boolean. Charging not finished. */
    /* some "optional" fields seem to be mandatory, at least the Ioniq sends them, and the Compleo charger ignores the message if too short.
       See https://github.com/uhi22/OpenV2Gx/commit/db2c7addb0cae0e16175d666e736efd551f3e14d#diff-333579da65917bc52ef70369b576374d0ee5dbca47d2b1e3bedb6f062decacff
       Let's fill them:
    */
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning_isUsed = 1;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVCabinConditioning = 0;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning_isUsed = 1;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.DC_EVStatus.EVRESSConditioning = 0;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed  = 1;
-   //ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete = 0;
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed  = 1;
+   ExiDocEnc.iso1D.V2G_Message.Body.PowerDeliveryReq.DC_EVPowerDeliveryParameter.BulkChargingComplete = 0;
    encodeAndTransmit();
 }
 
@@ -296,28 +314,37 @@ static void pev_sendCurrentDemandReq(void)
    projectExiConnector_prepare_Iso1ExiDocument();
    ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq_isUsed = 1u;
    init_iso1CurrentDemandReqType(&ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq);
-   
-   //ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.EVTargetEnergyRequest.Value = 100; /* let' just say 100kWh */
-   //ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.EVTargetEnergyRequest.Multiplier = 3;
-   
-   // DisplayParameters
-#define dip ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.DisplayParameters
-    //dip.CurrentSOC = hardwareInterface_getSoc();
-    //dip.CurrentSOC_isUsed = 1;
-    /* There are a lot more of display information which we could send here, e.g. CurrentRange, RemainingTimeToBulkSOC, ... */
-    //ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.DisplayParameters_isUsed = 1;
-#undef dip
+   // DC_EVStatus
+#define st ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.DC_EVStatus
+   st.EVReady = 1; /* 1 means true. We are ready. */
+   st.EVErrorCode = iso1DC_EVErrorCodeType_NO_ERROR;
+   st.EVRESSSOC = hardwareInterface_getSoc();
+#undef st
 
    // EVTargetVoltage
 #define tvolt ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.EVTargetVoltage
    tvolt.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
+   tvolt.Unit = iso1unitSymbolType_V;
    tvolt.Value = hardwareInterface_getChargingTargetVoltage(); /* The charging target. Scaling is 1V. */
 #undef tvolt
    // EVTargetCurrent
 #define tcurr ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.EVTargetCurrent
    tcurr.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
+   tcurr.Unit = iso1unitSymbolType_A;
    tcurr.Value = hardwareInterface_getChargingTargetCurrent(); /* The charging target current. Scaling is 1A. */
 #undef tcurr
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.ChargingComplete = 0; /* boolean. Not complete. */
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete_isUsed = 1u;
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.BulkChargingComplete = 0u; /* not complete */
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC_isUsed = 1u;
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Unit = iso1unitSymbolType_s;
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToFullSoC.Value = 1200; /* seconds */
+
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC_isUsed = 1u;
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Unit = iso1unitSymbolType_s;
+   ExiDocEnc.iso1D.V2G_Message.Body.CurrentDemandReq.RemainingTimeToBulkSoC.Value = 600; /* seconds */
    encodeAndTransmit();
 }
 
@@ -326,7 +353,11 @@ static void pev_sendWeldingDetectionReq(void)
    projectExiConnector_prepare_Iso1ExiDocument();
    ExiDocEnc.iso1D.V2G_Message.Body.WeldingDetectionReq_isUsed = 1u;
    init_iso1WeldingDetectionReqType(&ExiDocEnc.iso1D.V2G_Message.Body.WeldingDetectionReq);
-   /* in iso1, the welding detection request is an empty message */
+#define st ExiDocEnc.iso1D.V2G_Message.Body.WeldingDetectionReq.DC_EVStatus
+   st.EVReady = 1; /* 1 means true. We are ready. */
+   st.EVErrorCode = iso1DC_EVErrorCodeType_NO_ERROR;
+   st.EVRESSSOC = hardwareInterface_getSoc();
+#undef st
    encodeAndTransmit();
 }
 

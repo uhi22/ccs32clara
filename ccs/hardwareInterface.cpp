@@ -17,6 +17,11 @@ static LockStt lockTarget;
 static uint16_t lockTimer;
 static bool actuatorTestRunning = false;
 
+static uint8_t actuatorTest_lockUnlockState; /* status of the actuator test for connector locking/unlocking */
+#define ACTUTEST_STATUS_IDLE 0
+#define ACTUTEST_STATUS_LOCKING_TRIGGERED 1
+#define ACTUTEST_STATUS_UNLOCKING_TRIGGERED 2
+
 void hardwareInterface_showOnDisplay(char*, char*, char*)
 {
 
@@ -457,28 +462,40 @@ static void ActuatorTest()
    switch (Param::GetInt(Param::ActuatorTest))
    {
    case TEST_CLOSELOCK:
-      hardwareInterface_triggerConnectorLocking();
+      if (actuatorTest_lockUnlockState!=ACTUTEST_STATUS_LOCKING_TRIGGERED) {
+        hardwareInterface_triggerConnectorLocking();
+        actuatorTest_lockUnlockState = ACTUTEST_STATUS_LOCKING_TRIGGERED;
+      } /* else: locking was already triggered, do not trigger the same again, to avoid permanent actuation. */
       break;
    case TEST_OPENLOCK:
-      hardwareInterface_triggerConnectorUnlocking();
+      if (actuatorTest_lockUnlockState!=ACTUTEST_STATUS_UNLOCKING_TRIGGERED) {
+        hardwareInterface_triggerConnectorUnlocking();
+        actuatorTest_lockUnlockState = ACTUTEST_STATUS_UNLOCKING_TRIGGERED;
+      } /* else: unlocking was already triggered, do not trigger the same again, to avoid permanent actuation. */
       break;
    case TEST_CONTACTOR:
       hardwareInterface_setPowerRelayOn();
+      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_STATEC:
       hardwareInterface_setStateC();
+      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_LEDGREEN:
       hardwareInterface_setRGB(2);
+      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_LEDRED:
       hardwareInterface_setRGB(1);
+      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_LEDBLUE:
       hardwareInterface_setRGB(4);
+      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    default: /* all cases including TEST_NONE are stopping the actuator test */
       blTestOngoing = false;
+      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       if (actuatorTestRunning) {
         /* If the actuator test is just ending, then perform a clean up:
            Return everything to default state. LEDs are reset anyway as soon as we leave test mode. */

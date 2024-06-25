@@ -43,8 +43,8 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 31
-//Next value Id: 2027
+//Next param id (increase when adding new parameter!): 32
+//Next value Id: 2030
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
@@ -63,6 +63,7 @@
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxVoltage,           "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxCurrent,           "A",       0,      500,    125,    19  ) \
+    PARAM_ENTRY(CAT_CHARGE,  MaxAllowedPinTemperature, "°C",  0,      120,    70,     31  ) \
     TESTP_ENTRY(CAT_CHARGE,  TargetVoltage,        "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  ChargeCurrent,        "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
@@ -78,6 +79,9 @@
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
     VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
+    VALUE_ENTRY(TempLimitedCurrent, "A",             2027 ) \
+    VALUE_ENTRY(EVTargetCurrent,    "A",             2029 ) \
+    VALUE_ENTRY(LimitationReason,   LIMITATIONREASONS, 2028 ) \
     VALUE_ENTRY(InletVoltage,       "V",             2007 ) \
     VALUE_ENTRY(EvseMaxCurrent,     "A",             2008 ) \
     VALUE_ENTRY(EvseMaxVoltage,     "V",             2009 ) \
@@ -110,12 +114,13 @@
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
-#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency"
+#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat"
 #define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp, 4=LevelOnValidPP"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
+#define LIMITATIONREASONS  "0=None, 1=InletHot"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 
@@ -154,7 +159,14 @@ enum _stopreasons
    STOP_REASON_CAN_TIMEOUT,
    STOP_REASON_CHARGER_SHUTDOWN,
    STOP_REASON_ACCU_FULL,
-   STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN
+   STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN,
+   STOP_REASON_INLET_OVERHEAT
+};
+
+enum _limitationreasons
+{
+   LIMITATIONREASON_NONE,
+   LIMITATIONREASON_INLET_HOT
 };
 
 enum _actuatortest

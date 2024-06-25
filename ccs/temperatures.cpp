@@ -61,5 +61,34 @@ void temperatures_calculateTemperatures(void) {
     Param::SetFloat(Param::temp3, temp);
     tempMax = MAX(tempMax, temp);
     Param::SetFloat(Param::MaxTemp, tempMax);
+    
+    /* Calculate the pin-temperature-dependent derating of the charge current.
+       Goal: Prevent overheating of the inlet and cables.
+       Strategy: Three cases.
+         1. If the maximum of the three sensors is below the configured threshold,
+            the allowed charge current shall be proportional to the gap.
+            At the moment hardcoded AMPS_PER_KELVIN = 5, this means with a gap of 20K we allow 100A.
+         2. If the maximum of the three temperature sensors reaches the
+            parametrized MaxAllowedPinTemperature, the allowed charge current
+            shall reach nearly zero (let's say allow just 2A).
+         3. If nothing helps and the temperature further increases, terminate the
+            session ("emergency stop") */
+    float diffTemp_K = tempMax - Param::GetFloat(Param::MaxAllowedPinTemperature); /* good case is negative diffTemp */
+    float maxAllowedCurrent_A;
+    #define AMPS_PER_KELVIN 5 /* proportional gain: five amperes per Kelvin */
+    #define MINIMUM_SENSEFUL_CURRENT_A 2 /* charging below this amperage makes no sense */
+    if (diffTemp_K > 10) {
+        /* very high temperature (much above the configured limit) --> stop charging completely */
+        maxAllowedCurrent_A = 0; /* this will stop the session, evaluated in hardwareInterface_stopChargeRequested() */
+    } else if (diffTemp_K >= 0) {
+        /* temperature limit is reached. Try to stabilize, using a minimum charging current. */
+        maxAllowedCurrent_A = MINIMUM_SENSEFUL_CURRENT_A;
+    } else {
+        /* normal temperature, linear derating */
+        maxAllowedCurrent_A = -diffTemp_K * AMPS_PER_KELVIN;
+        /* but not below the minimum current: */
+        if (maxAllowedCurrent_A < MINIMUM_SENSEFUL_CURRENT_A) maxAllowedCurrent_A = MINIMUM_SENSEFUL_CURRENT_A;
+    }
+    Param::SetFloat(Param::TempLimitedCurrent, maxAllowedCurrent_A);
 }
 

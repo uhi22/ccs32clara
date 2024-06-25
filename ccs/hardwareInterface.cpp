@@ -97,7 +97,21 @@ int16_t hardwareInterface_getChargingTargetCurrent(void)
          only important thing is that configured current can drive the load. Let's say 10A is good. */
       Param::SetInt(Param::ChargeCurrent, 10);
    }
-   return Param::GetInt(Param::ChargeCurrent);
+   int16_t iOriginalDemand = Param::GetInt(Param::ChargeCurrent); /* the current demand from BMS */
+   int16_t iLimit = Param::GetInt(Param::TempLimitedCurrent); /* the limit due to inlet temperature */
+   int16_t iEVTarget;
+   if (iOriginalDemand>iLimit) {
+       /* We are limiting. Set a spot value "LimitationReason=LimitedDueToHighInletTemperature" so that the
+          user has a chance to understand what happens. */
+       Param::SetInt(Param::LimitationReason, LIMITATIONREASON_INLET_HOT);
+       iEVTarget = iLimit;
+   } else {
+       /* no limitation */
+       Param::SetInt(Param::LimitationReason, LIMITATIONREASON_NONE);
+       iEVTarget = iOriginalDemand;
+   }
+   Param::SetInt(Param::EVTargetCurrent, iEVTarget);
+   return iEVTarget;
 }
 
 uint8_t hardwareInterface_getSoc(void)
@@ -205,14 +219,22 @@ bool hardwareInterface_stopChargeRequested()
     if (pushbutton_isPressed500ms()) {
         stopReason = STOP_REASON_BUTTON;
         Param::SetInt(Param::StopReason, stopReason);
+        addToTrace(MOD_HWIF, "User pressed the stop button.");
     }
     if (!Param::GetBool(Param::enable)) {
         stopReason = STOP_REASON_MISSING_ENABLE;
         Param::SetInt(Param::StopReason, stopReason);
+        addToTrace(MOD_HWIF, "Got enable=false.");
     }
     if ((Param::GetInt(Param::CanWatchdog) >= CAN_TIMEOUT) && (Param::GetInt(Param::DemoControl) != DEMOCONTROL_STANDALONE)) {
         stopReason = STOP_REASON_CAN_TIMEOUT;
         Param::SetInt(Param::StopReason, stopReason);
+        addToTrace(MOD_HWIF, "Timeout of CanWatchdog.");
+    }
+    if (Param::GetFloat(Param::TempLimitedCurrent)<0.1) { /* overheat of the inlet shall stop the session */
+        stopReason = STOP_REASON_INLET_OVERHEAT;
+        Param::SetInt(Param::StopReason, stopReason);
+        addToTrace(MOD_HWIF, "Inlet overheated.");
     }
     return (stopReason!=STOP_REASON_NONE);
 }

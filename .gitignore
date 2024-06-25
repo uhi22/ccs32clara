@@ -12,4 +12,5 @@ stm32_ccs
 stm32_ccs.bin
 stm32_ccs.hex
 stm32_canloader.hex
+*.hex
 

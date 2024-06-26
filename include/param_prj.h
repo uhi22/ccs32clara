@@ -56,7 +56,7 @@
     PARAM_ENTRY(CAT_HARDWARE,LockOpenThresh,       "dig",     0,      4095,   0,      12  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorNomRes,     "Ohm",     1,      1000000,10000,  26  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
-    PARAM_ENTRY(CAT_HARDWARE,ppvariant,            "",        0,      9,      0,      28  ) \
+    PARAM_ENTRY(CAT_HARDWARE,ppvariant,            PPVARIANT, 0,      9,      2,      28  ) \
     PARAM_ENTRY(CAT_HARDWARE,WakeupPinFunc,        WAKEUP,    0,      4,      0,      30  ) \
     PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
@@ -121,6 +121,7 @@
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
 #define LIMITATIONREASONS  "0=None, 1=InletHot"
+#define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down" 
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 

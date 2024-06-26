@@ -4,12 +4,14 @@
 
 #define CP_DUTY_VALID_TIMER_MAX 3 /* after 3 cycles with 30ms, we consider the CP connection lost, if
                                      we do not see PWM interrupts anymore */
-#define CONTACTOR_CYCLES_FOR_FULL_PWM (33*2) /* 33 cycles per second */
+#define CONTACTOR_CYCLES_FOR_FULL_PWM (33/5) /* 33 cycles per second. ~200ms should be more than enough, see https://github.com/uhi22/ccs32clara/issues/22  */
+#define CONTACTOR_CYCLES_SEQUENTIAL (33/3) /* ~300ms delay from one contactor to the other, to avoid high peak current consumption. https://github.com/uhi22/ccs32clara/issues/22  */ 
 
 static float cpDuty_Percent;
 static uint8_t cpDutyValidTimer;
 static uint8_t ContactorRequest;
-static uint8_t ContactorOnTimer;
+static int8_t ContactorOnTimer1, ContactorOnTimer2;
+static uint16_t dutyContactor1, dutyContactor2;
 static uint8_t LedBlinkDivider;
 static LockStt lockRequest;
 static LockStt lockState;
@@ -303,24 +305,32 @@ static void hwIf_handleContactorRequests(void)
    if (ContactorRequest==0)
    {
       /* request is "OFF" -> set PWM immediately to zero for both contactors */
-      hardwareInteface_setContactorPwm(0, 0); /* both off */
-      ContactorOnTimer=0;
+      dutyContactor1 = 0;
+      dutyContactor2 = 0;
+      ContactorOnTimer1=0;
+      ContactorOnTimer2=-CONTACTOR_CYCLES_SEQUENTIAL; /* start the second contactor with a negative time, so that it will be later. */
    }
    else
    {
       /* request is "ON". Start with 100% PWM, and later switch to economizer mode */
-      if (ContactorOnTimer<255) ContactorOnTimer++;
-      if (ContactorOnTimer<CONTACTOR_CYCLES_FOR_FULL_PWM)
-      {
-         hardwareInteface_setContactorPwm(CONTACT_LOCK_PERIOD, CONTACT_LOCK_PERIOD); /* both full */
-         addToTrace(MOD_HWIF, "Turning on charge port contactors");
+      if (ContactorOnTimer1==0) {
+         dutyContactor1 = CONTACT_LOCK_PERIOD;
+         addToTrace(MOD_HWIF, "Turning on charge port contactor 1");
       }
-      else
-      {
-         int dc = (Param::GetInt(Param::EconomizerDuty) * CONTACT_LOCK_PERIOD) / 100;
-         hardwareInteface_setContactorPwm(dc, dc); /* both reduced */
+      if (ContactorOnTimer2==0) {
+         dutyContactor2 = CONTACT_LOCK_PERIOD;
+         addToTrace(MOD_HWIF, "Turning on charge port contactor 2");
       }
+      if (ContactorOnTimer1>=CONTACTOR_CYCLES_FOR_FULL_PWM) {
+         dutyContactor1 = (Param::GetInt(Param::EconomizerDuty) * CONTACT_LOCK_PERIOD) / 100; /* reduced duty */
+      }
+      if (ContactorOnTimer2>=CONTACTOR_CYCLES_FOR_FULL_PWM) {
+         dutyContactor2 = (Param::GetInt(Param::EconomizerDuty) * CONTACT_LOCK_PERIOD) / 100; /* reduced duty */
+      }
+      if (ContactorOnTimer1<127) ContactorOnTimer1++;
+      if (ContactorOnTimer2<127) ContactorOnTimer2++;
    }
+   hardwareInteface_setContactorPwm(dutyContactor1, dutyContactor2);
 }
 
 static void hwIf_handleLockRequests()

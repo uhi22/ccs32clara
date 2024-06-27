@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VERSION 0.39
+#define VERSION 0.40
 
 #include "myLogging.h"
 
@@ -63,7 +63,7 @@
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxVoltage,           "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxCurrent,           "A",       0,      500,    125,    19  ) \
-    PARAM_ENTRY(CAT_CHARGE,  MaxAllowedPinTemperature, "°C",  0,      120,    70,     31  ) \
+    PARAM_ENTRY(CAT_CHARGE,  MaxPinTemperature,    "°C",      0,      120,    70,     31  ) \
     TESTP_ENTRY(CAT_CHARGE,  TargetVoltage,        "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  ChargeCurrent,        "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
@@ -121,7 +121,7 @@
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
 #define LIMITATIONREASONS  "0=None, 1=InletHot"
-#define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down" 
+#define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 

@@ -61,7 +61,7 @@ void temperatures_calculateTemperatures(void) {
     Param::SetFloat(Param::temp3, temp);
     tempMax = MAX(tempMax, temp);
     Param::SetFloat(Param::MaxTemp, tempMax);
-    
+
     /* Calculate the pin-temperature-dependent derating of the charge current.
        Goal: Prevent overheating of the inlet and cables.
        Strategy: Three cases.
@@ -73,9 +73,8 @@ void temperatures_calculateTemperatures(void) {
             shall reach nearly zero (let's say allow just 2A).
          3. If nothing helps and the temperature further increases, terminate the
             session ("emergency stop") */
-    float diffTemp_K = tempMax - Param::GetFloat(Param::MaxAllowedPinTemperature); /* good case is negative diffTemp */
-    float maxAllowedCurrent_A;
-    #define AMPS_PER_KELVIN 5 /* proportional gain: five amperes per Kelvin */
+    float diffTemp_K = tempMax - Param::GetFloat(Param::MaxPinTemperature); /* good case is negative diffTemp */
+    float maxAllowedCurrent_A = Param::GetFloat(Param::ChargeCurrent);
     #define MINIMUM_SENSEFUL_CURRENT_A 2 /* charging below this amperage makes no sense */
     if (diffTemp_K > 10) {
         /* very high temperature (much above the configured limit) --> stop charging completely */
@@ -84,10 +83,11 @@ void temperatures_calculateTemperatures(void) {
         /* temperature limit is reached. Try to stabilize, using a minimum charging current. */
         maxAllowedCurrent_A = MINIMUM_SENSEFUL_CURRENT_A;
     } else {
-        /* normal temperature, linear derating */
-        maxAllowedCurrent_A = -diffTemp_K * AMPS_PER_KELVIN;
+        /* normal temperature, linear derating 10K below maximum temperature */
+        float limit = -diffTemp_K * maxAllowedCurrent_A / 10;
         /* but not below the minimum current: */
-        if (maxAllowedCurrent_A < MINIMUM_SENSEFUL_CURRENT_A) maxAllowedCurrent_A = MINIMUM_SENSEFUL_CURRENT_A;
+        maxAllowedCurrent_A = MIN(maxAllowedCurrent_A, limit);
+        maxAllowedCurrent_A = MAX(maxAllowedCurrent_A, 2);
     }
     Param::SetFloat(Param::TempLimitedCurrent, maxAllowedCurrent_A);
 }

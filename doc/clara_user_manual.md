@@ -18,7 +18,8 @@ https://github.com/jsphuebner/ccs32clara
 - Blue very fast flashing: pre charge
 - Blue solid: charging
 - Green/Blue fast blinking: charge finished
-- Red: Error
+- Red: Error. Clara will leave the error state after some seconds and re-try a connection. For finding the cause of the error, observe the spot value lasterr and/or check the console log.
+- Red fast blinking: Clara detected a CP PWM which indicates AC charging, but does not see CAN communication from the AC OBC. Make sure that you have the correct CAN mapping and correct value for AcObcState.
 
 ## Serial logging
 

@@ -6,9 +6,13 @@
 */
 
 #include "ccs32_globals.h"
+#include <math.h> /* for log() */
+
+#define MAX_ADC_VALUE 4095 /* we have 12 bit ADC resolution */
+
 
 static uint8_t isBasicAcCharging = 0; /* shows whether we are connected to a basic AC charger (CP PWM 8% to 96%) */
-static uint8_t stateBasicAcCharging = 0; /* invalid */
+static acobcstate previousStateBasicAcCharging = OBC_IDLE;
 
 /* From the AC Onboard Charger, we receive a status signal, which tells us, what to do with the connector lock,
    LEDs and StateC. We take over the meaning of ST_CHGNG as far as possible from here:
@@ -23,10 +27,6 @@ static uint8_t stateBasicAcCharging = 0; /* invalid */
      >=6 invalid. Clara ignores the data.
 */
 
-#define ACOBC_STATE_INITIALIZING 1
-#define ACOBC_STATE_CHARGING 2
-#define ACOBC_STATE_CHARGEFINISHED 4
-#define ACOBC_STATE_CHARGEERROR 5
 
 static uint8_t debounceCounterUntilAcValid = 0;
 static uint8_t debounceCounterFivePercentPwm = 0;
@@ -45,6 +45,67 @@ uint8_t acOBC_isBasicAcCharging(void) {
     return isBasicAcCharging;
 }
 
+static void evaluateProximityPilot(void) {
+    float temp = AnaIn::pp.Get();
+    float U_refAdc, U_pull, U_meas, Rv, R;
+    float iLimit;
+
+    /* Step 1: Provide the raw AD value (0 to 4095) for analysis purposes. */
+    Param::SetFloat(Param::AdcProximityPilot, temp);
+
+    /* Step 2: Calculate the PP resistance */
+    /* Todo: consider the input circuit variant:
+         - old Foccci v4.1 has x ohm pull-up to 3V3 and no pull-down
+         - next Foccci v4.2 has 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider to match the 3V3 ADC input.
+         - there could be an additional pull-down in the CCS inlet.
+       The parameter ppvariant shall select which hardware circuit is installed. */
+
+    if (Param::GetInt(Param::ppvariant) == 0) {
+        /* The old Foccci (until revision 4.1) */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull = 3.3; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
+        U_meas = U_refAdc * temp/4095; /* The measured voltage on the PP. In this case no divider. */
+        Rv = 1000.0; /* The effective pull-up resistor. In this case 1k. */
+        /* Todo: verify on hardware */
+    } else if (Param::GetInt(Param::ppvariant) == 1) {
+        /* The newer Foccci with 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull = 4.5; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 1 / (1/330.0 + 1/3000.0); /* The effective pull-up resistor. In this case 330ohm parallel 3000ohm. */
+        /* tested on hand-wired Foccci. Calculation is ok. */
+    } else {
+        /* The newer Foccci with 330 ohm pull-up to 5V and no pull-down and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull = 5.0; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 330.0; /* The effective pull-up resistor. In this case 330ohm. */
+        /* Todo: verify on hardware */
+    }
+    if (U_meas>(U_pull-0.5)) {
+        /* The voltage on PP is quite high. We do not calculate the R, because this may lead to overflow. Just
+           give a high resistance value. */
+        R = 10000.0; /* ohms */
+    } else if (U_meas<0.05) {
+        /* The voltage on PP is very low. We do not calculate the R, because this may lead to division-by-zero. Just say R=0. */
+        R = 0.0; /* ohms */
+    }else {
+        /* calculate the resistance of the PP */
+        R = Rv / (U_pull/U_meas-1);
+    }
+    Param::SetFloat(Param::ResistanceProxPilot, R);
+
+    /* Step 3: Calculate the cable current limit */
+    /* Reference: https://www.goingelectric.de/wiki/Typ2-Signalisierung-und-Steckercodierung/ */
+    iLimit = 0;
+    if ((R>1500*0.8) && (R<1500*1.2)) { iLimit = 13; /* 1k5 is 13A, or digital communication */ }
+    if ((R>680*0.8) &&  (R<680*1.2)) { iLimit = 20; /* 680ohm is 20A */ }
+    if ((R>220*0.8) && (R<220*1.2)) { iLimit = 32; /* 220ohm is 32A */ }
+    if ((R>100*0.8) && (R<100*1.2)) { iLimit = 63; /* 100ohm is 63A */ }
+    Param::SetFloat(Param::CableCurrentLimit, iLimit);
+
+}
+
 uint8_t acOBC_getRGB(void) {
     static uint8_t cycleDivider;
     uint8_t rgb;
@@ -52,13 +113,13 @@ uint8_t acOBC_getRGB(void) {
     #define GREEN 2
     #define BLUE 4
     cycleDivider++;
-    if (stateBasicAcCharging == ACOBC_STATE_INITIALIZING) {
+    if (previousStateBasicAcCharging == OBC_LOCK) {
         if (cycleDivider & 2) { rgb = GREEN; } else { rgb = 0; }
-    } else if (stateBasicAcCharging == ACOBC_STATE_CHARGING) {
+    } else if (previousStateBasicAcCharging == OBC_CHARGE) {
         rgb = BLUE;
-    } else if (stateBasicAcCharging == ACOBC_STATE_CHARGEFINISHED) {
+    } else if (previousStateBasicAcCharging == OBC_COMPLETE) {
         rgb = BLUE+GREEN;
-    } else if (stateBasicAcCharging == ACOBC_STATE_CHARGEERROR) {
+    } else if (previousStateBasicAcCharging == OBC_ERROR) {
         rgb = RED;
     } else {
         if (cycleDivider & 1) { rgb = RED; } else { rgb = 0; } /* everything else: flash red */
@@ -107,29 +168,51 @@ void acOBC_calculateCurrentLimit(void) {
     }
 }
 
-void acOBC_mainfunction(void) {
-    /* cyclic main function. Runs in 100ms */
-    uint8_t x;
-    acOBC_calculateCurrentLimit();
-    if (isBasicAcCharging) {
-        /* take data from the spot value AcObcState (which was received from CAN) and transfer it to the stateBasicAcCharging if valid */
-        x = Param::GetInt(Param::AcObcState);
-        /* todo: do we need a plausibilization here? */
-        if ((x == ACOBC_STATE_INITIALIZING) && (stateBasicAcCharging != ACOBC_STATE_INITIALIZING)) {
-            /* we just arrived in INITIALIZING. Todo: Trigger the connector locking here. */
-        }
-        if ((x == ACOBC_STATE_CHARGING) && (stateBasicAcCharging != ACOBC_STATE_CHARGING)) {
-            /* we just arrived in CHARGING. Set stateC here. */
-            hardwareInterface_setStateC();
-        }
-        if ((x != ACOBC_STATE_CHARGING) && (stateBasicAcCharging == ACOBC_STATE_CHARGING)) {
-            /* we just leaving CHARGING. Deactivate stateC here. */
-            hardwareInterface_setStateB();
-            /*  Todo: shall we unlock the connector here? */
-        }
-        /* todo: more cases for unlocking? */
-        stateBasicAcCharging = x;
+static void triggerActions()
+{
+   if (isBasicAcCharging) {
+      acobcstate requestedState = (acobcstate)Param::GetInt(Param::AcObcState);
+
+      switch (requestedState) {
+      case OBC_IDLE:
+         //always turn off stateB here
+         hardwareInterface_setStateB();
+         //Unlock connector when coming here from any other state
+         if (previousStateBasicAcCharging != OBC_IDLE)
+            hardwareInterface_triggerConnectorUnlocking();
+         break;
+      case OBC_LOCK:
+      case OBC_PAUSE:
+      case OBC_ERROR:
+      case OBC_COMPLETE:
+         //always turn off stateC in these states
+         hardwareInterface_setStateB();
+         //Lock connector when coming here from idle state, otherw
+         if (previousStateBasicAcCharging == OBC_IDLE)
+            hardwareInterface_triggerConnectorLocking();
+         break;
+      case OBC_CHARGE:
+         //Keep stateC on here
+         hardwareInterface_setStateC();
+         //Lock connector when coming here from idle state
+         if (previousStateBasicAcCharging == OBC_IDLE)
+            hardwareInterface_triggerConnectorUnlocking();
+         break;
+      }
+
+      previousStateBasicAcCharging = requestedState;
     } else {
         /* Todo: maybe need some cleanup actions here, if we left the AC charging. E.g. unlocking the connector? */
+        /* Todo: how do we exit AC charging?
+        - Button?
+        - What if DutyCycle goes away? (e.g. PV charging turning off over night)
+        - What if proximity goes away? (e.g. no lock installed) */
     }
+}
+
+void acOBC_mainfunction(void) {
+   /* cyclic main function. Runs in 100ms */
+   acOBC_calculateCurrentLimit();
+   evaluateProximityPilot();
+   triggerActions();
 }

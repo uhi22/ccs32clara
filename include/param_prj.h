@@ -69,7 +69,7 @@
     TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  BatteryVoltage,       "V",       0,      1000,   0,      6   ) \
     TESTP_ENTRY(CAT_CHARGE,  enable,               OFFON,     0,      1,      1,      23  ) \
-    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           "",        0,      15,     0,      29  ) \
+    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           ACOBCSTT,  0,      2,      0,      29  ) \
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
@@ -122,6 +122,7 @@
 #define CAT_TEST     "Testing"
 #define LIMITATIONREASONS  "0=None, 1=InletHot"
 #define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down"
+#define ACOBCSTT     "0=Idle, 1=Lock, 2=Charging, 3=Pause, 4=Complete, 5=Error"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 
@@ -136,6 +137,16 @@
 #define VERSTR STRINGIFY(4=VER2(GITHUB_RUN_NUMBER))
 
 /***** enums ******/
+
+enum acobcstate
+{
+   OBC_IDLE = 0,
+   OBC_LOCK = 1,
+   OBC_CHARGE = 2,
+   OBC_PAUSE = 3,
+   OBC_COMPLETE = 4,
+   OBC_ERROR = 5
+};
 
 enum _wakeupfuncs
 {

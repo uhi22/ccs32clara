@@ -53,7 +53,6 @@
 #include "udpChecksum.h"
 #include "temperatures.h"
 #include "pushbutton.h"
-#include "proximitypilot.h"
 #include "hardwareVariants.h"
 #include "acOBC.h"
 
@@ -84,7 +83,6 @@ static void Ms100Task(void)
    Param::SetInt(Param::ContactorDuty, timer_get_ic_value(CONTACT_LOCK_TIMER, TIM_IC3));
    Param::SetInt(Param::AdcLockFeedback, AnaIn::lockfb.Get());
    Param::SetInt(Param::AdcIpropi, AnaIn::ipropi.Get());
-   pp_evaluateProximityPilot();
    temperatures_calculateTemperatures();
    acOBC_mainfunction();
    hardwareInterface_WakeupOtherPeripherals();

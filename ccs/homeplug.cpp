@@ -823,6 +823,13 @@ static void evaluateGetKeyCnf(void) {}
 
 void evaluateReceivedHomeplugPacket(void)
 {
+   if (connMgr_getConnectionLevel()==100) {
+       /* we have TCP traffic running, so we ignore all homeplug management packets. This
+       makes us robust against cross-talk from other charging cables.
+       Discussion here: https://github.com/uhi22/ccs32clara/issues/24 */
+       addToTrace(MOD_HOMEPLUG, "[HOMEPLUG] Ignoring homeplug message, because high level communication is ongoing.");
+       return;
+   }
    switch (getManagementMessageType())
    {
    case CM_GET_KEY + MMTYPE_CNF:

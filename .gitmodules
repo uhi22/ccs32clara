@@ -1,7 +1,7 @@
 [submodule "libopeninv"]
         path = libopeninv
-        url = https://www.github.com/jsphuebner/libopeninv.git
+        url = ../../jsphuebner/libopeninv.git
 [submodule "libopencm3"]
         path = libopencm3
-        url = https://www.github.com/jsphuebner/libopencm3.git
+        url = ../../jsphuebner/libopencm3.git
 

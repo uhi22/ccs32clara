@@ -52,8 +52,6 @@
 		<Unit filename="ccs/myLogging.h" />
 		<Unit filename="ccs/pevStateMachine.cpp" />
 		<Unit filename="ccs/pevStateMachine.h" />
-		<Unit filename="ccs/proximitypilot.cpp" />
-		<Unit filename="ccs/proximitypilot.h" />
 		<Unit filename="ccs/pushbutton.cpp" />
 		<Unit filename="ccs/pushbutton.h" />
 		<Unit filename="ccs/qca7000.cpp" />

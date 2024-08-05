@@ -114,7 +114,7 @@
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
-#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat"
+#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat, 8=EvseMalfunction"
 #define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp, 4=LevelOnValidPP"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
@@ -172,7 +172,8 @@ enum _stopreasons
    STOP_REASON_CHARGER_SHUTDOWN,
    STOP_REASON_ACCU_FULL,
    STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN,
-   STOP_REASON_INLET_OVERHEAT
+   STOP_REASON_INLET_OVERHEAT,
+   STOP_REASON_CHARGER_EVSE_MALFUNCTION
 };
 
 enum _limitationreasons

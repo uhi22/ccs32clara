@@ -864,6 +864,17 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             pev_isUserStopRequestOnChargerSide = 1;
             Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_SHUTDOWN);
          }
+         if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_Malfunction)
+         {
+            /* If the charger reports a malfunction, we stop the charging. */
+            /* Issue reference: https://github.com/uhi22/ccs32clara/issues/29 */
+            addToTrace(MOD_PEV, "Charger reported EVSE_Malfunction. A reason could be hitting the EVSEMaximumVoltageLimit.");
+            pev_wasPowerDeliveryRequestedOn=0;
+            setCheckpoint(800);
+            pev_sendPowerDeliveryReq(0);
+            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+            Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_EVSE_MALFUNCTION);
+         }
          if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
          {
             /* If the charger reports an emergency, we stop the charging. */

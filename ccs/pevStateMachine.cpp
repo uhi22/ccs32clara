@@ -294,6 +294,7 @@ static void pev_sendPowerDeliveryReq(uint8_t isOn)
 
 static void pev_sendCurrentDemandReq(void)
 {
+   uint16_t UTarget, EVMaximumVoltageLimit;
    projectExiConnector_prepare_DinExiDocument();
    dinDocEnc.V2G_Message.Body.CurrentDemandReq_isUsed = 1u;
    init_dinCurrentDemandReqType(&dinDocEnc.V2G_Message.Body.CurrentDemandReq);
@@ -304,11 +305,22 @@ static void pev_sendCurrentDemandReq(void)
    st.EVRESSSOC = hardwareInterface_getSoc();
 #undef st
    // EVTargetVoltage
+   UTarget = hardwareInterface_getChargingTargetVoltage(); /* The charging target. Scaling is 1V. */
+   EVMaximumVoltageLimit = Param::GetInt(Param::MaxVoltage);
+   if ((UTarget+1>EVMaximumVoltageLimit) && (EVMaximumVoltageLimit>1)) {
+       /* Some chargers run into emergency shutdown, if the requested or actual voltage is above the
+          announced EVMaximumVoltageLimit. That's why we limit here the request. Nevertheless, this
+          is more a workaround than a solution, because a physical overshoot may still lead to
+          emergency shutdown. The solution is to choose an appropriate value of Param::MaxVoltage. */
+       UTarget=EVMaximumVoltageLimit-1;
+       printf("Warning: TargetVoltage %dV is near to EVMaximumVoltageLimit %dV, which may cause charger shutdown.\r\n",
+              UTarget, EVMaximumVoltageLimit);
+   }
 #define tvolt dinDocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetVoltage
    tvolt.Multiplier = 0;  /* -3 to 3. The exponent for base of 10. */
    tvolt.Unit = dinunitSymbolType_V;
    tvolt.Unit_isUsed = 1;
-   tvolt.Value = hardwareInterface_getChargingTargetVoltage(); /* The charging target. Scaling is 1V. */
+   tvolt.Value = UTarget; /* The charging target voltage. Scaling is 1V. */
 #undef tvolt
    // EVTargetCurrent
 #define tcurr dinDocEnc.V2G_Message.Body.CurrentDemandReq.EVTargetCurrent
@@ -868,7 +880,8 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
          {
             /* If the charger reports a malfunction, we stop the charging. */
             /* Issue reference: https://github.com/uhi22/ccs32clara/issues/29 */
-            addToTrace(MOD_PEV, "Charger reported EVSE_Malfunction. A reason could be hitting the EVSEMaximumVoltageLimit.");
+            addToTrace(MOD_PEV,
+              "Charger reported EVSE_Malfunction. A reason could be hitting the EVMaximumVoltageLimit or EVSEMaximumVoltageLimit.");
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);
             pev_sendPowerDeliveryReq(0);

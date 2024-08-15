@@ -728,22 +728,25 @@ static void stateFunctionWaitForPreChargeResponse(void)
          }
          if ((ABS(inletVtg - batVtg) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) && (batVtg > EVSEMinimumVoltage))
          {
-            addToTrace(MOD_PEV, "Difference between accu voltage and inlet voltage is small. Sending PowerDeliveryReq.");
+            addToTrace(MOD_PEV, "Difference between accu voltage and inlet voltage is small.");
             publishStatus("PreCharge done", "");
             if (isLightBulbDemo)
             {
                // For light-bulb-demo, nothing to do here.
                addToTrace(MOD_PEV, "This is a light bulb demo. Do not turn-on the relay at end of precharge.");
+               addToTrace(MOD_PEV, "Sending PowerDeliveryReq.");
+               pev_sendPowerDeliveryReq(1); /* 1 is ON */
+               pev_wasPowerDeliveryRequestedOn=1;
+               setCheckpoint(600);
+               pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
             }
             else
             {
                // In real-world-case, turn the power relay on.
                hardwareInterface_setPowerRelayOn();
+               pev_DelayCycles = 15; /* 15*30ms, explanation see below */
+               pev_enterState(PEV_STATE_WaitForContactorsClosed);
             }
-            pev_wasPowerDeliveryRequestedOn=1;
-            setCheckpoint(600);
-            pev_sendPowerDeliveryReq(1); /* 1 is ON */
-            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
          }
          else
          {
@@ -760,32 +763,22 @@ static void stateFunctionWaitForPreChargeResponse(void)
 
 static void stateFunctionWaitForContactorsClosed(void)
 {
-   uint8_t readyForNextState=0;
    if (pev_DelayCycles>0)
    {
+      /* simplified solution for waiting for the contactors: Since the contactors anyway have no feedback whether
+         they are really closed, we just use a time-based approach. In
+         https://github.com/uhi22/ccs32clara/issues/22 we see that it takes ~350ms until both contactors have
+         current, so we wait here 15 cycles * 30ms = 450ms, and additional delay will be caused by the
+         powerDeliveryRequest/Response and the currentDemandRequest/Response. So this should give sufficient
+         time to close the contactors until the charger really provides current. */
       pev_DelayCycles--;
       return;
    }
-   if (isLightBulbDemo)
-   {
-      readyForNextState=1; /* if it's just a bulb demo, we do not wait for contactor, because it is not switched in this moment. */
-   }
-   else
-   {
-      readyForNextState = hardwareInterface_getPowerRelayConfirmation(); /* check if the contactor is closed */
-      if (readyForNextState)
-      {
-         addToTrace(MOD_PEV, "Contactors are confirmed to be closed.");
-         publishStatus("Contactors ON", "");
-      }
-   }
-   if (readyForNextState)
-   {
-      addToTrace(MOD_PEV, "Sending PowerDeliveryReq.");
-      pev_sendPowerDeliveryReq(1); /* 1 is ON */
-      pev_wasPowerDeliveryRequestedOn=1;
-      pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
-   }
+   addToTrace(MOD_PEV, "Contactors assumingly finished closing. Sending PowerDeliveryReq.");
+   pev_sendPowerDeliveryReq(1); /* 1 is ON */
+   pev_wasPowerDeliveryRequestedOn=1;
+   setCheckpoint(600);
+   pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
 }
 
 

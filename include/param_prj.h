@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VERSION 0.40.T
+#define VERSION 0.40.TD
 
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 33
-//Next value Id: 2031
+//Next value Id: 2033
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
@@ -79,6 +79,7 @@
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
     VALUE_ENTRY(PortState,          PORTSTAT,        2030 ) \
+    VALUE_ENTRY(BasicAcCharging,    OFFON,           2031 ) \
     VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
     VALUE_ENTRY(TempLimitedCurrent, "A",             2027 ) \
@@ -105,6 +106,7 @@
     VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \
     VALUE_ENTRY(checkpoint,         "dig",           2015 ) \
     VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
+    VALUE_ENTRY(CanAwake,            OFFON,           2032 ) \
     VALUE_ENTRY(cpuload,            "%",             2094 )
 
 

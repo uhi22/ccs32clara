@@ -39,7 +39,7 @@
  */
 
  //Define a version string of your firmware here
-#define VERSION 0.40.TD
+#define VERSION 0.41
 
 #include "myLogging.h"
 

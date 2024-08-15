@@ -12,7 +12,7 @@
 
 
 static uint8_t isBasicAcCharging = 0; /* shows whether we are connected to a basic AC charger (CP PWM 8% to 96%) */
-static acobcstate previousStateBasicAcCharging = OBC_IDLE;
+static uint8_t previousStateBasicAcCharging = OBC_IDLE;
 
 /* From the AC Onboard Charger, we receive a status signal, which tells us, what to do with the connector lock,
    LEDs and StateC. We take over the meaning of ST_CHGNG as far as possible from here:
@@ -243,9 +243,11 @@ void acOBC_calculateCurrentLimit(void)
 
 static void triggerActions()
 {
+    Param::SetInt(Param::BasicAcCharging, isBasicAcCharging);
+
     if (isBasicAcCharging)
     {
-        acobcstate requestedState = (acobcstate)Param::GetInt(Param::AcObcState);
+        uint8_t requestedState = Param::GetInt(Param::AcObcState);
 
         if (pushbutton_isPressed500ms())//if push button is pressed we stop charging
         {
@@ -261,9 +263,17 @@ static void triggerActions()
         {
             requestedState = OBC_IDLE; // force idle when we are stopped due to button
             StopAcTimer++; //increase very 100ms
-            if(StopAcTimer > 300)//30s time out before starting charge again
+            if(StopAcTimer > 150)//10s time out before starting charge again
             {
                 ButtonStopAC = false; //Release the charging block
+            }
+        }
+
+        if (!Param::GetBool(Param::enable)) //If the param enable is not set do not allow charging of any kind
+        {
+            if(requestedState != OBC_IDLE)
+            {
+                requestedState = OBC_IDLE;
             }
         }
 
@@ -276,13 +286,19 @@ static void triggerActions()
             //Unlock connector when coming here from any other state
             if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetInt(Param::AllowUnlock) == 1)//only unlock if allowed and lock is locked
             {
-                hardwareInterface_triggerConnectorUnlocking();
+                if(Param::GetInt(Param::ActuatorTest) == 0)
+                {
+                    hardwareInterface_triggerConnectorUnlocking();
+                }
             }
             break;
         case OBC_LOCK:
             if (Param::GetInt(Param::LockState) == LOCK_OPEN)//only trigger is lock is open
             {
-                hardwareInterface_triggerConnectorLocking();
+                if(Param::GetInt(Param::ActuatorTest) == 0)
+                {
+                    hardwareInterface_triggerConnectorLocking();
+                }
             }
             break;
         case OBC_PAUSE:
@@ -299,7 +315,10 @@ static void triggerActions()
             //hardwareInterface_setStateC();
             if (Param::GetInt(Param::LockState) == LOCK_OPEN)//only trigger is lock is open
             {
-                hardwareInterface_triggerConnectorLocking();
+                if(Param::GetInt(Param::ActuatorTest) == 0)
+                {
+                    hardwareInterface_triggerConnectorLocking();
+                }
             }
             if(Param::GetInt(Param::LockState) == LOCK_CLOSED) //Do not allow Request for AC power without locking
             {
@@ -310,7 +329,6 @@ static void triggerActions()
         }
 
         previousStateBasicAcCharging = requestedState;
-
     }
     else
     {

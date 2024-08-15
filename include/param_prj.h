@@ -39,12 +39,12 @@
  */
 
  //Define a version string of your firmware here
-#define VERSION 0.40
+#define VERSION 0.42
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 32
-//Next value Id: 2030
+//Next param id (increase when adding new parameter!): 33
+//Next value Id: 2033
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
@@ -58,6 +58,7 @@
     PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
     PARAM_ENTRY(CAT_HARDWARE,ppvariant,            PPVARIANT, 0,      9,      2,      28  ) \
     PARAM_ENTRY(CAT_HARDWARE,WakeupPinFunc,        WAKEUP,    0,      4,      0,      30  ) \
+    PARAM_ENTRY(CAT_HARDWARE,AllowUnlock,          OFFON,     0,      1,      1,      32 ) \
     PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
@@ -77,6 +78,8 @@
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
+    VALUE_ENTRY(PortState,          PORTSTAT,        2030 ) \
+    VALUE_ENTRY(BasicAcCharging,    OFFON,           2031 ) \
     VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
     VALUE_ENTRY(TempLimitedCurrent, "A",             2027 ) \
@@ -103,6 +106,7 @@
     VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \
     VALUE_ENTRY(checkpoint,         "dig",           2015 ) \
     VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
+    VALUE_ENTRY(CanAwake,            OFFON,           2032 ) \
     VALUE_ENTRY(cpuload,            "%",             2094 )
 
 
@@ -123,6 +127,7 @@
 #define LIMITATIONREASONS  "0=None, 1=InletHot"
 #define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down"
 #define ACOBCSTT     "0=Idle, 1=Lock, 2=Charging, 3=Pause, 4=Complete, 5=Error"
+#define PORTSTAT     "0=Idle, 1=PluggedIn, 2=Ready, 3=ChargingAC, 4=ChargingDC, 5=Stopping, 6=Unlock, 7=PortError"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 

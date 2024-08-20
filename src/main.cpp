@@ -96,7 +96,18 @@ static void Ms100Task(void)
         Param::SetFixed(Param::InletVoltage, Param::Get(Param::EvseVoltage));
         break;
     case IVSRC_ANAIN:
-        Param::SetFloat(Param::InletVoltage, AnaIn::udc.Get() / Param::GetFloat(Param::UdcDivider));
+         #define hv_offset 562 /* The ADC value in case of zero high voltage.
+                                  In case of the muehlpower board discussed in
+                                  https://openinverter.org/forum/viewtopic.php?t=2474
+                                  this is 1.42V on Foccci connector pin.
+                                  Discussed here: https://github.com/uhi22/ccs32clara/issues/23 */
+         int16_t hv_reading;
+         hv_reading = AnaIn::udc.Get();
+         hv_reading -= hv_offset; /* we allow to show negative voltages, which really works with the
+                                     muehlpower board. This Foccci pin voltage in this case goes
+                                     below the "idle" of 1.42V. */
+         Param::SetFloat(Param::InletVoltage, hv_reading / Param::GetFloat(Param::UdcDivider));
+         break;
         break;
     default:
     case IVSRC_CAN:

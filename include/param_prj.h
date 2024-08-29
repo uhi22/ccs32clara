@@ -106,7 +106,8 @@
     VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \
     VALUE_ENTRY(checkpoint,         "dig",           2015 ) \
     VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
-    VALUE_ENTRY(CanAwake,            OFFON,           2032 ) \
+    VALUE_ENTRY(CanAwake,            OFFON,          2032 ) \
+    VALUE_ENTRY(ButtonPushed,       OFFON,           2033 ) \
     VALUE_ENTRY(cpuload,            "%",             2094 )
 
 

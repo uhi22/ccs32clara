@@ -180,6 +180,7 @@ static void Ms30Task()
     //cyclicLcdUpdate();
     hardwareInterface_cyclic();
     pushbutton_handlePushbutton();
+    Param::SetInt(Param::ButtonPushed, pushbutton_isPressed500ms());
     ErrorMessage::SetTime(rtc_get_counter_val());
 }
 

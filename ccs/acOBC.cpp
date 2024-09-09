@@ -142,7 +142,24 @@ uint8_t acOBC_getRGB(void)
 #define GREEN 2
 #define BLUE 4
     cycleDivider++;
-    if (previousStateBasicAcCharging == OBC_LOCK)
+
+    if (previousStateBasicAcCharging == OBC_IDLE)
+    {
+        if (cycleDivider & 2)
+        {
+            rgb = BLUE;
+        }
+        else
+        {
+            rgb = 0;
+        }
+    }
+    else if (previousStateBasicAcCharging == OBC_LOCK)
+    {
+
+        rgb = BLUE;
+    }
+    else if (previousStateBasicAcCharging == OBC_CHARGE)
     {
         if (cycleDivider & 2)
         {
@@ -152,10 +169,6 @@ uint8_t acOBC_getRGB(void)
         {
             rgb = 0;
         }
-    }
-    else if (previousStateBasicAcCharging == OBC_CHARGE)
-    {
-        rgb = BLUE;
     }
     else if (previousStateBasicAcCharging == OBC_COMPLETE)
     {
@@ -332,6 +345,8 @@ static void triggerActions()
     }
     else
     {
+
+
         //!!! CHECK IF NOT DC CHARGING this will be ran every 100ms
         /* Todo: maybe need some cleanup actions here, if we left the AC charging. E.g. unlocking the connector? */
         /* Todo: how do we exit AC charging?

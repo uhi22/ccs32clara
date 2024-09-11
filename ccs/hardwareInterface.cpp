@@ -15,7 +15,7 @@ static uint16_t dutyContactor1, dutyContactor2;
 static uint8_t LedBlinkDivider;
 static LockStt lockRequest;
 static LockStt lockState;
-static LockStt lockTarget;
+static LockStt lockTarget = LOCK_UNKNOWN;
 static uint16_t lockTimer;
 static bool actuatorTestRunning = false;
 
@@ -365,7 +365,7 @@ static void hwIf_handleLockRequests()
       pwmNeg = 0;
       pwmPos = CONTACT_LOCK_PERIOD;
       /* connector lock just time-based, without evaluating the feedback */
-      if (lockRequest == LOCK_OPEN)
+      if (lockRequest == LOCK_OPEN && lockTarget == LOCK_UNKNOWN)
       {
          addToTrace(MOD_HWIF, "unlocking the connector");
          Param::SetInt(Param::LockState, LOCK_OPENING);
@@ -374,7 +374,7 @@ static void hwIf_handleLockRequests()
          lockTarget = LOCK_OPEN;
          lockRequest = LOCK_UNKNOWN;
       }
-      if (lockRequest == LOCK_CLOSED)
+      if (lockRequest == LOCK_CLOSED && lockTarget == LOCK_UNKNOWN)
       {
          addToTrace(MOD_HWIF, "locking the connector");
          Param::SetInt(Param::LockState, LOCK_CLOSING);
@@ -393,6 +393,7 @@ static void hwIf_handleLockRequests()
             hardwareInteface_setHBridge(0, 0);
             Param::SetInt(Param::LockState, lockTarget);
             lockState = lockTarget;
+			lockTarget = LOCK_UNKNOWN;
             addToTrace(MOD_HWIF, "finished connector (un)locking");
          }
       }

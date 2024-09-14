@@ -40,7 +40,14 @@ static void pushbutton_processPushButtonSeries(void) {
 
 bool pushbutton_isPressed500ms()
 {
-   return pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+    if(Param::GetInt(Param::AllowUnlock) == 1) //check unlocking is allowed and thus vehicle is not in lockstate, read button
+    {
+        return pushbutton_tButtonPressTime>(PUSHBUTTON_CYCLES_PER_SECOND/2);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 int pushButton_getAccumulatedDigits()

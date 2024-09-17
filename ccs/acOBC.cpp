@@ -55,6 +55,7 @@ static void evaluateProximityPilot(void)
     float temp = AnaIn::pp.Get();
     float U_refAdc, U_pull, U_meas, Rv, R;
     float iLimit;
+    uint8_t blPlugPresent;
 
     /* Step 1: Provide the raw AD value (0 to 4095) for analysis purposes. */
     Param::SetFloat(Param::AdcProximityPilot, temp);
@@ -131,6 +132,10 @@ static void evaluateProximityPilot(void)
         iLimit = 63; /* 100ohm is 63A */
     }
     Param::SetFloat(Param::CableCurrentLimit, iLimit);
+    
+    /* Step 4: Provide the PlugPresent (e.g. for the feature "driveInhibit") */
+    blPlugPresent = R < 5000; /* Design decision: The plug is considered as present if the PP resistance is below 5kohms. */
+    Param::SetInt(Param::PlugPresent, blPlugPresent); /* 0: no plug present. 1: plug detected. */
 
 }
 

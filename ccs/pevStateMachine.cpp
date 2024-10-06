@@ -1115,10 +1115,13 @@ static void pev_runFsm(void)
    if (connMgr_getConnectionLevel()==CONNLEVEL_80_TCP_RUNNING)
    {
       /* We have a TCP connection. This is the trigger for us. */
-      if (pev_state==PEV_STATE_NotYetInitialized) pev_enterState(PEV_STATE_Connected);
+      if (pev_state == PEV_STATE_NotYetInitialized) pev_enterState(PEV_STATE_Connected);
    }
 
    stateFunctions[pev_state](); //call state function
+
+   if (pev_state != PEV_STATE_WaitForCurrentDemandResponse) //only in currentDemand we have meaningful current values
+      Param::SetInt(Param::EvseCurrent, 0);
 
    if (pev_isTooLong())
       pev_enterState(PEV_STATE_SequenceTimeout);

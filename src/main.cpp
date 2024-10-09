@@ -74,7 +74,7 @@ static void Ms100Task(void)
 {
     static uint32_t lastValidCp = 0;
 
-    DigIo::led_out.Toggle();
+    DigIo::led_alive.Toggle();
     //The boot loader enables the watchdog, we have to reset it
     //at least every 2s or otherwise the controller is hard reset.
     iwdg_reset();
@@ -159,7 +159,7 @@ static void Ms100Task(void)
         {
             if ((Param::GetInt(Param::WakeupPinFunc) & WAKEUP_ONVALIDPP) == 0 || !ppValid)
             {
-                DigIo::supply_out.Clear();
+                DigIo::keep_power_on.Clear();
             }
         }
     }
@@ -261,7 +261,7 @@ extern "C" int main(void)
     write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
     gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
-    DigIo::supply_out.Set(); //Make sure board stays awake
+    DigIo::keep_power_on.Set(); //Make sure board stays awake
 
     hardwareInterface_setStateB();
     hw_evaluateHardwareVariants();

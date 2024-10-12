@@ -86,7 +86,18 @@ C:\ST\STM32CubeIDE_1.12.1\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.external
     - JTAG/SWD adapter (STLink, with the command line mentioned above)
     - can-updater.py script (todo: more details)
     - the esp32 web interface (see below)
-
+- You can also use the STM32 ST-link utility `https://www.st.com/en/development-tools/stsw-link004.html`
+    -The following instructions are adapted from the Tesla Model S/X Gen2 Charger OI Wiki page:
+        -Click "Target --> Connect" from top menu. You want to see the screen get filled with a data dump of symbols. In the upper right of the screen you can see it identified the device.
+        -In the main viewing window are multiple tabs, click the "Binary File" tab to select it.
+        -This will ask to open a file, you choose: "stm32_canloader.hex". This will change what shows up in the viewing window.
+        -Click "Target --> Program and Verify" from the top menu. This pops up a window, and you can probably just click "Start" on that window. This programs the STM32 chip with the stm32_canloader.hex file.
+        -The bootloader has now been flashed.
+        -You can close the stm32_canloader.hex tab, and go back to the "Binary File" tab, which will ask to open another file.
+        -You choose: "stm32_ccs.hex"
+        -Same as last time, click "Target --> Program and Verify" from the top menu. And click Start.
+        -The STM32 on your Foccci Board now also has the software to run.  
+  
 ## How to use Clara with the openinverter web interface?
 
 The esp32-web-interface (from openinverter shop or https://github.com/jsphuebner/esp32-web-interface) is able to talk to Clara via CAN.

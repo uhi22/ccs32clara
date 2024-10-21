@@ -55,7 +55,7 @@
 #include "pushbutton.h"
 #include "hardwareVariants.h"
 #include "acOBC.h"
-
+#include "wakecontrol.h"
 
 #define PRINT_JSON 0
 
@@ -72,8 +72,6 @@ static CanSdo* canSdo;
 
 static void Ms100Task(void)
 {
-    static uint32_t lastValidCp = 0;
-
     DigIo::led_alive.Toggle();
     //The boot loader enables the watchdog, we have to reset it
     //at least every 2s or otherwise the controller is hard reset.
@@ -141,29 +139,7 @@ static void Ms100Task(void)
     {
         Param::SetInt(Param::CanAwake,0);
     }
-
-
-    if (Param::GetInt(Param::ControlPilotDuty) > 3)
-        lastValidCp = rtc_get_counter_val();
-
-    //If no frequency on CP shut down after 10s
-    if ((rtc_get_counter_val() - lastValidCp) > 1000)
-    {
-        bool ppValid = Param::GetInt(Param::ResistanceProxPilot) < 2000;
-
-        bool CanActive = Param::GetInt(Param::CanAwake);
-
-        //WAKEUP_ONVALIDPP implies that we use PP for wakeup. So as long as PP is valid
-        //Do not clear the supply pin as that will skew the PP measurement and we can't turn off anyway
-        if(!CanActive)
-        {
-            if ((Param::GetInt(Param::WakeupPinFunc) & WAKEUP_ONVALIDPP) == 0 || !ppValid)
-            {
-                DigIo::keep_power_on.Clear();
-            }
-        }
-    }
-
+    wakecontrol_mainfunction();
     canMap->SendAll();
 }
 
@@ -261,7 +237,7 @@ extern "C" int main(void)
     write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
     gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
-    DigIo::keep_power_on.Set(); //Make sure board stays awake
+    wakecontrol_init(); //Make sure board stays awake
 
     hardwareInterface_setStateB();
     hw_evaluateHardwareVariants();

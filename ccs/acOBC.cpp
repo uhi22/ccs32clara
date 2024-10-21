@@ -56,6 +56,12 @@ static void evaluateProximityPilot(void)
     float U_refAdc, U_pull, U_meas, Rv, R;
     float iLimit;
     uint8_t blPlugPresent;
+    
+    if (wakecontrol_isPpMeasurementInvalid()) {
+        /* in case there are conditions which corrupt the PP resistance measurement, we discard the measurement,
+        and just live with the last valid value. Strategy: Better an old, valid value than a corrupted value. */
+        return;
+    }
 
     /* Step 1: Provide the raw AD value (0 to 4095) for analysis purposes. */
     Param::SetFloat(Param::AdcProximityPilot, temp);

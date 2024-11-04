@@ -289,6 +289,7 @@ extern "C" int main(void)
         {
             PrintTrace();
         }
+        t.Run();
     }
 
     return 0;

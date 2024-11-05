@@ -514,10 +514,7 @@ void evaluateGetSwCnf(void)
    {
       sourceMac[i] = myethreceivebuffer[6+i];
    }
-#if 1
-   sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
-   printf("For MAC %s ", strMac);
-#endif
+
    verLen = myethreceivebuffer[22];
    if ((verLen>0) && (verLen<0x30))
    {
@@ -533,7 +530,11 @@ void evaluateGetSwCnf(void)
          strVersion[i]=x;
       }
       strVersion[i] = 0;
-      printf("software version %s\r\n", strVersion);
+      if (Param::GetInt(Param::logging) & MOD_HOMEPLUG) {
+         sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
+         printf("For MAC %s ", strMac);
+         printf("software version %s\r\n", strVersion);
+      }
       //addToTrace("For " + strMac + " the software version is " + String(strVersion));
 #ifdef DEMO_SHOW_MODEM_SOFTWARE_VERSION_ON_OLED
       StringVersion = String(strVersion);
@@ -557,7 +558,8 @@ uint8_t isEvseModemFound(void)
 
 void slac_enterState(int n)
 {
-   printf("[%d] [PEVSLAC] from %d entering %d\r\n", rtc_get_ms(), pevSequenceState, n);
+   if (Param::GetInt(Param::logging) & MOD_HOMEPLUG)
+      printf("[%d] [PEVSLAC] from %d entering %d\r\n", rtc_get_ms(), pevSequenceState, n);
    pevSequenceState = n;
    pevSequenceCyclesInState = 0;
 }

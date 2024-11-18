@@ -364,6 +364,23 @@ static void triggerActions()
         - Button?
         - What if DutyCycle goes away? (e.g. PV charging turning off over night)
         - What if proximity goes away? (e.g. no lock installed) */
+
+        uint8_t cpDuty_Percent = (uint8_t)Param::GetFloat(Param::ControlPilotDuty);
+        if(cpDuty_Percent<3)
+        {
+            Param::SetInt(Param::PortState,0x1); //set PortState to Plugged In due to dropping way of valid CP - !!!Should not interfere with CCS charging
+            if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetInt(Param::AllowUnlock) == 1)//only unlock if allowed and lock is locked
+            {
+                if(Param::GetInt(Param::ActuatorTest) == 0)
+                {
+                    hardwareInterface_triggerConnectorUnlocking();
+                }
+            }
+        }
+        else if(Param::GetFloat(Param::CableCurrentLimit) < 1)
+        {
+            Param::SetInt(Param::PortState,0x0); //set PortState to Idle NO PP or CP present thus unplugged
+        }
     }
 }
 

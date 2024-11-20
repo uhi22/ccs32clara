@@ -43,7 +43,7 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 33
+//Next param id (increase when adding new parameter!): 34
 //Next value Id: 2035
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
@@ -65,12 +65,13 @@
     PARAM_ENTRY(CAT_CHARGE,  MaxVoltage,           "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxCurrent,           "A",       0,      500,    125,    19  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxPinTemperature,    "°C",      0,      120,    70,     31  ) \
+    PARAM_ENTRY(CAT_CHARGE,  AcChargeControl,      ACMODES,   0,      1,      0,      33  ) \
     TESTP_ENTRY(CAT_CHARGE,  TargetVoltage,        "V",       0,      1000,   0,      3   ) \
     TESTP_ENTRY(CAT_CHARGE,  ChargeCurrent,        "A",       0,      500,    0,      4   ) \
     TESTP_ENTRY(CAT_CHARGE,  soc,                  "%",       0,      100,    0,      5   ) \
     TESTP_ENTRY(CAT_CHARGE,  BatteryVoltage,       "V",       0,      1000,   0,      6   ) \
     TESTP_ENTRY(CAT_CHARGE,  enable,               OFFON,     0,      1,      1,      23  ) \
-    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           ACOBCSTT,  0,      2,      0,      29  ) \
+    TESTP_ENTRY(CAT_CHARGE,  AcObcState,           ACOBCSTT,  0,      5,      0,      29  ) \
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
@@ -84,7 +85,7 @@
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
     VALUE_ENTRY(TempLimitedCurrent, "A",             2027 ) \
     VALUE_ENTRY(EVTargetCurrent,    "A",             2029 ) \
-    VALUE_ENTRY(LimitationReason,   LIMITATIONREASONS, 2028 ) \
+    VALUE_ENTRY(LimitationReason,   LIMITREASONS,    2028 ) \
     VALUE_ENTRY(InletVoltage,       "V",             2007 ) \
     VALUE_ENTRY(EvseMaxCurrent,     "A",             2008 ) \
     VALUE_ENTRY(EvseMaxVoltage,     "V",             2009 ) \
@@ -107,7 +108,7 @@
     VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \
     VALUE_ENTRY(checkpoint,         "dig",           2015 ) \
     VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
-    VALUE_ENTRY(CanAwake,            OFFON,          2032 ) \
+    VALUE_ENTRY(CanAwake,           OFFON,          2032 ) \
     VALUE_ENTRY(ButtonPushed,       OFFON,           2033 ) \
     VALUE_ENTRY(cpuload,            "%",             2094 )
 
@@ -120,13 +121,14 @@
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
+#define ACMODES      "0=CANRemoteControlled, 1=StandAlone"
 #define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat, 8=EvseMalfunction"
 #define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp, 4=LevelOnValidPP"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
-#define LIMITATIONREASONS  "0=None, 1=InletHot"
+#define LIMITREASONS "0=None, 1=InletHot"
 #define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down"
 #define ACOBCSTT     "0=Idle, 1=Lock, 2=Charging, 3=Pause, 4=Complete, 5=Error"
 #define PORTSTAT     "0=Idle, 1=PluggedIn, 2=Ready, 3=ChargingAC, 4=ChargingDC, 5=Stopping, 6=Unlock, 7=PortError"
@@ -153,6 +155,24 @@ enum acobcstate
    OBC_PAUSE = 3,
    OBC_COMPLETE = 4,
    OBC_ERROR = 5
+};
+
+enum portstate
+{
+   PS_IDLE = 0,
+   PS_PLUGGEDIN = 1,
+   PS_READY = 2,
+   PS_CHARGING_AC = 3,
+   PS_CHARGING_DC = 4,
+   PS_STOPPING = 5,
+   PS_UNLOCK = 6,
+   PS_PORTERROR = 7
+};
+
+enum acmodes
+{
+   ACM_CANCONTROLLED = 0,
+   ACM_STANDALONE = 1
 };
 
 enum _wakeupfuncs

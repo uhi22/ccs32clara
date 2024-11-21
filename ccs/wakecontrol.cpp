@@ -2,8 +2,8 @@
 
 #include "ccs32_globals.h"
 
-uint8_t wakecontrol_timer;
-uint8_t allowSleep;
+static uint8_t wakecontrol_timer;
+static uint8_t allowSleep;
 
 #define WAKECONTROL_TIMER_MAX 20 /* 20*100ms = 2s cycle time */
 #define WAKECONTROL_TIMER_NEARLY_EXPIRED 5 /* 5*100ms = 500ms keep_power_on activation time */
@@ -15,7 +15,7 @@ uint8_t wakecontrol_isPpMeasurementInvalid(void) {
        Discussion was here: https://openinverter.org/forum/viewtopic.php?p=75629#p75629 */
     if (allowSleep==0) return 0; /* as long as we are not ready to sleep, the PP is valid. */
     if (wakecontrol_timer<=WAKECONTROL_TIMER_END_OF_CYCLE__MEASUREMENT_ALLOWED) return 0; /* valid because cyclic pulsing and sufficient propagation delay */
-    return 1; /* no PP measurement possible, because corrupted by KEEP_POWER_ON. */ 
+    return 1; /* no PP measurement possible, because corrupted by KEEP_POWER_ON. */
 }
 
 void wakecontrol_mainfunction(void) /* runs in 100ms cycle */
@@ -33,15 +33,12 @@ void wakecontrol_mainfunction(void) /* runs in 100ms cycle */
 
         //WAKEUP_ONVALIDPP implies that we use PP for wakeup. So as long as PP is valid
         //Do not clear the supply pin as that will skew the PP measurement and we can't turn off anyway
-        if(!CanActive)
+        if ((Param::GetInt(Param::WakeupPinFunc) & WAKEUP_ONVALIDPP) == 0 || !ppValid)
         {
-            if ((Param::GetInt(Param::WakeupPinFunc) & WAKEUP_ONVALIDPP) == 0 || !ppValid)
-            {
-                allowSleep = 1;
-            }
+            allowSleep = !CanActive;
         }
     }
-    
+
     if (!allowSleep) {
         DigIo::keep_power_on.Set(); /* Keep the power on */
         wakecontrol_timer=WAKECONTROL_TIMER_MAX;
@@ -63,7 +60,7 @@ void wakecontrol_mainfunction(void) /* runs in 100ms cycle */
             /* just in the middle of the counting */
             wakecontrol_timer--;
         }
-        
+
     }
 }
 

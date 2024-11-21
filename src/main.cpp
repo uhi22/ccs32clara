@@ -131,14 +131,7 @@ static void Ms100Task(void)
     }
 
     //CAN bus a sleep !!!to decide
-    if(Param::GetInt(Param::CanWatchdog) < (CAN_TIMEOUT-10))
-    {
-        Param::SetInt(Param::CanAwake,1);
-    }
-    else
-    {
-        Param::SetInt(Param::CanAwake,0);
-    }
+    Param::SetInt(Param::CanAwake, (rtc_get_counter_val() - can->GetLastRxTimestamp()) < 200);
     wakecontrol_mainfunction();
     canMap->SendAll();
 }
@@ -178,6 +171,8 @@ static void SetMacAddress()
 /** This function is called when the user changes a parameter */
 void Param::Change(Param::PARAM_NUM paramNum)
 {
+    static bool enableReceived = false;
+
     switch (paramNum)
     {
     case Param::CanSpeed:
@@ -190,12 +185,14 @@ void Param::Change(Param::PARAM_NUM paramNum)
         //Charge current is the single most important item that must be constantly updated
         //by the BMS or VCU. Whenever it is updated we feed the dog
         //When it is no longer updated the dog will bark and stop the charge session
-        Param::SetInt(Param::CanWatchdog, 0);
+        if (enableReceived)
+            Param::SetInt(Param::CanWatchdog, 0);
+        enableReceived = false; //this will be set back to true once enable is received again
         break;
     case Param::enable:
-        //by the BMS or VCU. Whenever it is updated we feed the dog
+        //by the BMS or VCU. Whenever this AND ChargeCurrent is updated we feed the dog
         //When it is no longer updated the dog will bark and stop the charge session
-        Param::SetInt(Param::CanWatchdog, 0);
+        enableReceived = true;
         break;
     default:
         //Handle general parameter changes here. Add paramNum labels for handling specific parameters

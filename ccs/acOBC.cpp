@@ -33,18 +33,6 @@ static uint8_t debounceCounterFivePercentPwm = 0;
 static bool ButtonStopAC = false;
 static uint16_t StopAcTimer = 0;
 
-void acOBC_activateBasicAcCharging(void)
-{
-    /* This function shall be called if we detect a CP PWM in the "analog range". */
-    isBasicAcCharging = 1;
-}
-
-void acOBC_deactivateBasicAcCharging(void)
-{
-    /* This function shall be called whenever there is an hint that we are connected to something else that an analog AC charger. */
-    isBasicAcCharging = 0;
-}
-
 uint8_t acOBC_isBasicAcCharging(void)
 {
     return isBasicAcCharging;
@@ -56,7 +44,7 @@ static void evaluateProximityPilot(void)
     float U_refAdc, U_pull, U_meas, Rv, R;
     float iLimit;
     uint8_t blPlugPresent;
-    
+
     if (wakecontrol_isPpMeasurementInvalid()) {
         /* in case there are conditions which corrupt the PP resistance measurement, we discard the measurement,
         and just live with the last valid value. Strategy: Better an old, valid value than a corrupted value. */
@@ -138,7 +126,7 @@ static void evaluateProximityPilot(void)
         iLimit = 63; /* 100ohm is 63A */
     }
     Param::SetFloat(Param::CableCurrentLimit, iLimit);
-    
+
     /* Step 4: Provide the PlugPresent (e.g. for the feature "driveInhibit") */
     blPlugPresent = R < 5000; /* Design decision: The plug is considered as present if the PP resistance is below 5kohms. */
     Param::SetInt(Param::PlugPresent, blPlugPresent); /* 0: no plug present. 1: plug detected. */
@@ -218,7 +206,12 @@ void acOBC_calculateCurrentLimit(void)
         }
         else
         {
-            acOBC_deactivateBasicAcCharging(); /* in case we have stable 5% PWM, this is no basic AC charging. */
+            isBasicAcCharging = false;  /* in case we have stable 5% PWM, this is no basic AC charging. */
+
+            // If the charger or VCU does not communicate with Foccci go straight to complete mode
+            // as soon as an invalid/zero AC current limit is detected
+            if (Param::GetInt(Param::AcChargeControl) == ACM_STANDALONE)
+               Param::SetInt(Param::AcObcState, OBC_COMPLETE);
         }
     }
     else if (cpDuty_Percent<10)
@@ -256,7 +249,12 @@ void acOBC_calculateCurrentLimit(void)
         }
         else
         {
-            acOBC_activateBasicAcCharging(); /* in case of valid AC charging PWM, we switch to the AC charging mode. */
+            isBasicAcCharging = true; /* in case of valid AC charging PWM, we switch to the AC charging mode. */
+
+            // If the charger or VCU does not communicate with Foccci go straight to charge mode
+            // as soon as valid AC current limit is detected
+            if (Param::GetInt(Param::AcChargeControl) == ACM_STANDALONE)
+               Param::SetInt(Param::AcObcState, OBC_CHARGE);
         }
     }
     else
@@ -283,7 +281,7 @@ static void triggerActions()
             }
         }
 
-        if(ButtonStopAC == true)
+        if (ButtonStopAC)
         {
             requestedState = OBC_IDLE; // force idle when we are stopped due to button
             StopAcTimer++; //increase very 100ms
@@ -306,9 +304,9 @@ static void triggerActions()
         case OBC_IDLE:
             //always turn off stateB here
             hardwareInterface_setStateB();
-            Param::SetInt(Param::PortState,0x2); //set PortState to Ready, combined with CP current limit signaling to VCU for AC charging
+            Param::SetInt(Param::PortState, PS_READY); //set PortState to Ready, combined with CP current limit signaling to VCU for AC charging
             //Unlock connector when coming here from any other state
-            if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetInt(Param::AllowUnlock) == 1)//only unlock if allowed and lock is locked
+            if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetBool(Param::AllowUnlock))//only unlock if allowed and lock is locked
             {
                 if(Param::GetInt(Param::ActuatorTest) == 0)
                 {
@@ -328,7 +326,7 @@ static void triggerActions()
         case OBC_PAUSE:
             break;
         case OBC_ERROR:
-            Param::SetInt(Param::PortState,0x7); //set PortState to Error
+            Param::SetInt(Param::PortState, PS_PORTERROR); //set PortState to Error
             break;
         case OBC_COMPLETE:
             //always turn off stateC in these states
@@ -347,7 +345,7 @@ static void triggerActions()
             if(Param::GetInt(Param::LockState) == LOCK_CLOSED) //Do not allow Request for AC power without locking
             {
                 hardwareInterface_setStateC();
-                Param::SetInt(Param::PortState,0x3); //set PortState to AcCharging
+                Param::SetInt(Param::PortState, PS_CHARGING_AC); //set PortState to AcCharging
             }
             break;
         }
@@ -368,8 +366,8 @@ static void triggerActions()
         uint8_t cpDuty_Percent = (uint8_t)Param::GetFloat(Param::ControlPilotDuty);
         if(cpDuty_Percent<3)
         {
-            Param::SetInt(Param::PortState,0x1); //set PortState to Plugged In due to dropping way of valid CP - !!!Should not interfere with CCS charging
-            if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetInt(Param::AllowUnlock) == 1)//only unlock if allowed and lock is locked
+            Param::SetInt(Param::PortState, PS_PLUGGEDIN); //set PortState to Plugged In due to dropping way of valid CP - !!!Should not interfere with CCS charging
+            if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetBool(Param::AllowUnlock))//only unlock if allowed and lock is locked
             {
                 if(Param::GetInt(Param::ActuatorTest) == 0)
                 {
@@ -379,7 +377,7 @@ static void triggerActions()
         }
         else if(Param::GetFloat(Param::CableCurrentLimit) < 1)
         {
-            Param::SetInt(Param::PortState,0x0); //set PortState to Idle NO PP or CP present thus unplugged
+            Param::SetInt(Param::PortState, PS_IDLE); //set PortState to Idle NO PP or CP present thus unplugged
         }
     }
 }

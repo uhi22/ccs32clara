@@ -269,6 +269,7 @@ extern "C" int main(void)
 
     //backward compatibility, version 4 was the first to support the "stream" command
     Param::SetInt(Param::version, 4);
+    Param::SetInt(Param::LockState, LOCK_OPEN); //Assume lock open
     Param::Change(Param::PARAM_LAST); //Call callback one for general parameter propagation
     //Now all our main() does is running the terminal
     //All other processing takes place in the scheduler or other interrupt service routines

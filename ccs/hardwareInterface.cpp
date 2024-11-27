@@ -5,7 +5,7 @@
 #define CP_DUTY_VALID_TIMER_MAX 3 /* after 3 cycles with 30ms, we consider the CP connection lost, if
                                      we do not see PWM interrupts anymore */
 #define CONTACTOR_CYCLES_FOR_FULL_PWM (33/5) /* 33 cycles per second. ~200ms should be more than enough, see https://github.com/uhi22/ccs32clara/issues/22  */
-#define CONTACTOR_CYCLES_SEQUENTIAL (33/3) /* ~300ms delay from one contactor to the other, to avoid high peak current consumption. https://github.com/uhi22/ccs32clara/issues/22  */ 
+#define CONTACTOR_CYCLES_SEQUENTIAL (33/3) /* ~300ms delay from one contactor to the other, to avoid high peak current consumption. https://github.com/uhi22/ccs32clara/issues/22  */
 
 static float cpDuty_Percent;
 static uint8_t cpDutyValidTimer;
@@ -14,12 +14,10 @@ static int8_t ContactorOnTimer1, ContactorOnTimer2;
 static uint16_t dutyContactor1, dutyContactor2;
 static uint8_t LedBlinkDivider;
 static LockStt lockRequest;
-static LockStt lockState;
-static LockStt lockTarget = LOCK_UNKNOWN;
+static LockStt lockState = LOCK_OPEN; //In case we have no feedback we assume the lock is open
 static uint16_t lockTimer;
 static bool actuatorTestRunning = false;
 
-static uint8_t actuatorTest_lockUnlockState; /* status of the actuator test for connector locking/unlocking */
 #define ACTUTEST_STATUS_IDLE 0
 #define ACTUTEST_STATUS_LOCKING_TRIGGERED 1
 #define ACTUTEST_STATUS_UNLOCKING_TRIGGERED 2
@@ -362,26 +360,20 @@ static void hwIf_handleLockRequests()
    }
    else //lock drive without feedback
    {
-      pwmNeg = 0;
-      pwmPos = CONTACT_LOCK_PERIOD;
       /* connector lock just time-based, without evaluating the feedback */
-      if (lockRequest == LOCK_OPEN && lockTarget == LOCK_UNKNOWN)
+      if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
       {
-         addToTrace(MOD_HWIF, "unlocking the connector");
+         //addToTrace(MOD_HWIF, "unlocking the connector");
          Param::SetInt(Param::LockState, LOCK_OPENING);
          hardwareInteface_setHBridge(pwmNeg, pwmPos);
-         lockTimer = Param::GetInt(Param::LockRunTime) / 30; /* in 30ms steps */
-         lockTarget = LOCK_OPEN;
-         lockRequest = LOCK_UNKNOWN;
+         lockTimer = lockTimer == 0 ? Param::GetInt(Param::LockRunTime) / 30 : lockTimer; /* in 30ms steps */
       }
-      if (lockRequest == LOCK_CLOSED && lockTarget == LOCK_UNKNOWN)
+      if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
       {
-         addToTrace(MOD_HWIF, "locking the connector");
+         //addToTrace(MOD_HWIF, "locking the connector");
          Param::SetInt(Param::LockState, LOCK_CLOSING);
          hardwareInteface_setHBridge(pwmPos, pwmNeg);
-         lockTimer = Param::GetInt(Param::LockRunTime) / 30; /* in 30ms steps */
-         lockTarget = LOCK_CLOSED;
-         lockRequest = LOCK_UNKNOWN;
+         lockTimer = lockTimer == 0 ? Param::GetInt(Param::LockRunTime) / 30 : lockTimer; /* in 30ms steps */
       }
       if (lockTimer>0)
       {
@@ -391,9 +383,8 @@ static void hwIf_handleLockRequests()
          {
             /* if the time is expired, we turn off the lock motor and report the new state */
             hardwareInteface_setHBridge(0, 0);
-            Param::SetInt(Param::LockState, lockTarget);
-            lockState = lockTarget;
-			lockTarget = LOCK_UNKNOWN;
+            lockState = lockRequest;
+            Param::SetInt(Param::LockState, lockState);
             addToTrace(MOD_HWIF, "finished connector (un)locking");
          }
       }
@@ -495,46 +486,35 @@ static void ActuatorTest()
    switch (Param::GetInt(Param::ActuatorTest))
    {
    case TEST_CLOSELOCK:
-      if (actuatorTest_lockUnlockState!=ACTUTEST_STATUS_LOCKING_TRIGGERED) {
-        hardwareInterface_triggerConnectorLocking();
-        actuatorTest_lockUnlockState = ACTUTEST_STATUS_LOCKING_TRIGGERED;
-      } /* else: locking was already triggered, do not trigger the same again, to avoid permanent actuation. */
+      hardwareInterface_triggerConnectorLocking();
+      Param::SetInt(Param::ActuatorTest, TEST_NONE); //Make sure we only trigger the test once
       break;
    case TEST_OPENLOCK:
-      if (actuatorTest_lockUnlockState!=ACTUTEST_STATUS_UNLOCKING_TRIGGERED) {
-        hardwareInterface_triggerConnectorUnlocking();
-        actuatorTest_lockUnlockState = ACTUTEST_STATUS_UNLOCKING_TRIGGERED;
-      } /* else: unlocking was already triggered, do not trigger the same again, to avoid permanent actuation. */
+      hardwareInterface_triggerConnectorUnlocking();
+      Param::SetInt(Param::ActuatorTest, TEST_NONE); //Make sure we only trigger the test once
       break;
    case TEST_CONTACTOR:
       hardwareInterface_setPowerRelayOn();
-      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_STATEC:
       hardwareInterface_setStateC();
-      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_LEDGREEN:
       hardwareInterface_setRGB(2);
-      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_LEDRED:
       hardwareInterface_setRGB(1);
-      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    case TEST_LEDBLUE:
       hardwareInterface_setRGB(4);
-      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       break;
    default: /* all cases including TEST_NONE are stopping the actuator test */
       blTestOngoing = false;
-      actuatorTest_lockUnlockState = ACTUTEST_STATUS_IDLE;
       if (actuatorTestRunning) {
         /* If the actuator test is just ending, then perform a clean up:
            Return everything to default state. LEDs are reset anyway as soon as we leave test mode. */
         hardwareInterface_setPowerRelayOff();
         hardwareInterface_setStateB();
-        hardwareInterface_triggerConnectorUnlocking();
         actuatorTestRunning = false;
       } else {
         /* actuator test was not ongoing and is not requested -> nothing to do */

@@ -308,19 +308,13 @@ static void triggerActions()
             //Unlock connector when coming here from any other state
             if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetBool(Param::AllowUnlock))//only unlock if allowed and lock is locked
             {
-                if(Param::GetInt(Param::ActuatorTest) == 0)
-                {
-                    hardwareInterface_triggerConnectorUnlocking();
-                }
+                hardwareInterface_triggerConnectorUnlocking();
             }
             break;
         case OBC_LOCK:
             if (Param::GetInt(Param::LockState) == LOCK_OPEN)//only trigger is lock is open
             {
-                if(Param::GetInt(Param::ActuatorTest) == 0)
-                {
-                    hardwareInterface_triggerConnectorLocking();
-                }
+                hardwareInterface_triggerConnectorLocking();
             }
             break;
         case OBC_PAUSE:

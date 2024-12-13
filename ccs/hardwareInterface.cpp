@@ -106,8 +106,15 @@ int16_t hardwareInterface_getChargingTargetCurrent(void)
        Param::SetInt(Param::LimitationReason, LIMITATIONREASON_INLET_HOT);
        iEVTarget = iLimit;
    } else {
-       /* no limitation */
-       Param::SetInt(Param::LimitationReason, LIMITATIONREASON_NONE);
+       int chargerLimit = Param::GetInt(Param::EvseMaxCurrent);
+
+       //Who is the weaker link in the chain - battery or charger?
+       if (iOriginalDemand >= chargerLimit)
+           Param::SetInt(Param::LimitationReason, LIMITATIONREASON_CHARGER);
+       else
+           Param::SetInt(Param::LimitationReason, LIMITATIONREASON_BATTERY);
+
+       /* no temperature limitation */
        iEVTarget = iOriginalDemand;
    }
    Param::SetInt(Param::EVTargetCurrent, iEVTarget);

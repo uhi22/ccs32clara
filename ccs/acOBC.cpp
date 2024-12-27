@@ -217,22 +217,22 @@ void acOBC_calculateCurrentLimit(void)
     else if (cpDuty_Percent<10)
     {
         evseCurrentLimitAC_A = 6; /* from 8% to 10% we have 6A */
-        debounceCounterFivePercentPwm=0;
+        debounceCounterFivePercentPwm = 0;
     }
     else if (cpDuty_Percent<85)
     {
-        evseCurrentLimitAC_A = (uint8_t)((float)cpDuty_Percent*0.6); /* from 10% to 85% the limit is 0.6A*PWM */
-        debounceCounterFivePercentPwm=0;
+        evseCurrentLimitAC_A = cpDuty_Percent * 0.6f; /* from 10% to 85% the limit is 0.6A*PWM */
+        debounceCounterFivePercentPwm = 0;
     }
     else  if (cpDuty_Percent<=96)
     {
-        evseCurrentLimitAC_A = (uint8_t)((float)(cpDuty_Percent-64)*2.5); /* from 80% to 96% the limit is 2.5A*(PWM-64) */
-        debounceCounterFivePercentPwm=0;
+        evseCurrentLimitAC_A = (cpDuty_Percent - 64) * 2.5f; /* from 80% to 96% the limit is 2.5A*(PWM-64) */
+        debounceCounterFivePercentPwm = 0;
     }
     else if (cpDuty_Percent<=97)
     {
         evseCurrentLimitAC_A = 80; /* 80A */
-        debounceCounterFivePercentPwm=0;
+        debounceCounterFivePercentPwm = 0;
     }
     else
     {
@@ -267,6 +267,7 @@ static void triggerActions()
 {
     Param::SetInt(Param::BasicAcCharging, isBasicAcCharging);
 
+    //This means we are seeing CP PWM > 8%
     if (isBasicAcCharging)
     {
         uint8_t requestedState = Param::GetInt(Param::AcObcState);
@@ -293,10 +294,7 @@ static void triggerActions()
 
         if (!Param::GetBool(Param::enable)) //If the param enable is not set do not allow charging of any kind
         {
-            if(requestedState != OBC_IDLE)
-            {
-                requestedState = OBC_IDLE;
-            }
+            requestedState = OBC_IDLE;
         }
 
         switch (requestedState)
@@ -327,14 +325,9 @@ static void triggerActions()
             hardwareInterface_setStateB();
             break;
         case OBC_CHARGE:
-            //Keep stateC on here
-            //hardwareInterface_setStateC();
             if (Param::GetInt(Param::LockState) == LOCK_OPEN)//only trigger is lock is open
             {
-                if(Param::GetInt(Param::ActuatorTest) == 0)
-                {
-                    hardwareInterface_triggerConnectorLocking();
-                }
+                hardwareInterface_triggerConnectorLocking();
             }
             if(Param::GetInt(Param::LockState) == LOCK_CLOSED) //Do not allow Request for AC power without locking
             {
@@ -346,32 +339,26 @@ static void triggerActions()
 
         previousStateBasicAcCharging = requestedState;
     }
-    else
+    else if (Param::GetBool(Param::PlugPresent) && Param::GetInt(Param::opmode) == 0) //Plugged in and no CCS going
     {
-
-
-        //!!! CHECK IF NOT DC CHARGING this will be ran every 100ms
-        /* Todo: maybe need some cleanup actions here, if we left the AC charging. E.g. unlocking the connector? */
-        /* Todo: how do we exit AC charging?
-        - Button?
-        - What if DutyCycle goes away? (e.g. PV charging turning off over night)
-        - What if proximity goes away? (e.g. no lock installed) */
-
-        uint8_t cpDuty_Percent = (uint8_t)Param::GetFloat(Param::ControlPilotDuty);
+        Param::SetInt(Param::PortState, PS_PLUGGEDIN); //set PortState to Plugged In due to dropping way of valid CP - !!!Should not interfere with CCS charging
+        int cpDuty_Percent = Param::GetInt(Param::ControlPilotDuty);
         if(cpDuty_Percent<3)
         {
-            Param::SetInt(Param::PortState, PS_PLUGGEDIN); //set PortState to Plugged In due to dropping way of valid CP - !!!Should not interfere with CCS charging
             if (Param::GetInt(Param::LockState) == LOCK_CLOSED && Param::GetBool(Param::AllowUnlock))//only unlock if allowed and lock is locked
             {
-                if(Param::GetInt(Param::ActuatorTest) == 0)
-                {
-                    hardwareInterface_triggerConnectorUnlocking();
-                }
+                hardwareInterface_triggerConnectorUnlocking();
             }
         }
-        else if(Param::GetFloat(Param::CableCurrentLimit) < 1)
+    }
+    //Not Plugged in and no CCS going (just to make sure we don't interfere with CCS if PP is not connected)
+    else if (!Param::GetBool(Param::PlugPresent) && Param::GetInt(Param::opmode) == 0)
+    {
+        hardwareInterface_setStateB();
+        Param::SetInt(Param::PortState, PS_IDLE);
+        if (Param::GetInt(Param::LockState) == LOCK_CLOSED) //always unlock when nothing is plugged in
         {
-            Param::SetInt(Param::PortState, PS_IDLE); //set PortState to Idle NO PP or CP present thus unplugged
+            hardwareInterface_triggerConnectorUnlocking();
         }
     }
 }

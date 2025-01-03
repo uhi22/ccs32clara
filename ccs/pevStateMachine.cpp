@@ -565,6 +565,7 @@ static void stateFunctionWaitForChargeParameterDiscoveryResponse(void)
    }
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
+	  Param::SetInt(Param::PortState, PS_CHARGING_DC);  //Set Port state to DC Fastcharging -as this is an attempt !!! TBC if this is the right place for it.
       addToTrace(MOD_PEV, "In state WaitForChargeParameterDiscoveryResponse");
       routeDecoderInputData();
       projectExiConnector_decode_DinExiDocument();

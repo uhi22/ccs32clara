@@ -342,8 +342,13 @@ static void hwIf_handleLockRequests()
 {
    int lockOpenThresh = Param::GetInt(Param::LockOpenThresh);
    int lockClosedThresh = Param::GetInt(Param::LockClosedThresh);
-   int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - (CONTACT_LOCK_PERIOD * Param::GetInt(Param::LockDuty)) / 100;
-   int pwmPos = (CONTACT_LOCK_PERIOD / 2) + (CONTACT_LOCK_PERIOD * Param::GetInt(Param::LockDuty)) / 100;
+   /* calculation examples:
+     1. LockDuty = 0%, means "no lock control". pwmNeg and pwmPos have the identical value. No effective voltage.
+     2. LockDuty = 50%, means "half battery voltage". pwmNeg has 0.25*periode, pwmPos has 0.75*periode. Effective 50% voltage.
+     3. LockDuty = 100%, means "full voltage". pwmNeg is 0. pwmPos = periode. Effective 100% voltage.
+     Discussion reference: https://openinverter.org/forum/viewtopic.php?p=79675#p79675 */
+   int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
+   int pwmPos = (CONTACT_LOCK_PERIOD / 2) + ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
 
    //Lock drive based on actuator feedback
    if (lockClosedThresh != lockOpenThresh)

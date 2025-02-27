@@ -44,7 +44,7 @@
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 34
-//Next value Id: 2035
+//Next value Id: 2036
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
@@ -110,6 +110,7 @@
     VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
     VALUE_ENTRY(CanAwake,           OFFON,           2032 ) \
     VALUE_ENTRY(ButtonPushed,       OFFON,           2033 ) \
+    VALUE_ENTRY(VehicleSideIsoMonAllowed, OFFON,     2035 ) \
     VALUE_ENTRY(cpuload,            "%",             2094 )
 
 

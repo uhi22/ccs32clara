@@ -10,7 +10,7 @@
 #define TCP_TRANSMIT_PACKET_LEN 200
 
 #define TCP_ACK_TIMEOUT_MS 100 /* if for 100ms no ACK is received, we retry the transmission */
-#define TCP_MAX_NUMBER_OF_RETRANSMISSIONS 10
+#define TCP_MAX_NUMBER_OF_RETRANSMISSIONS 40 /* allow 40 retries with 100ms cycle, to bridge 4 seconds of broken line. */
 #define TCP_ACTIVITY_TIMER_START (5*33) /* 5 seconds */
 
 #define TCP_STATE_CLOSED 0

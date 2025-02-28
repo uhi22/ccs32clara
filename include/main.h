@@ -41,8 +41,6 @@ void Error_Handler(void);
 #define OUT_CONTACTOR_CONTROL1_GPIO_Port GPIOB
 #define OUT_CONTACTOR_CONTROL2_Pin GPIO_PIN_6
 #define OUT_CONTACTOR_CONTROL2_GPIO_Port GPIOB
-#define OUT_LED_ALIVE_Pin GPIO_PIN_7
-#define OUT_LED_ALIVE_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

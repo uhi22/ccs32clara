@@ -347,6 +347,7 @@ static void composeSlacMatchReq(void)
 static void evaluateSlacMatchCnf(void)
 {
    uint8_t i;
+   uint8_t blIsDestinationMacForMe;
    // The SLAC_MATCH.CNF contains the NMK and the NID.
    // We extract this information, so that we can use it for the CM_SET_KEY afterwards.
    // References: https://github.com/qca/open-plc-utils/blob/master/slac/evse_cm_slac_match.c
@@ -358,25 +359,36 @@ static void evaluateSlacMatchCnf(void)
    }
    else
    {
-      addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received SLAC_MATCH.CNF");
-      for (i=0; i<7; i++)   // NID has 7 bytes
-      {
-         NID[i] = myethreceivebuffer[85+i];
+      blIsDestinationMacForMe = 1;
+      for (i=0; i<6; i++) {
+          /* compare all 6 bytes of the destination MAC with our own MAC */
+          if (myethreceivebuffer[i] != myMAC[i]) {
+              blIsDestinationMacForMe = 0; /* any mismatch -> it is not for me */
+          }
       }
-      for (i=0; i<16; i++)
-      {
-         NMK[i] = myethreceivebuffer[93+i];
-      }
-      addToTrace(MOD_HOMEPLUG, "[PEVSLAC] From SlacMatchCnf, got network membership key (NMK) and NID.");
-      // use the extracted NMK and NID to set the key in the adaptor:
-      composeSetKey();
-      addToTrace(MOD_HOMEPLUG, "[PEVSLAC] Checkpoint170: transmitting CM_SET_KEY.REQ");
-      setCheckpoint(170);
-      publishStatus("SLAC", "set key");
-      myEthTransmit();
-      if (pevSequenceState==STATE_WAITING_FOR_SLAC_MATCH_CNF)   // we were waiting for finishing the SLAC_MATCH.CNF and SET_KEY.REQ
-      {
-         slac_enterState(STATE_WAITING_FOR_RESTART2);
+      if (!blIsDestinationMacForMe) {
+          addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received SLAC_MATCH.CNF but with foreign destination MAC. Ignoring.");
+      } else {
+          addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received SLAC_MATCH.CNF");
+          for (i=0; i<7; i++)   // NID has 7 bytes
+          {
+             NID[i] = myethreceivebuffer[85+i];
+          }
+          for (i=0; i<16; i++)
+          {
+             NMK[i] = myethreceivebuffer[93+i];
+          }
+          addToTrace(MOD_HOMEPLUG, "[PEVSLAC] From SlacMatchCnf, got network membership key (NMK) and NID.");
+          // use the extracted NMK and NID to set the key in the adaptor:
+          composeSetKey();
+          addToTrace(MOD_HOMEPLUG, "[PEVSLAC] Checkpoint170: transmitting CM_SET_KEY.REQ");
+          setCheckpoint(170);
+          publishStatus("SLAC", "set key");
+          myEthTransmit();
+          if (pevSequenceState==STATE_WAITING_FOR_SLAC_MATCH_CNF)   // we were waiting for finishing the SLAC_MATCH.CNF and SET_KEY.REQ
+          {
+             slac_enterState(STATE_WAITING_FOR_RESTART2);
+          }
       }
    }
 }
@@ -502,10 +514,7 @@ void evaluateGetSwCnf(void)
    {
       sourceMac[i] = myethreceivebuffer[6+i];
    }
-#if 1
-   sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
-   printf("For MAC %s ", strMac);
-#endif
+
    verLen = myethreceivebuffer[22];
    if ((verLen>0) && (verLen<0x30))
    {
@@ -521,7 +530,11 @@ void evaluateGetSwCnf(void)
          strVersion[i]=x;
       }
       strVersion[i] = 0;
-      printf("software version %s\r\n", strVersion);
+      if (Param::GetInt(Param::logging) & MOD_HOMEPLUG) {
+         sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
+         printf("For MAC %s ", strMac);
+         printf("software version %s\r\n", strVersion);
+      }
       //addToTrace("For " + strMac + " the software version is " + String(strVersion));
 #ifdef DEMO_SHOW_MODEM_SOFTWARE_VERSION_ON_OLED
       StringVersion = String(strVersion);
@@ -545,7 +558,8 @@ uint8_t isEvseModemFound(void)
 
 void slac_enterState(int n)
 {
-   printf("[%d] [PEVSLAC] from %d entering %d\r\n", rtc_get_ms(), pevSequenceState, n);
+   if (Param::GetInt(Param::logging) & MOD_HOMEPLUG)
+      printf("[%d] [PEVSLAC] from %d entering %d\r\n", rtc_get_ms(), pevSequenceState, n);
    pevSequenceState = n;
    pevSequenceCyclesInState = 0;
 }

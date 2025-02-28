@@ -10,13 +10,13 @@
 
 #define DIG_IO_LIST \
     DIG_IO_ENTRY(spics,       GPIOA, GPIO4,  PinMode::OUTPUT)   \
-    DIG_IO_ENTRY(led_out,     GPIOB, GPIO7,  PinMode::OUTPUT)   \
+    DIG_IO_ENTRY(led_alive,     GPIOB, GPIO7,  PinMode::OUTPUT)   \
     DIG_IO_ENTRY(statec_out,  GPIOB, GPIO4,  PinMode::OUTPUT)   \
     DIG_IO_ENTRY(red_out,     GPIOB, GPIO2,  PinMode::OUTPUT)   \
     DIG_IO_ENTRY(green_out,   GPIOB, GPIO10, PinMode::OUTPUT)   \
     DIG_IO_ENTRY(blue_out,    GPIOB, GPIO11, PinMode::OUTPUT)   \
     DIG_IO_ENTRY(contact_out, GPIOA, GPIO1,  PinMode::OUTPUT)   \
-    DIG_IO_ENTRY(wakeup_out,  GPIOB, GPIO0,  PinMode::OUTPUT)   \
-    DIG_IO_ENTRY(supply_out,  GPIOB, GPIO1,  PinMode::OUTPUT)   \
+    DIG_IO_ENTRY(trigger_wakeup,  GPIOB, GPIO0,  PinMode::OUTPUT)   \
+    DIG_IO_ENTRY(keep_power_on,   GPIOB, GPIO1,  PinMode::OUTPUT)   \
 
 #endif // PinMode_PRJ_H_INCLUDED

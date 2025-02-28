@@ -55,7 +55,7 @@
 #include "pushbutton.h"
 #include "hardwareVariants.h"
 #include "acOBC.h"
-
+#include "wakecontrol.h"
 
 #define PRINT_JSON 0
 
@@ -72,9 +72,7 @@ static CanSdo* canSdo;
 
 static void Ms100Task(void)
 {
-    static uint32_t lastValidCp = 0;
-
-    DigIo::led_out.Toggle();
+    DigIo::led_alive.Toggle();
     //The boot loader enables the watchdog, we have to reset it
     //at least every 2s or otherwise the controller is hard reset.
     iwdg_reset();
@@ -133,37 +131,8 @@ static void Ms100Task(void)
     }
 
     //CAN bus a sleep !!!to decide
-    if(Param::GetInt(Param::CanWatchdog) < (CAN_TIMEOUT-10))
-    {
-        Param::SetInt(Param::CanAwake,1);
-    }
-    else
-    {
-        Param::SetInt(Param::CanAwake,0);
-    }
-
-
-    if (Param::GetInt(Param::ControlPilotDuty) > 3)
-        lastValidCp = rtc_get_counter_val();
-
-    //If no frequency on CP shut down after 10s
-    if ((rtc_get_counter_val() - lastValidCp) > 1000)
-    {
-        bool ppValid = Param::GetInt(Param::ResistanceProxPilot) < 2000;
-
-        bool CanActive = Param::GetInt(Param::CanAwake);
-
-        //WAKEUP_ONVALIDPP implies that we use PP for wakeup. So as long as PP is valid
-        //Do not clear the supply pin as that will skew the PP measurement and we can't turn off anyway
-        if(!CanActive)
-        {
-            if ((Param::GetInt(Param::WakeupPinFunc) & WAKEUP_ONVALIDPP) == 0 || !ppValid)
-            {
-                DigIo::supply_out.Clear();
-            }
-        }
-    }
-
+    Param::SetInt(Param::CanAwake, (rtc_get_counter_val() - can->GetLastRxTimestamp()) < 200);
+    wakecontrol_mainfunction();
     canMap->SendAll();
 }
 
@@ -202,6 +171,8 @@ static void SetMacAddress()
 /** This function is called when the user changes a parameter */
 void Param::Change(Param::PARAM_NUM paramNum)
 {
+    static bool enableReceived = false;
+
     switch (paramNum)
     {
     case Param::CanSpeed:
@@ -214,12 +185,14 @@ void Param::Change(Param::PARAM_NUM paramNum)
         //Charge current is the single most important item that must be constantly updated
         //by the BMS or VCU. Whenever it is updated we feed the dog
         //When it is no longer updated the dog will bark and stop the charge session
-        Param::SetInt(Param::CanWatchdog, 0);
+        if (enableReceived)
+            Param::SetInt(Param::CanWatchdog, 0);
+        enableReceived = false; //this will be set back to true once enable is received again
         break;
     case Param::enable:
-        //by the BMS or VCU. Whenever it is updated we feed the dog
+        //by the BMS or VCU. Whenever this AND ChargeCurrent is updated we feed the dog
         //When it is no longer updated the dog will bark and stop the charge session
-        Param::SetInt(Param::CanWatchdog, 0);
+        enableReceived = true;
         break;
     default:
         //Handle general parameter changes here. Add paramNum labels for handling specific parameters
@@ -261,7 +234,7 @@ extern "C" int main(void)
     write_bootloader_pininit(); //Instructs boot loader to initialize certain pins
     gpio_primary_remap(AFIO_MAPR_SWJ_CFG_JTAG_OFF_SW_ON, AFIO_MAPR_TIM3_REMAP_FULL_REMAP | AFIO_MAPR_TIM2_REMAP_FULL_REMAP);
 
-    DigIo::supply_out.Set(); //Make sure board stays awake
+    wakecontrol_init(); //Make sure board stays awake
 
     hardwareInterface_setStateB();
     hw_evaluateHardwareVariants();
@@ -296,6 +269,8 @@ extern "C" int main(void)
 
     //backward compatibility, version 4 was the first to support the "stream" command
     Param::SetInt(Param::version, 4);
+    Param::SetInt(Param::LockState, LOCK_OPEN); //Assume lock open
+    Param::SetInt(Param::VehicleSideIsoMonAllowed, 1); /* isolation monitoring on vehicle side is allowed per default */
     Param::Change(Param::PARAM_LAST); //Call callback one for general parameter propagation
     //Now all our main() does is running the terminal
     //All other processing takes place in the scheduler or other interrupt service routines
@@ -313,6 +288,7 @@ extern "C" int main(void)
         {
             PrintTrace();
         }
+        t.Run();
     }
 
     return 0;

@@ -62,6 +62,8 @@
 		<Unit filename="ccs/temperatures.h" />
 		<Unit filename="ccs/udpChecksum.cpp" />
 		<Unit filename="ccs/udpChecksum.h" />
+		<Unit filename="ccs/wakecontrol.cpp" />
+		<Unit filename="ccs/wakecontrol.h" />
 		<Unit filename="exi/BitInputStream.c">
 			<Option compilerVar="CC" />
 		</Unit>

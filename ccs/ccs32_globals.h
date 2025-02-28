@@ -35,6 +35,7 @@
 #include "hwinit.h"
 #include "errormessage.h"
 #include "my_string.h"
+#include "wakecontrol.h"
 
 /* temporary stubs */
 #define publishStatus(x, y)

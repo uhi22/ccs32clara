@@ -41,7 +41,7 @@ uint8_t acOBC_isBasicAcCharging(void)
 static void evaluateProximityPilot(void)
 {
     float temp = AnaIn::pp.Get();
-    float U_refAdc, U_pull, U_meas, Rv, R;
+    float U_refAdc, U_pull_effective, U_meas, Rv, R, U_pull_supply, U_diode_drop;
     float iLimit;
     uint8_t blPlugPresent;
 
@@ -65,7 +65,7 @@ static void evaluateProximityPilot(void)
     {
         /* The old Foccci (until revision 4.1) */
         U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
-        U_pull = 3.3; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
+        U_pull_effective = 3.3; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
         U_meas = U_refAdc * temp/4095; /* The measured voltage on the PP. In this case no divider. */
         Rv = 1000.0; /* The effective pull-up resistor. In this case 1k. */
         /* Todo: verify on hardware */
@@ -74,21 +74,58 @@ static void evaluateProximityPilot(void)
     {
         /* The newer Foccci with 330 ohm pull-up to 5V and a 3k pull-down and a 47k by 47k divider */
         U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
-        U_pull = 4.5; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
+        U_pull_effective = 4.5; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
         U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
         Rv = 1 / (1/330.0 + 1/3000.0); /* The effective pull-up resistor. In this case 330ohm parallel 3000ohm. */
         /* tested on hand-wired Foccci. Calculation is ok. */
     }
-    else
+    else if (Param::GetInt(Param::ppvariant) == 2)
     {
-        /* The newer Foccci with 330 ohm pull-up to 5V and no pull-down and a 47k by 47k divider */
+        /* The Foccci 4.5 with 330 ohm pull-up to 5V and no pull-down and a 47k by 47k divider */
         U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
-        U_pull = 5.0; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
+        U_pull_effective = 5.0; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. In this case, no pull-down at all. */
         U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
         Rv = 330.0; /* The effective pull-up resistor. In this case 330ohm. */
         /* Todo: verify on hardware */
     }
-    if (U_meas>(U_pull-0.5))
+    else if (Param::GetInt(Param::ppvariant) == 3)
+    {
+        /* The Foccci 5 with 330 ohm pull-up to 5V via diode and no pull-down and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull_supply = 5.1; /* [V] The voltage of the 5V regulator. */
+        U_diode_drop = 0.2; /* [V] The drop on the diode D20. This depends on the current.
+                                    ~120mV with 100k load, 260mV with 150ohm load. */
+        U_pull_effective = U_pull_supply-U_diode_drop; /* volt. The effective pull-up-voltage, created by pull-up and pull-down resistor. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 330.0; /* The effective pull-up resistor. In this case 330ohm. */
+        /* tested on hardware. okay within 10% resistance tolerance at 1k5 and 150ohm. */
+    }
+    else if (Param::GetInt(Param::ppvariant) == 4)
+    {
+        /* The Foccci 5 with 330 ohm pull-up to 5V via diode and 2k7 pull-down in the inlet and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull_supply = 5.1; /* [V] The voltage of the 5V regulator. */
+        U_diode_drop = 0.2; /* [V] The drop on the diode D20. This depends on the current.
+                                    ~120mV with 100k load, 260mV with 150ohm load. */
+        U_pull_effective = (U_pull_supply-U_diode_drop) * 2700.0 / (2700.0+330.0); /* [V] The effective pull-up-voltage, created by pull-up and pull-down resistor. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 330.0; /* The effective pull-up resistor. In this case 330ohm. */
+        /* tested on hardware. okay within 10% resistance tolerance at 1k5 and 150ohm. */
+    }
+    else
+    {
+        /* The Foccci 5 with 330 ohm pull-up to 5V via diode and 3k3 internal pull-down (R60) and a 47k by 47k divider */
+        U_refAdc = 3.3; /* volt. The full-scale voltage of the ADC */
+        U_pull_supply = 5.1; /* [V] The voltage of the 5V regulator. */
+        U_diode_drop = 0.2; /* [V] The drop on the diode D20. This depends on the current.
+                                    ~120mV with 100k load, 260mV with 150ohm load. */
+        U_pull_effective = (U_pull_supply-U_diode_drop) * 3300.0 / (3300.0+330.0); /* [V] The effective pull-up-voltage, created by pull-up and pull-down resistor. */
+        U_meas = U_refAdc * temp/4095 * (47.0+47.0)/47.0; /* The measured voltage on the PP. In this case the ADC gets half the PP voltage. */
+        Rv = 330.0; /* The effective pull-up resistor. In this case 330ohm. */
+        /* to be tested */
+    }
+    
+    if (U_meas>(U_pull_effective-0.5))
     {
         /* The voltage on PP is quite high. We do not calculate the R, because this may lead to overflow. Just
            give a high resistance value. */
@@ -102,7 +139,7 @@ static void evaluateProximityPilot(void)
     else
     {
         /* calculate the resistance of the PP */
-        R = Rv / (U_pull/U_meas-1);
+        R = Rv / (U_pull_effective/U_meas-1);
     }
     Param::SetFloat(Param::ResistanceProxPilot, R);
 

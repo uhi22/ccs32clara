@@ -130,7 +130,7 @@
 #define CAT_COMM     "Communication"
 #define CAT_TEST     "Testing"
 #define LIMITREASONS "0=None, 1=Charger, 2=Battery, 3=InletHot"
-#define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down"
+#define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down, 3=Foccci5_330up_no_down, 4=Foccci5_330up_2700down, 5=Foccci5_330up_3300down"
 #define ACOBCSTT     "0=Idle, 1=Lock, 2=Charging, 3=Pause, 4=Complete, 5=Error"
 #define PORTSTAT     "0=Idle, 1=PluggedIn, 2=Ready, 3=ChargingAC, 4=ChargingDC, 5=Stopping, 6=Unlock, 7=PortError"
 

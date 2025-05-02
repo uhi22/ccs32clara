@@ -44,11 +44,12 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 34
-//Next value Id: 2036
+//Next param id (increase when adding new parameter!): 35
+//Next value Id: 2037
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
-    PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    10,     1   ) \
+    PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    2.63,   1   ) \
+    PARAM_ENTRY(CAT_HARDWARE,UdcOffset,            "dig",     0,      4000,   572,    34  ) \
     PARAM_ENTRY(CAT_HARDWARE,EconomizerDuty,       "%",       0,      100,    100,    7   ) \
     PARAM_ENTRY(CAT_HARDWARE,InletVtgSrc,          IVSRC,     0,      2,      0,      8   ) \
     PARAM_ENTRY(CAT_HARDWARE,LockDuty,             "%",      -100,    100,    30,     14  ) \
@@ -87,6 +88,7 @@
     VALUE_ENTRY(TempLimitedCurrent, "A",             2027 ) \
     VALUE_ENTRY(EVTargetCurrent,    "A",             2029 ) \
     VALUE_ENTRY(LimitationReason,   LIMITREASONS,    2028 ) \
+    VALUE_ENTRY(AdcInletVoltage,    "dig",           2036 ) \
     VALUE_ENTRY(InletVoltage,       "V",             2007 ) \
     VALUE_ENTRY(EvseMaxCurrent,     "A",             2008 ) \
     VALUE_ENTRY(EvseMaxVoltage,     "V",             2009 ) \

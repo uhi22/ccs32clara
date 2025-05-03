@@ -3,6 +3,10 @@
 /* Global Defines */
 #define CAN_TIMEOUT 30 //multiples of 100ms
 
+#define ACTUTEST_STATUS_IDLE 0
+#define ACTUTEST_STATUS_LOCKING_TRIGGERED 1
+#define ACTUTEST_STATUS_UNLOCKING_TRIGGERED 2
+
 enum LockStt
 {
    LOCK_UNKNOWN, LOCK_OPEN, LOCK_CLOSED, LOCK_OPENING, LOCK_CLOSING
@@ -10,11 +14,14 @@ enum LockStt
 
 /* Global Variables */
 
+
 /* Global Functions */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+extern void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k);
+extern void hwIf_handleLockRequests(void);
 extern void hardwareInterface_setStateB(void);
 extern void hardwareInterface_setStateC(void);
 extern void hardwareInterface_setPowerRelayOff(void);

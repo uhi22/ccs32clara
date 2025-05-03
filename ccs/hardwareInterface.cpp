@@ -13,14 +13,8 @@ static uint8_t ContactorRequest;
 static int8_t ContactorOnTimer1, ContactorOnTimer2;
 static uint16_t dutyContactor1, dutyContactor2;
 static uint8_t LedBlinkDivider;
-static LockStt lockRequest;
-static LockStt lockState = LOCK_OPEN; //In case we have no feedback we assume the lock is open
-static uint16_t lockTimer;
 static bool actuatorTestRunning = false;
 
-#define ACTUTEST_STATUS_IDLE 0
-#define ACTUTEST_STATUS_LOCKING_TRIGGERED 1
-#define ACTUTEST_STATUS_UNLOCKING_TRIGGERED 2
 
 void hardwareInterface_showOnDisplay(char*, char*, char*)
 {
@@ -175,7 +169,7 @@ void hardwareInterface_setRGB(uint8_t rgb)
       DigIo::blue_out.Clear();
 }
 
-static void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k)
+void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k)
 {
    /* Controls the H-bridge */
    /* PC6 (TIM3 ch 1) and PC7 (TIM3 ch 2) are controlling the two sides of the bridge */
@@ -197,21 +191,6 @@ static void hardwareInteface_setContactorPwm(uint16_t out1duty_4k, uint16_t out2
    /*Assign the new dutyCycle count to the capture compare register.*/
    timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT1_CHAN, out1duty_4k);
    timer_set_oc_value(CONTACT_LOCK_TIMER, CONTACT2_CHAN, out2duty_4k);
-}
-
-void hardwareInterface_triggerConnectorLocking(void)
-{
-   lockRequest = LOCK_CLOSED;
-}
-
-void hardwareInterface_triggerConnectorUnlocking(void)
-{
-   lockRequest = LOCK_OPEN;
-}
-
-uint8_t hardwareInterface_isConnectorLocked(void)
-{
-   return lockState == LOCK_CLOSED; /* no matter whether we have a real lock or just a simulated one, always give the state. */
 }
 
 uint8_t hardwareInterface_getPowerRelayConfirmation(void)
@@ -251,59 +230,6 @@ void hardwareInterface_resetSimulation(void)
    hwIf_simulatedSoc_0p01 = 2000; /* 20% */
 }
 
-static LockStt hwIf_getLockState()
-{
-   static int lastFeedbackValue = 0;
-   static uint32_t lockClosedTime = 0;
-   int lockOpenThresh = Param::GetInt(Param::LockOpenThresh);
-   int lockClosedThresh = Param::GetInt(Param::LockClosedThresh);
-   int feedbackValue = AnaIn::lockfb.Get();
-   LockStt state = LOCK_UNKNOWN;
-
-   if (lockClosedThresh > lockOpenThresh) //Feedback value when closed is greater than when open
-   {
-      if (feedbackValue > lockClosedThresh)
-         state = LOCK_CLOSED;
-      else if (feedbackValue < lockOpenThresh)
-         state = LOCK_OPEN;
-      else if ((feedbackValue - lastFeedbackValue) < 10)
-         state = LOCK_OPENING;
-      else if ((feedbackValue - lastFeedbackValue) > 10)
-         state = LOCK_CLOSING;
-   }
-   else if (lockClosedThresh < lockOpenThresh)
-   {
-      if (feedbackValue < lockClosedThresh)
-         state = LOCK_CLOSED;
-      else if (feedbackValue > lockOpenThresh)
-         state = LOCK_OPEN;
-      else if ((feedbackValue - lastFeedbackValue) > 10)
-         state = LOCK_OPENING;
-      else if ((feedbackValue - lastFeedbackValue) < 10)
-         state = LOCK_CLOSING;
-   }
-   else
-   {
-      //When both threshold sit at the same value, disable lock feedback
-      state = LOCK_UNKNOWN;
-   }
-
-   if (state == LOCK_CLOSED)
-   {
-      lockClosedTime = rtc_get_ms();
-   }
-
-   bool isOpening = (rtc_get_ms() - lockClosedTime) < (uint32_t)(Param::GetInt(Param::LockRunTime));
-   //Report lock opening at least x ms after we left closed state
-   if (state == LOCK_OPEN && isOpening)
-   {
-      state = LOCK_OPENING;
-   }
-
-   lastFeedbackValue = feedbackValue;
-
-   return state;
-}
 
 static void hwIf_handleContactorRequests(void)
 {
@@ -336,71 +262,6 @@ static void hwIf_handleContactorRequests(void)
       if (ContactorOnTimer2<127) ContactorOnTimer2++;
    }
    hardwareInteface_setContactorPwm(dutyContactor1, dutyContactor2);
-}
-
-static void hwIf_handleLockRequests()
-{
-   int lockOpenThresh = Param::GetInt(Param::LockOpenThresh);
-   int lockClosedThresh = Param::GetInt(Param::LockClosedThresh);
-   /* calculation examples:
-     1. LockDuty = 0%, means "no lock control". pwmNeg and pwmPos have the identical value. No effective voltage.
-     2. LockDuty = 50%, means "half battery voltage". pwmNeg has 0.25*periode, pwmPos has 0.75*periode. Effective 50% voltage.
-     3. LockDuty = 100%, means "full voltage". pwmNeg is 0. pwmPos = periode. Effective 100% voltage.
-     Discussion reference: https://openinverter.org/forum/viewtopic.php?p=79675#p79675 */
-   int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
-   int pwmPos = (CONTACT_LOCK_PERIOD / 2) + ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
-
-   //Lock drive based on actuator feedback
-   if (lockClosedThresh != lockOpenThresh)
-   {
-      lockState = hwIf_getLockState();
-      if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
-      {
-         Param::SetInt(Param::LockState, LOCK_OPENING);
-         hardwareInteface_setHBridge(pwmNeg, pwmPos);
-      }
-      else if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
-      {
-         Param::SetInt(Param::LockState, LOCK_CLOSING);
-         hardwareInteface_setHBridge(pwmPos, pwmNeg);
-      }
-      else
-      {
-         Param::SetInt(Param::LockState, lockState);
-         hardwareInteface_setHBridge(0, 0);
-      }
-   }
-   else //lock drive without feedback
-   {
-      /* connector lock just time-based, without evaluating the feedback */
-      if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
-      {
-         //addToTrace(MOD_HWIF, "unlocking the connector");
-         Param::SetInt(Param::LockState, LOCK_OPENING);
-         hardwareInteface_setHBridge(pwmNeg, pwmPos);
-         lockTimer = lockTimer == 0 ? Param::GetInt(Param::LockRunTime) / 30 : lockTimer; /* in 30ms steps */
-      }
-      if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
-      {
-         //addToTrace(MOD_HWIF, "locking the connector");
-         Param::SetInt(Param::LockState, LOCK_CLOSING);
-         hardwareInteface_setHBridge(pwmPos, pwmNeg);
-         lockTimer = lockTimer == 0 ? Param::GetInt(Param::LockRunTime) / 30 : lockTimer; /* in 30ms steps */
-      }
-      if (lockTimer>0)
-      {
-         /* as long as the timer runs, the PWM on the lock motor is active */
-         lockTimer--;
-         if (lockTimer==0)
-         {
-            /* if the time is expired, we turn off the lock motor and report the new state */
-            hardwareInteface_setHBridge(0, 0);
-            lockState = lockRequest;
-            Param::SetInt(Param::LockState, lockState);
-            addToTrace(MOD_HWIF, "finished connector (un)locking");
-         }
-      }
-   }
 }
 
 static void handleApplicationRGBLeds(void)

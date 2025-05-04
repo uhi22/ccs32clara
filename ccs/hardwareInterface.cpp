@@ -359,12 +359,10 @@ static void ActuatorTest()
    switch (Param::GetInt(Param::ActuatorTest))
    {
    case TEST_CLOSELOCK:
-      hardwareInterface_triggerConnectorLocking();
-      Param::SetInt(Param::ActuatorTest, TEST_NONE); //Make sure we only trigger the test once
+      hwIf_connectorLockActuatorTest(IOCONTROL_LOCK_CLOSE);
       break;
    case TEST_OPENLOCK:
-      hardwareInterface_triggerConnectorUnlocking();
-      Param::SetInt(Param::ActuatorTest, TEST_NONE); //Make sure we only trigger the test once
+      hwIf_connectorLockActuatorTest(IOCONTROL_LOCK_OPEN);
       break;
    case TEST_CONTACTOR:
       hardwareInterface_setPowerRelayOn();
@@ -388,6 +386,7 @@ static void ActuatorTest()
            Return everything to default state. LEDs are reset anyway as soon as we leave test mode. */
         hardwareInterface_setPowerRelayOff();
         hardwareInterface_setStateB();
+        hwIf_connectorLockActuatorTest(IOCONTROL_LOCK_RETURN_CONTROL_TO_ECU);
         actuatorTestRunning = false;
       } else {
         /* actuator test was not ongoing and is not requested -> nothing to do */
@@ -478,6 +477,12 @@ void hardwareInterface_cyclic(void)
 
    /* Run actuator test only if we are not connected to a charger */
    blActuatorTestAllowed = (Param::GetFloat(Param::ResistanceProxPilot)>2000) && (Param::GetInt(Param::opmode) == 0);
+   /* make an exception: the lock/unlock actuator test shall always be possible, to be able to test also
+      while the plug is inserted. */
+   if ((Param::GetInt(Param::ActuatorTest)==TEST_CLOSELOCK) ||
+       (Param::GetInt(Param::ActuatorTest)==TEST_OPENLOCK)) { 
+       blActuatorTestAllowed = 1;
+   }
    if (blActuatorTestAllowed) {
        /* actuator test is allowed -> run it */
        ActuatorTest();

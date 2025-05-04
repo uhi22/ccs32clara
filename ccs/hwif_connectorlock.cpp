@@ -31,17 +31,56 @@
 
 static LockStt lockRequest;
 static LockStt lockState = LOCK_OPEN; //In case we have no feedback we assume the lock is open
+static LockStt lastApplicationLockRequest;
 static uint16_t lockTimer;
+static uint8_t oldkindOfIoControl = IOCONTROL_LOCK_RETURN_CONTROL_TO_ECU;
 
-
-void hardwareInterface_triggerConnectorLocking(void)
-{
-   lockRequest = LOCK_CLOSED;
+/* The lock control via actuator test. */
+void hwIf_connectorLockActuatorTest(uint8_t kindOfControl) {
+  if (kindOfControl != oldkindOfIoControl) {
+      switch (kindOfControl) {
+          case IOCONTROL_LOCK_CLOSE:
+            /* The actuator test shall control the lock motor, no matter what the state is.
+               So we say: it is unlocked and shall be locked. */
+            lockState = LOCK_OPEN;
+            lockRequest = LOCK_CLOSED;
+            break;
+          case IOCONTROL_LOCK_OPEN:
+            /* The actuator test shall control the lock motor, no matter what the state is.
+               So we say: it is locked and shall be unlocked. */
+            lockState = LOCK_CLOSED;
+            lockRequest = LOCK_OPEN;
+            break;
+          case IOCONTROL_LOCK_RETURN_CONTROL_TO_ECU:
+            /* End of the actuator test. Now the potentially stored request from the
+               application can be executed. */
+            lockRequest = lastApplicationLockRequest;
+            break;
+      }
+      oldkindOfIoControl = kindOfControl;
+  }
 }
 
+/* The locking via application. */
+void hardwareInterface_triggerConnectorLocking(void)
+{
+  if (oldkindOfIoControl == IOCONTROL_LOCK_RETURN_CONTROL_TO_ECU) {
+    /* only accept the control by the application, if no actuator test is ongoing. */
+    lockRequest = LOCK_CLOSED;
+  }
+  /* even if the actuator test is blocking the application request, store it for later execution. */
+  lastApplicationLockRequest = LOCK_CLOSED;
+}
+
+/* The unlocking via application. */
 void hardwareInterface_triggerConnectorUnlocking(void)
 {
-   lockRequest = LOCK_OPEN;
+  if (oldkindOfIoControl == IOCONTROL_LOCK_RETURN_CONTROL_TO_ECU) {
+    /* only accept the control by the application, if no actuator test is ongoing. */
+    lockRequest = LOCK_OPEN;
+  }
+  /* even if the actuator test is blocking the application request, store it for later execution. */
+  lastApplicationLockRequest = LOCK_OPEN;
 }
 
 uint8_t hardwareInterface_isConnectorLocked(void)

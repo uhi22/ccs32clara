@@ -744,7 +744,7 @@ static void stateFunctionWaitForPreChargeResponse(void)
             else
             {
                // In real-world-case, turn the power relay on.
-               hardwareInterface_setPowerRelayOn();
+               hardwareInterface_setPowerRelaysOn(BOTH_CONTACTORS);
                pev_DelayCycles = 15; /* 15*30ms, explanation see below */
                pev_enterState(PEV_STATE_WaitForContactorsClosed);
             }
@@ -944,7 +944,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
          if (!pev_isBulbOn)
          {
             addToTrace(MOD_PEV, "This is a light bulb demo. Turning-on the bulb when 2s in the main charging loop.");
-            hardwareInterface_setPowerRelayOn();
+            hardwareInterface_setPowerRelaysOn(BOTH_CONTACTORS);
             pev_isBulbOn = 1;
          }
       }

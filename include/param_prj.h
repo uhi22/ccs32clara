@@ -76,7 +76,7 @@
     TESTP_ENTRY(CAT_CHARGE,  AcObcState,           ACOBCSTT,  0,      5,      0,      29  ) \
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
-    TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      7,      0,      9   ) \
+    TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      9,      0,      9   ) \
     PARAM_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
@@ -120,7 +120,7 @@
 /***** Enum String definitions *****/
 #define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
 #define LOCK         "0=None, 1=Open, 2=Closed, 3=Opening, 4=Closing"
-#define ACTEST       "0=None, 1=OpenLock, 2=CloseLock, 3=Contactor, 4=LedRed, 5=LedGreen, 6=LedBlue, 7=StateC"
+#define ACTEST       "0=None, 1=OpenLock, 2=CloseLock, 3=Contactor1, 4=Contactor2, 5=ContactorBoth, 6=LedRed, 7=LedGreen, 8=LedBlue, 9=StateC"
 #define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 512=SDP, 1024=EthTraffic, 2047=All, 959=AllButTraffic"
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
@@ -220,7 +220,9 @@ enum _actuatortest
    TEST_NONE,
    TEST_OPENLOCK,
    TEST_CLOSELOCK,
-   TEST_CONTACTOR,
+   TEST_CONTACTOR1,
+   TEST_CONTACTOR2,
+   TEST_CONTACTORBOTH,
    TEST_LEDRED,
    TEST_LEDGREEN,
    TEST_LEDBLUE,

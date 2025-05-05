@@ -126,9 +126,9 @@ uint8_t hardwareInterface_getIsAccuFull(void)
    return Param::GetInt(Param::soc) > 95;
 }
 
-void hardwareInterface_setPowerRelayOn(void)
+void hardwareInterface_setPowerRelaysOn(uint8_t contactorSelection)
 {
-   ContactorRequest=1;
+   ContactorRequest=contactorSelection; /* 1 or 2 for single contactor, or 3 for both contactors */
 }
 
 void hardwareInterface_setPowerRelayOff(void)
@@ -233,35 +233,39 @@ void hardwareInterface_resetSimulation(void)
 
 static void hwIf_handleContactorRequests(void)
 {
-   if (ContactorRequest==0)
-   {
-      /* request is "OFF" -> set PWM immediately to zero for both contactors */
-      dutyContactor1 = 0;
-      dutyContactor2 = 0;
-      ContactorOnTimer1=0;
-      ContactorOnTimer2=-CONTACTOR_CYCLES_SEQUENTIAL; /* start the second contactor with a negative time, so that it will be later. */
-   }
-   else
-   {
+  if (ContactorRequest & 1) {
+      /* contactor 1 is requested */
       /* request is "ON". Start with 100% PWM, and later switch to economizer mode */
       if (ContactorOnTimer1==0) {
          dutyContactor1 = CONTACT_LOCK_PERIOD;
          addToTrace(MOD_HWIF, "Turning on charge port contactor 1");
       }
+      if (ContactorOnTimer1>=CONTACTOR_CYCLES_FOR_FULL_PWM) {
+         dutyContactor1 = (Param::GetInt(Param::EconomizerDuty) * CONTACT_LOCK_PERIOD) / 100; /* reduced duty */
+      }
+      if (ContactorOnTimer1<127) ContactorOnTimer1++;
+  } else {
+      /* request is "OFF" -> set PWM immediately to zero */
+      dutyContactor1 = 0;
+      ContactorOnTimer1=0;
+  }
+  
+  if (ContactorRequest & 2) {
+      /* contactor 2 is requested */
       if (ContactorOnTimer2==0) {
          dutyContactor2 = CONTACT_LOCK_PERIOD;
          addToTrace(MOD_HWIF, "Turning on charge port contactor 2");
       }
-      if (ContactorOnTimer1>=CONTACTOR_CYCLES_FOR_FULL_PWM) {
-         dutyContactor1 = (Param::GetInt(Param::EconomizerDuty) * CONTACT_LOCK_PERIOD) / 100; /* reduced duty */
-      }
       if (ContactorOnTimer2>=CONTACTOR_CYCLES_FOR_FULL_PWM) {
          dutyContactor2 = (Param::GetInt(Param::EconomizerDuty) * CONTACT_LOCK_PERIOD) / 100; /* reduced duty */
       }
-      if (ContactorOnTimer1<127) ContactorOnTimer1++;
       if (ContactorOnTimer2<127) ContactorOnTimer2++;
-   }
-   hardwareInteface_setContactorPwm(dutyContactor1, dutyContactor2);
+  } else {
+      /* request is "OFF" -> set PWM immediately to zero */
+      dutyContactor2 = 0;
+      ContactorOnTimer2=-CONTACTOR_CYCLES_SEQUENTIAL; /* start the second contactor with a negative time, so that it will be later. */
+  }
+  hardwareInteface_setContactorPwm(dutyContactor1, dutyContactor2);
 }
 
 static void handleApplicationRGBLeds(void)
@@ -364,8 +368,14 @@ static void ActuatorTest()
    case TEST_OPENLOCK:
       hwIf_connectorLockActuatorTest(IOCONTROL_LOCK_OPEN);
       break;
-   case TEST_CONTACTOR:
-      hardwareInterface_setPowerRelayOn();
+   case TEST_CONTACTOR1:
+      hardwareInterface_setPowerRelaysOn(1);
+      break;
+   case TEST_CONTACTOR2:
+      hardwareInterface_setPowerRelaysOn(2);
+      break;
+   case TEST_CONTACTORBOTH:
+      hardwareInterface_setPowerRelaysOn(BOTH_CONTACTORS);
       break;
    case TEST_STATEC:
       hardwareInterface_setStateC();

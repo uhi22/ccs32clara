@@ -24,13 +24,15 @@ extern "C" {
 #define IOCONTROL_LOCK_CLOSE 1
 #define IOCONTROL_LOCK_OPEN 2
 
+#define BOTH_CONTACTORS 3
+
 extern void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k);
 extern void hwIf_connectorLockActuatorTest(uint8_t kindOfControl);
 extern void hwIf_handleLockRequests(void);
 extern void hardwareInterface_setStateB(void);
 extern void hardwareInterface_setStateC(void);
 extern void hardwareInterface_setPowerRelayOff(void);
-extern void hardwareInterface_setPowerRelayOn(void);
+extern void hardwareInterface_setPowerRelaysOn(uint8_t contactorSelection);
 extern void hardwareInterface_setRGB(uint8_t rgb);
 extern void hardwareInterface_triggerConnectorLocking(void);
 extern void hardwareInterface_triggerConnectorUnlocking(void);

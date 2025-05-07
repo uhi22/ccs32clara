@@ -87,37 +87,7 @@ static void Ms100Task(void)
     temperatures_calculateTemperatures();
     acOBC_mainfunction();
     hardwareInterface_WakeupOtherPeripherals();
-    
-    Param::SetFloat(Param::AdcInletVoltage, AnaIn::udc.Get());
-    switch (Param::GetInt(Param::InletVtgSrc))
-    {
-    case IVSRC_CHARGER:
-        Param::SetFixed(Param::InletVoltage, Param::Get(Param::EvseVoltage));
-        break;
-    case IVSRC_ANAIN:
-         /* Param::UdcOffset is the ADC value in case of zero high voltage.
-            In case of the muehlpower board discussed in
-            https://openinverter.org/forum/viewtopic.php?t=2474
-            this is 1.42V on Foccci connector pin.
-            Discussed here: https://github.com/uhi22/ccs32clara/issues/23.
-            We allow to show negative voltages, which really works with the
-            muehlpower board. The Foccci pin voltage in this case goes
-            below the "idle" of 1.42V which is ~573 digits.
-            Test table
-            UDC   UFocci  AdcInletVoltage InletVoltage
-              0V  1.42V      573dig        0V
-            500V  4.8V      1890dig        500V
-            The Gain parameter (UdcDivider) is (1890-573)/500V = 2.63 dig/V */
-         Param::SetFloat(Param::InletVoltage,
-                         (AnaIn::udc.Get() - Param::GetFloat(Param::UdcOffset)) / Param::GetFloat(Param::UdcDivider)
-                        );
-         break;
-        break;
-    default:
-    case IVSRC_CAN:
-        //Do nothing, value received via CAN map
-        break;
-    }
+    hwIf_handleInletVoltage();
 
     //Watchdog
     int wd = Param::GetInt(Param::CanWatchdog);

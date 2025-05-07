@@ -47,11 +47,6 @@ void hardwareInterface_simulateCharging(void)
    }
 }
 
-int16_t hardwareInterface_getInletVoltage(void)
-{
-   return Param::GetInt(Param::InletVoltage);
-}
-
 int16_t hardwareInterface_getAccuVoltage(void)
 {
    if ((Param::GetInt(Param::DemoVoltage)>=150) && (Param::GetInt(Param::DemoVoltage)<=250) && (Param::GetInt(Param::DemoControl)==DEMOCONTROL_STANDALONE))

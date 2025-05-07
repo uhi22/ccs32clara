@@ -44,14 +44,15 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 35
-//Next value Id: 2037
+//Next param id (increase when adding new parameter!): 36
+//Next value Id: 2039
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    2.63,   1   ) \
     PARAM_ENTRY(CAT_HARDWARE,UdcOffset,            "dig",     0,      4000,   572,    34  ) \
     PARAM_ENTRY(CAT_HARDWARE,EconomizerDuty,       "%",       0,      100,    100,    7   ) \
     PARAM_ENTRY(CAT_HARDWARE,InletVtgSrc,          IVSRC,     0,      2,      0,      8   ) \
+    PARAM_ENTRY(CAT_HARDWARE,InletVoltageTolerance,"V",       0,      1000,   20,     35  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockDuty,             "%",      -100,    100,    30,     14  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockRunTime,          "ms",      0,      10000,  1500,   13  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockClosedThresh,     "dig",     0,      4095,   0,      11  ) \
@@ -83,13 +84,15 @@
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
     VALUE_ENTRY(PortState,          PORTSTAT,        2030 ) \
     VALUE_ENTRY(BasicAcCharging,    OFFON,           2031 ) \
-    VALUE_ENTRY(EvseVoltage,        "V",             2006 ) \
+    VALUE_ENTRY(EvsePresentVoltage, "V",             2006 ) \
     VALUE_ENTRY(EvseCurrent,        "A",             2010 ) \
     VALUE_ENTRY(TempLimitedCurrent, "A",             2027 ) \
     VALUE_ENTRY(EVTargetCurrent,    "A",             2029 ) \
     VALUE_ENTRY(LimitationReason,   LIMITREASONS,    2028 ) \
     VALUE_ENTRY(AdcInletVoltage,    "dig",           2036 ) \
-    VALUE_ENTRY(InletVoltage,       "V",             2007 ) \
+    VALUE_ENTRY(InletVoltageHw,     "V",             2007 ) \
+    VALUE_ENTRY(InletVoltagePlaus,  "V",             2037 ) \
+    VALUE_ENTRY(InletVoltageDeviation, "V",          2038 ) \
     VALUE_ENTRY(EvseMaxCurrent,     "A",             2008 ) \
     VALUE_ENTRY(EvseMaxVoltage,     "V",             2009 ) \
     VALUE_ENTRY(ControlPilotDuty,   "%",             2012 ) \
@@ -126,7 +129,7 @@
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
 #define ACMODES      "0=CANRemoteControlled, 1=StandAlone"
-#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat, 8=EvseMalfunction"
+#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat, 8=EvseMalfunction,9=InletVoltageDeviation"
 #define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp, 4=LevelOnValidPP"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
@@ -204,7 +207,8 @@ enum _stopreasons
    STOP_REASON_ACCU_FULL,
    STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN,
    STOP_REASON_INLET_OVERHEAT,
-   STOP_REASON_CHARGER_EVSE_MALFUNCTION
+   STOP_REASON_CHARGER_EVSE_MALFUNCTION,
+   STOP_REASON_INLET_VOLTAGE_DEVIATION
 };
 
 enum _limitationreasons

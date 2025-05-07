@@ -29,6 +29,7 @@ extern "C" {
 extern void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k);
 extern void hwIf_connectorLockActuatorTest(uint8_t kindOfControl);
 extern void hwIf_handleLockRequests(void);
+extern void hwIf_handleInletVoltage(void);
 extern void hardwareInterface_setStateB(void);
 extern void hardwareInterface_setStateC(void);
 extern void hardwareInterface_setPowerRelayOff(void);
@@ -45,7 +46,6 @@ extern void hardwareInterface_simulateCharging(void);
 extern void hardwareInterface_resetSimulation(void);
 extern void hardwareInterface_simulatePreCharge(void);
 extern int16_t hardwareInterface_getAccuVoltage(void);
-extern int16_t hardwareInterface_getInletVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetVoltage(void);
 extern int16_t hardwareInterface_getChargingTargetCurrent(void);
 extern void hardwareInterface_WakeupOtherPeripherals();
@@ -53,6 +53,9 @@ extern void hardwareInterface_LogTheCpPpPhysicalData();
 extern uint8_t hardwareInterface_isPpMeasurementInvalid(void);
 extern void hardwareInterface_cyclic(void);
 extern void hardwareInterface_init(void);
+
+/* shared variables */
+extern uint8_t hwIf_isInletVoltageError;
 
 #ifdef __cplusplus
 }

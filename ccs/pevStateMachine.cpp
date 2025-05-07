@@ -662,7 +662,7 @@ static void stateFunctionWaitForCableCheckResponse(void)
       {
          rc = dinDocDec.V2G_Message.Body.CableCheckRes.ResponseCode;
          proc = dinDocDec.V2G_Message.Body.CableCheckRes.EVSEProcessing;
-         Param::SetInt(Param::EvseVoltage, 0);
+         Param::SetInt(Param::EvsePresentVoltage, 0);
          //addToTrace("The CableCheck result is " + String(rc) + " " + String(proc));
          // We have two cases here:
          // 1) The charger says "cable check is finished and cable ok", by setting ResponseCode=OK and EVSEProcessing=Finished.
@@ -719,15 +719,15 @@ static void stateFunctionWaitForPreChargeResponse(void)
       {
          addToTrace(MOD_PEV, "PreCharge aknowledge received.");
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.PreChargeRes.EVSEPresentVoltage);
-         Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
+         Param::SetFloat(Param::EvsePresentVoltage, EVSEPresentVoltage);
 
-         uint16_t inletVtg = hardwareInterface_getInletVoltage();
+         uint16_t inletVoltage = Param::GetInt(Param::InletVoltagePlaus);
          uint16_t batVtg = hardwareInterface_getAccuVoltage();
 
          if (Param::GetInt(Param::logging) & MOD_PEV) {
-             printf("PreCharge aknowledge received. Inlet %dV, accu %dV, uMin %dV\r\n", inletVtg, batVtg, EVSEMinimumVoltage);
+             printf("PreCharge aknowledge received. Inlet %dV, accu %dV, uMin %dV\r\n", inletVoltage, batVtg, EVSEMinimumVoltage);
          }
-         if ((ABS(inletVtg - batVtg) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) && (batVtg > EVSEMinimumVoltage))
+         if ((ABS(inletVoltage - batVtg) < PARAM_U_DELTA_MAX_FOR_END_OF_PRECHARGE) && (batVtg > EVSEMinimumVoltage))
          {
             addToTrace(MOD_PEV, "Difference between accu voltage and inlet voltage is small.");
             publishStatus("PreCharge done", "");
@@ -844,6 +844,7 @@ static void stateFunctionWaitForCurrentDownAfterStateB(void) {
 
 static void stateFunctionWaitForCurrentDemandResponse(void)
 {
+   int16_t uHw, uEvse, uDeviation;
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
       //addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
@@ -892,6 +893,20 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
             Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
          }
+         if (hwIf_isInletVoltageError) {
+             /* If we detect a strong deviation between the hardware-based inlet voltage and the EvsePresentVoltage reported by the
+                charging station, this indicates a severe hardware issue. Stop charging. */
+            addToTrace(MOD_PEV, "Large deviation of the inlet voltage. Stopping.");
+            uHw        = Param::Get(Param::InletVoltageHw);
+            uEvse      = Param::Get(Param::EvsePresentVoltage);
+            uDeviation = Param::Get(Param::InletVoltageDeviation);
+            printf("Hardware %dV, Evse %dV, Deviation %dV\r\n", uHw, uEvse, uDeviation);
+            pev_wasPowerDeliveryRequestedOn=0;
+            setCheckpoint(800);
+            pev_sendPowerDeliveryReq(0);
+            pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
+            Param::SetInt(Param::StopReason, STOP_REASON_INLET_VOLTAGE_DEVIATION);
+         }
          /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
          pev_isUserStopRequestOnCarSide = hardwareInterface_stopChargeRequested();
          if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
@@ -925,7 +940,7 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentVoltage);
             uint16_t evsePresentCurrent = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.CurrentDemandRes.EVSEPresentCurrent);
             //publishStatus("Charging", String(u) + "V", String(hardwareInterface_getSoc()) + "%");
-            Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
+            Param::SetFloat(Param::EvsePresentVoltage, EVSEPresentVoltage);
             Param::SetInt(Param::EvseCurrent, evsePresentCurrent);
             setCheckpoint(710);
             pev_sendCurrentDemandReq();
@@ -965,7 +980,7 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
            round will show a quite high voltage, because the contactors are just opening. We
            need to repeat the requests, until the voltage is at a non-dangerous level. */
          EVSEPresentVoltage = combineValueAndMultiplier(dinDocDec.V2G_Message.Body.WeldingDetectionRes.EVSEPresentVoltage);
-         Param::SetFloat(Param::EvseVoltage, EVSEPresentVoltage);
+         Param::SetFloat(Param::EvsePresentVoltage, EVSEPresentVoltage);
          if (Param::GetInt(Param::logging) & MOD_PEV) {
              printf("EVSEPresentVoltage %dV\r\n", (int)EVSEPresentVoltage);
          }

@@ -7,7 +7,9 @@
  There are different variants which we want to support.
  1. Time based locking, without evaluating the feedback
     The lock motor is actuated for a parametrizable time, no matter whether there is a feedback or not.
-    Parametrization: Set LockOpenThresh and LockClosedThresh to the same value (e.g. 0), and
+    Parametrization: (old)Set LockOpenThresh and LockClosedThresh to the same value (e.g. 0)
+                     (new)Set LockControlVariant = TimeBased_VirtualFeedback
+                     and
                      Set LockRunTime to the intended actuation time (e.g. 500ms).
  2. Locking with feedback
      We evaluate the lock feedback, by comparing the analog feedback value with the thresholds
@@ -30,6 +32,7 @@
 
 
 static LockStt lockRequest;
+static LockStt lockRequestOld=LOCK_UNKNOWN; /* old value is invalid at the beginning */
 static LockStt lockState = LOCK_OPEN; //In case we have no feedback we assume the lock is open
 static LockStt lastApplicationLockRequest;
 static uint16_t lockTimer;
@@ -98,18 +101,18 @@ static LockStt hwIf_getLockState()
    int feedbackValue = AnaIn::lockfb.Get();
    LockStt state = LOCK_UNKNOWN;
 
-   if (lockClosedThresh > lockOpenThresh) //Feedback value when closed is greater than when open
+   if (lockClosedThresh >= lockOpenThresh) //Feedback value when closed is greater than when open
    {
       if (feedbackValue > lockClosedThresh)
          state = LOCK_CLOSED;
       else if (feedbackValue < lockOpenThresh)
          state = LOCK_OPEN;
-      else if ((feedbackValue - lastFeedbackValue) < 10)
+      else if ((feedbackValue - lastFeedbackValue) < 10) /* purpose not clear. A static feedback "in the middle" would lead to "opening". */
          state = LOCK_OPENING;
       else if ((feedbackValue - lastFeedbackValue) > 10)
          state = LOCK_CLOSING;
    }
-   else if (lockClosedThresh < lockOpenThresh)
+   else /* (lockClosedThresh < lockOpenThresh) */
    {
       if (feedbackValue < lockClosedThresh)
          state = LOCK_CLOSED;
@@ -117,15 +120,15 @@ static LockStt hwIf_getLockState()
          state = LOCK_OPEN;
       else if ((feedbackValue - lastFeedbackValue) > 10)
          state = LOCK_OPENING;
-      else if ((feedbackValue - lastFeedbackValue) < 10)
+      else if ((feedbackValue - lastFeedbackValue) < 10) /* purpose not clear. A static feedback "in the middle" would lead to "closing". */
          state = LOCK_CLOSING;
    }
-   else
-   {
-      //When both threshold sit at the same value, disable lock feedback
-      state = LOCK_UNKNOWN;
-   }
 
+#ifdef UNCLEAR_WHAT_WAS_THE_INTENTION_OF_THIS
+    /* unclear intention.
+       Looks like a requirement "When changing from CLOSED to OPEN, there shall be a OPENING in between."
+       But why? Is it needed for a certain consumer of the state on CAN? Or for the internal logic of Clara?
+     */
    if (state == LOCK_CLOSED)
    {
       lockClosedTime = rtc_get_ms();
@@ -137,64 +140,66 @@ static LockStt hwIf_getLockState()
    {
       state = LOCK_OPENING;
    }
+#endif
 
    lastFeedbackValue = feedbackValue;
 
    return state;
 }
 
-
+/* cyclic mainfunction for the lock handling. Called in 30ms task. */
 void hwIf_handleLockRequests(void)
 {
-   int lockOpenThresh = Param::GetInt(Param::LockOpenThresh);
-   int lockClosedThresh = Param::GetInt(Param::LockClosedThresh);
-   /* calculation examples:
+  /* calculation examples:
      1. LockDuty = 0%, means "no lock control". pwmNeg and pwmPos have the identical value. No effective voltage.
      2. LockDuty = 50%, means "half battery voltage". pwmNeg has 0.25*periode, pwmPos has 0.75*periode. Effective 50% voltage.
      3. LockDuty = 100%, means "full voltage". pwmNeg is 0. pwmPos = periode. Effective 100% voltage.
      Discussion reference: https://openinverter.org/forum/viewtopic.php?p=79675#p79675 */
-   int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
-   int pwmPos = (CONTACT_LOCK_PERIOD / 2) + ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
+  int pwmNeg = (CONTACT_LOCK_PERIOD / 2) - ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
+  int pwmPos = (CONTACT_LOCK_PERIOD / 2) + ((CONTACT_LOCK_PERIOD / 2) * Param::GetInt(Param::LockDuty)) / 100;
 
-   //Lock drive based on actuator feedback
-   if (lockClosedThresh != lockOpenThresh)
-   {
-      lockState = hwIf_getLockState();
-      if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
-      {
+  switch(Param::GetInt(Param::LockControlVariant)) {
+      case LOCKCONTROL_V_FEEDBACKBASED:
+        /* Lock drive based on actuator feedback */
+        /* This is the old, dangerous variant. It controls the lock as long as the feedback does not
+           say that the intended position is reached. Risk for burning the actuator. Discussed here:
+           https://openinverter.org/forum/viewtopic.php?p=82103#p82103 and
+           https://github.com/uhi22/ccs32clara/issues/51 */
+        lockState = hwIf_getLockState();
+        if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
+        {
          Param::SetInt(Param::LockState, LOCK_OPENING);
          hardwareInteface_setHBridge(pwmNeg, pwmPos);
-      }
-      else if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
-      {
+        }
+        else if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
+        {
          Param::SetInt(Param::LockState, LOCK_CLOSING);
          hardwareInteface_setHBridge(pwmPos, pwmNeg);
-      }
-      else
-      {
+        }
+        else
+        {
          Param::SetInt(Param::LockState, lockState);
          hardwareInteface_setHBridge(0, 0);
-      }
-   }
-   else //lock drive without feedback
-   {
-      /* connector lock just time-based, without evaluating the feedback */
-      if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
-      {
+        }
+        break;
+      case LOCKCONTROL_V_TIMEBASED_VIRTUALFEEDBACK:
+        /* Lock drive is pure time-based. The hardware feedback is completely igored. */
+        if (lockRequest == LOCK_OPEN && lockState != LOCK_OPEN)
+        {
          //addToTrace(MOD_HWIF, "unlocking the connector");
          Param::SetInt(Param::LockState, LOCK_OPENING);
          hardwareInteface_setHBridge(pwmNeg, pwmPos);
          lockTimer = lockTimer == 0 ? Param::GetInt(Param::LockRunTime) / 30 : lockTimer; /* in 30ms steps */
-      }
-      if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
-      {
+        }
+        if (lockRequest == LOCK_CLOSED && lockState != LOCK_CLOSED)
+        {
          //addToTrace(MOD_HWIF, "locking the connector");
          Param::SetInt(Param::LockState, LOCK_CLOSING);
          hardwareInteface_setHBridge(pwmPos, pwmNeg);
          lockTimer = lockTimer == 0 ? Param::GetInt(Param::LockRunTime) / 30 : lockTimer; /* in 30ms steps */
-      }
-      if (lockTimer>0)
-      {
+        }
+        if (lockTimer>0)
+        {
          /* as long as the timer runs, the PWM on the lock motor is active */
          lockTimer--;
          if (lockTimer==0)
@@ -205,7 +210,34 @@ void hwIf_handleLockRequests(void)
             Param::SetInt(Param::LockState, lockState);
             addToTrace(MOD_HWIF, "finished connector (un)locking");
          }
-      }
+        }
+        break;
+      case LOCKCONTROL_V_TIMEBASED_HWFEEDBACK:
+        /* Lock drive is pure time-based. The hardware feedback is permanently routed to the spotvalue LockState. */
+        if ((lockRequest == LOCK_OPEN) && (lockRequest != lockRequestOld)) {
+            addToTrace(MOD_HWIF, "unlocking the connector (time-based)");
+            hardwareInteface_setHBridge(pwmNeg, pwmPos);
+            lockTimer = Param::GetInt(Param::LockRunTime) / 30; /* in 30ms steps */
+        }
+        if ((lockRequest == LOCK_CLOSED) && (lockRequest != lockRequestOld)) {
+            addToTrace(MOD_HWIF, "locking the connector (time-based)");
+            hardwareInteface_setHBridge(pwmPos, pwmNeg);
+            lockTimer = Param::GetInt(Param::LockRunTime) / 30; /* in 30ms steps */
+        }
+        lockRequestOld = lockRequest; /* request has been translated, mark as "done" for the next loop */
+        if (lockTimer>0) {
+            /* as long as the timer runs, the PWM on the lock motor is active */
+            lockTimer--;
+            if (lockTimer==0) {
+                /* if the time is expired, we turn off the lock motor */
+                hardwareInteface_setHBridge(0, 0);
+                addToTrace(MOD_HWIF, "finished connector (un)locking");
+            }
+        }
+        /* permanently route the hardware feedback to the spot value */
+        lockState = hwIf_getLockState();
+        Param::SetInt(Param::LockState, lockState);
+        break;
    }
 }
 

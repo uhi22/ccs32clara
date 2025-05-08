@@ -44,7 +44,7 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 36
+//Next param id (increase when adding new parameter!): 37
 //Next value Id: 2039
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
@@ -57,6 +57,7 @@
     PARAM_ENTRY(CAT_HARDWARE,LockRunTime,          "ms",      0,      10000,  1500,   13  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockClosedThresh,     "dig",     0,      4095,   0,      11  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockOpenThresh,       "dig",     0,      4095,   0,      12  ) \
+    PARAM_ENTRY(CAT_HARDWARE,LockControlVariant,   LCKCVAR,   0,      2,      0,      36  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorNomRes,     "Ohm",     1,      1000000,10000,  26  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
     PARAM_ENTRY(CAT_HARDWARE,ppvariant,            PPVARIANT, 0,      9,      2,      28  ) \
@@ -139,6 +140,7 @@
 #define PPVARIANT    "0=Foccci4.1_3V3_1k, 1=Foccci4.2_5V_330up_3000down, 2=Foccci4.5_5V_330up_no_down, 3=Foccci5_330up_no_down, 4=Foccci5_330up_2700down, 5=Foccci5_330up_3300down"
 #define ACOBCSTT     "0=Idle, 1=Lock, 2=Charging, 3=Pause, 4=Complete, 5=Error"
 #define PORTSTAT     "0=Idle, 1=PluggedIn, 2=Ready, 3=ChargingAC, 4=ChargingDC, 5=Stopping, 6=Unlock, 7=PortError"
+#define LCKCVAR      "0=TimeBased_VirtualFeedback, 1=TimeBased_HwFeedback, 2=FeedbackBased"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 
@@ -231,6 +233,13 @@ enum _actuatortest
    TEST_LEDGREEN,
    TEST_LEDBLUE,
    TEST_STATEC
+};
+
+enum _lockcontrolvariants
+{
+   LOCKCONTROL_V_TIMEBASED_VIRTUALFEEDBACK = 0,
+   LOCKCONTROL_V_TIMEBASED_HWFEEDBACK = 1,
+   LOCKCONTROL_V_FEEDBACKBASED = 2
 };
 
 #define DEMOCONTROL_STANDALONE 234 /* activates the demo-mode without CAN input. Uses just an "unlikely" uint16 number, to reduce risk of unintended activation. */

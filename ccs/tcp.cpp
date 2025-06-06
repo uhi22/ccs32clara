@@ -5,6 +5,7 @@
 #define NEXT_TCP 0x06 /* the next protocol is TCP */
 
 #define TCP_FLAG_SYN 0x02
+#define TCP_FLAG_RST 0x04
 #define TCP_FLAG_PSH 0x08
 #define TCP_FLAG_ACK 0x10
 #define TCP_TRANSMIT_PACKET_LEN 200
@@ -332,6 +333,25 @@ void tcp_Disconnect(void)
    //if (evccPort>65000) evccPort=60000;
 }
 
+void tcp_reset(void)
+{
+   /* Tesla v2 (at least mine) seem to run tcp over a bus that never times out:-) It deliver packets to
+   previously used/wrong ports, several days since my last visit! A brutal RST seems to do the trick,
+   no more wrong-port packets delivered after this.
+   TODO: also call tcp_reset() before powerOff, to make sure the last connection is also freed.
+   */
+   
+   if (tcpState != TCP_STATE_CLOSED)
+   {
+      tcpHeaderLen = 20;  // no options
+      tcpPayloadLen = 0;  // no payload
+      TcpAckNr = 0; // not acknowledging any data
+      tcp_prepareTcpHeader(TCP_FLAG_RST);
+      tcp_packRequestIntoIp();
+      tcpState = TCP_STATE_CLOSED;  // close connection state
+   }
+}
+
 uint8_t tcp_isClosed(void)
 {
    return (tcpState == TCP_STATE_CLOSED);
@@ -363,7 +383,7 @@ void tcp_Mainfunction(void)
    {
       /* No SDP done. Means: It does not make sense to start or continue TCP. */
       lastUnackTransmissionTime = 0;
-      tcpState = TCP_STATE_CLOSED;
+      tcp_reset();
       return;
    }
    if ((connMgr_getConnectionLevel()==50) && (tcpState == TCP_STATE_CLOSED))

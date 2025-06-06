@@ -335,7 +335,7 @@ void tcp_Disconnect(void)
 
 void tcp_reset(void)
 {
-   /* Tesla v2 (at least mine) seem to run tcp over a bus that never times out:-) It deliver packets to
+   /* Tesla v2 (at least mine) seem to run tcp over a queue that never times out:-) It deliver packets to
    previously used/wrong ports, several days since my last visit! A brutal RST seems to do the trick,
    no more wrong-port packets delivered after this.
    TODO: also call tcp_reset() before powerOff, to make sure the last connection is also freed.

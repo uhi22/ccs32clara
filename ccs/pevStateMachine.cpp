@@ -1003,6 +1003,10 @@ static void stateFunctionWaitForWeldingDetectionResponse(void)
              if (numberOfWeldingDetectionRounds<MAX_NUMBER_OF_WELDING_DETECTION_ROUNDS) {
                  /* max number of rounds not yet reached */
                  addToTrace(MOD_PEV, "WeldingDetection: voltage still too high. Sending again WeldingDetectionReq.");
+                 numberOfWeldingDetectionRounds++; /* https://github.com/uhi22/ccs32clara/issues/55
+                                                      Count the number of welding detection rounds. To be clarified, whether
+                                                      a certain time or number of rounds make sense to cover all use cases with
+                                                      different chargers etc */
                  pev_sendWeldingDetectionReq();
                  pev_enterState(PEV_STATE_WaitForWeldingDetectionResponse);
              } else {

@@ -26,6 +26,13 @@ extern "C" {
 
 #define BOTH_CONTACTORS 3
 
+#define RGB_OFF 0
+#define RGB_RED 1
+#define RGB_GREEN 2
+#define RGB_BLUE 4
+#define RGB_CYAN 6
+#define RGB_WHITE 7
+
 extern void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k);
 extern void hwIf_connectorLockActuatorTest(uint8_t kindOfControl);
 extern void hwIf_handleLockRequests(void);

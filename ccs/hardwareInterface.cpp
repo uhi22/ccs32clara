@@ -274,80 +274,80 @@ static void handleApplicationRGBLeds(void)
    if (checkpointNumber<100)
    {
       /* modem is sleeping (or defective), or modem search ongoing */
-      hardwareInterface_setRGB(4+2+1); /* blue+green+red */
+      hardwareInterface_setRGB(RGB_WHITE);
       return;
    }
-   if ((checkpointNumber>=100) && (checkpointNumber<150))
+   else if ((checkpointNumber>=100) && (checkpointNumber<150))
    {
       /* One modem detected. This is the normal "ready" case. */
-      hardwareInterface_setRGB(2); /* green */
+      hardwareInterface_setRGB(RGB_GREEN);
    }
-   if ((checkpointNumber>150) && (checkpointNumber<=530))
+   else if ((checkpointNumber>150) && (checkpointNumber<=530))
    {
       if (LedBlinkDivider & 4)
       {
-         hardwareInterface_setRGB(2); /* green */
+         hardwareInterface_setRGB(RGB_GREEN);
       }
       else
       {
-         hardwareInterface_setRGB(0); /* off */
+         hardwareInterface_setRGB(RGB_OFF);
       }
    }
-   if ((checkpointNumber>=540) /* Auth finished */ && (checkpointNumber<560 /* CableCheck */))
+   else if ((checkpointNumber>=540) /* Auth finished */ && (checkpointNumber<560 /* CableCheck */))
    {
       if (LedBlinkDivider & 2)
       {
-         hardwareInterface_setRGB(2); /* green */
+         hardwareInterface_setRGB(RGB_GREEN);
       }
       else
       {
-         hardwareInterface_setRGB(0); /* off */
+         hardwareInterface_setRGB(RGB_OFF);
       }
    }
-   if (checkpointNumber>=560 /* CableCheck */)
+   else if (checkpointNumber>=560 /* CableCheck */)
    {
       if (LedBlinkDivider & 2)
       {
-         hardwareInterface_setRGB(4); /* blue */
+         hardwareInterface_setRGB(RGB_BLUE);
       }
       else
       {
-         hardwareInterface_setRGB(0); /* off */
+         hardwareInterface_setRGB(RGB_OFF);
       }
    }
-   if ((checkpointNumber>=570 /* PreCharge */) && (checkpointNumber<700 /* charge loop start */))
+   else if ((checkpointNumber>=570 /* PreCharge */) && (checkpointNumber<700 /* charge loop start */))
    {
       if (LedBlinkDivider & 1) /* very fast flashing during the PreCharge */
       {
-         hardwareInterface_setRGB(4); /* blue */
+         hardwareInterface_setRGB(RGB_BLUE);
       }
       else
       {
-         hardwareInterface_setRGB(0); /* off */
+         hardwareInterface_setRGB(RGB_OFF);
       }
    }
-   if ((checkpointNumber>=700 /* charge loop */) && (checkpointNumber<800 /* charge loop */))
+   else if ((checkpointNumber>=700 /* charge loop */) && (checkpointNumber<800 /* charge loop */))
    {
-      hardwareInterface_setRGB(4); /* blue */
+      hardwareInterface_setRGB(RGB_BLUE);
    }
-   if ((checkpointNumber>=800 /* charge end */) && (checkpointNumber<900 /* welding detection */))
+   else if ((checkpointNumber>=800 /* charge end */) && (checkpointNumber<900 /* welding detection */))
    {
       if (LedBlinkDivider & 1)
       {
-         hardwareInterface_setRGB(4); /* blue */
+         hardwareInterface_setRGB(RGB_BLUE);
       }
       else
       {
-         hardwareInterface_setRGB(2); /* green */
+         hardwareInterface_setRGB(RGB_GREEN);
       }
    }
-   if (checkpointNumber==900 /* session stop */)
+   else if (checkpointNumber==900 /* session stop */)
    {
-      hardwareInterface_setRGB(4+2); /* blue+green */
+      hardwareInterface_setRGB(RGB_CYAN);
    }
-   if (checkpointNumber>1000)   /* error states */
+   else if (checkpointNumber>1000)   /* error states */
    {
-      hardwareInterface_setRGB(1); /* red */
+      hardwareInterface_setRGB(RGB_RED);
    }
 }
 
@@ -376,13 +376,13 @@ static void ActuatorTest()
       hardwareInterface_setStateC();
       break;
    case TEST_LEDGREEN:
-      hardwareInterface_setRGB(2);
+      hardwareInterface_setRGB(RGB_GREEN);
       break;
    case TEST_LEDRED:
-      hardwareInterface_setRGB(1);
+      hardwareInterface_setRGB(RGB_RED);
       break;
    case TEST_LEDBLUE:
-      hardwareInterface_setRGB(4);
+      hardwareInterface_setRGB(RGB_BLUE);
       break;
    default: /* all cases including TEST_NONE are stopping the actuator test */
       blTestOngoing = false;
@@ -403,7 +403,7 @@ static void ActuatorTest()
 
 void hardwareInterface_WakeupOtherPeripherals()
 {
-   static int wakeUpPulseLength = 10;
+   static uint8_t wakeUpPulseLength = 10;
    bool dutyValid = Param::GetInt(Param::ControlPilotDuty) > 3;
    bool ppValid = Param::GetInt(Param::ResistanceProxPilot) < 2000;
    int wakeupPinFunc = Param::GetInt(Param::WakeupPinFunc);

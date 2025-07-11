@@ -3,19 +3,19 @@
 #include "ccs32_globals.h"
 
 static uint8_t wakecontrol_timer;
-static uint8_t allowSleep;
+static bool allowSleep;
 
 #define WAKECONTROL_TIMER_MAX 20 /* 20*100ms = 2s cycle time */
 #define WAKECONTROL_TIMER_NEARLY_EXPIRED 5 /* 5*100ms = 500ms keep_power_on activation time */
 #define WAKECONTROL_TIMER_END_OF_CYCLE__MEASUREMENT_ALLOWED 3 /* after turning the keep_power_on, 200ms time for
                                                                 in-rush and adc sampling until measurement is considered as valid. */
 
-uint8_t wakecontrol_isPpMeasurementInvalid(void) {
+bool wakecontrol_isPpMeasurementInvalid(void) {
     /* The PP measurement is not valid, if the voltage on the PP is pulled up by the wakeup path.
        Discussion was here: https://openinverter.org/forum/viewtopic.php?p=75629#p75629 */
-    if (allowSleep==0) return 0; /* as long as we are not ready to sleep, the PP is valid. */
-    if (wakecontrol_timer<=WAKECONTROL_TIMER_END_OF_CYCLE__MEASUREMENT_ALLOWED) return 0; /* valid because cyclic pulsing and sufficient propagation delay */
-    return 1; /* no PP measurement possible, because corrupted by KEEP_POWER_ON. */
+    if (!allowSleep) return false; /* as long as we are not ready to sleep, the PP is valid. */
+    if (wakecontrol_timer<=WAKECONTROL_TIMER_END_OF_CYCLE__MEASUREMENT_ALLOWED) return false; /* valid because cyclic pulsing and sufficient propagation delay */
+    return true; /* no PP measurement possible, because corrupted by KEEP_POWER_ON. */
 }
 
 void wakecontrol_mainfunction(void) /* runs in 100ms cycle */
@@ -66,7 +66,7 @@ void wakecontrol_mainfunction(void) /* runs in 100ms cycle */
 
 void wakecontrol_init(void) {
     DigIo::keep_power_on.Set(); /* Make sure board stays awake. */
-    allowSleep=0;
+    allowSleep=false;
 }
 
 

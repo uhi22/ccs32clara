@@ -70,7 +70,7 @@ static uint8_t NMK[16];
 static uint8_t numberOfFoundModems;
 static uint8_t pevSequenceState;
 static uint16_t pevSequenceCyclesInState;
-static uint16_t pevSequenceDelayCycles;
+static uint8_t pevSequenceDelayCycles;
 static uint8_t nRemainingStartAttenChar;
 static uint8_t remainingNumberOfSounds;
 static uint8_t AttenCharIndNumberOfSounds;
@@ -347,7 +347,7 @@ static void composeSlacMatchReq(void)
 static void evaluateSlacMatchCnf(void)
 {
    uint8_t i;
-   uint8_t blIsDestinationMacForMe;
+   bool blIsDestinationMacForMe;
    // The SLAC_MATCH.CNF contains the NMK and the NID.
    // We extract this information, so that we can use it for the CM_SET_KEY afterwards.
    // References: https://github.com/qca/open-plc-utils/blob/master/slac/evse_cm_slac_match.c
@@ -359,11 +359,11 @@ static void evaluateSlacMatchCnf(void)
    }
    else
    {
-      blIsDestinationMacForMe = 1;
+      blIsDestinationMacForMe = true;
       for (i=0; i<6; i++) {
           /* compare all 6 bytes of the destination MAC with our own MAC */
           if (myethreceivebuffer[i] != myMAC[i]) {
-              blIsDestinationMacForMe = 0; /* any mismatch -> it is not for me */
+              blIsDestinationMacForMe = false; /* any mismatch -> it is not for me */
           }
       }
       if (!blIsDestinationMacForMe) {
@@ -564,10 +564,10 @@ void slac_enterState(int n)
    pevSequenceCyclesInState = 0;
 }
 
-int isTooLong(void)
+bool isTooLong(void)
 {
    /* The timeout handling function. */
-   return (pevSequenceCyclesInState > 500);
+   return pevSequenceCyclesInState > 500;
 }
 
 void runSlacSequencer(void)

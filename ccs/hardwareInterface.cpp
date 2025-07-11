@@ -148,20 +148,9 @@ void hardwareInterface_setRGB(uint8_t rgb)
     * bit 1: green
     * bit 2: blue
     */
-   if (rgb & 1)
-      DigIo::red_out.Set();
-   else
-      DigIo::red_out.Clear();
-
-   if (rgb & 2)
-      DigIo::green_out.Set();
-   else
-      DigIo::green_out.Clear();
-
-   if (rgb & 4)
-      DigIo::blue_out.Set();
-   else
-      DigIo::blue_out.Clear();
+   (rgb & RGB_RED)   ? DigIo::red_out.Set()   : DigIo::red_out.Clear();
+   (rgb & RGB_GREEN) ? DigIo::green_out.Set() : DigIo::green_out.Clear();
+   (rgb & RGB_BLUE)  ? DigIo::blue_out.Set()  : DigIo::blue_out.Clear();
 }
 
 void hardwareInteface_setHBridge(uint16_t out1duty_4k, uint16_t out2duty_4k)

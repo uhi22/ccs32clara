@@ -95,7 +95,6 @@ uint8_t hardwareInterface_isConnectorLocked(void)
 static LockStt hwIf_getLockState()
 {
    static int lastFeedbackValue = 0;
-   static uint32_t lockClosedTime = 0;
    int lockOpenThresh = Param::GetInt(Param::LockOpenThresh);
    int lockClosedThresh = Param::GetInt(Param::LockClosedThresh);
    int feedbackValue = AnaIn::lockfb.Get();
@@ -125,6 +124,7 @@ static LockStt hwIf_getLockState()
    }
 
 #ifdef UNCLEAR_WHAT_WAS_THE_INTENTION_OF_THIS
+   static uint32_t lockClosedTime = 0;
     /* unclear intention.
        Looks like a requirement "When changing from CLOSED to OPEN, there shall be a OPENING in between."
        But why? Is it needed for a certain consumer of the state on CAN? Or for the internal logic of Clara?

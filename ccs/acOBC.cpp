@@ -173,59 +173,22 @@ static void evaluateProximityPilot(void)
 uint8_t acOBC_getRGB(void)
 {
     static uint8_t cycleDivider;
-    uint8_t rgb;
-#define RED 1
-#define GREEN 2
-#define BLUE 4
     cycleDivider++;
 
-    if (previousStateBasicAcCharging == OBC_IDLE)
-    {
-        if (cycleDivider & 2)
-        {
-            rgb = BLUE;
-        }
-        else
-        {
-            rgb = 0;
-        }
+    switch (previousStateBasicAcCharging) {
+        case OBC_IDLE:
+            return (cycleDivider & 2) ? RGB_BLUE : RGB_OFF;
+        case OBC_LOCK:
+            return RGB_BLUE;
+        case OBC_CHARGE:
+            return (cycleDivider & 2) ? RGB_GREEN : RGB_OFF;
+        case OBC_COMPLETE:
+            return RGB_CYAN;
+        case OBC_ERROR:
+            return RGB_RED;
+        default: //Every other state, flash red
+            return (cycleDivider & 1) ? RGB_RED : RGB_OFF;
     }
-    else if (previousStateBasicAcCharging == OBC_LOCK)
-    {
-
-        rgb = BLUE;
-    }
-    else if (previousStateBasicAcCharging == OBC_CHARGE)
-    {
-        if (cycleDivider & 2)
-        {
-            rgb = GREEN;
-        }
-        else
-        {
-            rgb = 0;
-        }
-    }
-    else if (previousStateBasicAcCharging == OBC_COMPLETE)
-    {
-        rgb = BLUE+GREEN;
-    }
-    else if (previousStateBasicAcCharging == OBC_ERROR)
-    {
-        rgb = RED;
-    }
-    else
-    {
-        if (cycleDivider & 1)
-        {
-            rgb = RED;    /* everything else: flash red */
-        }
-        else
-        {
-            rgb = 0;
-        }
-    }
-    return rgb;
 }
 
 void acOBC_calculateCurrentLimit(void)

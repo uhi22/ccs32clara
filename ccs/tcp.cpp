@@ -4,6 +4,7 @@
 
 #define NEXT_TCP 0x06 /* the next protocol is TCP */
 
+#define TCP_FLAG_FIN 0x01
 #define TCP_FLAG_SYN 0x02
 #define TCP_FLAG_RST 0x04
 #define TCP_FLAG_PSH 0x08
@@ -91,6 +92,12 @@ void evaluateTcpPacket(void)
       (((uint32_t)myethreceivebuffer[64])<<8) +
       (((uint32_t)myethreceivebuffer[65]));
    flags = myethreceivebuffer[67];
+   if (flags & TCP_FLAG_RST)
+   {
+       addToTrace(MOD_TCP, "[TCP] RST received, closing connection.");
+       tcpState = TCP_STATE_CLOSED;
+       return;
+   }
    if (flags == TCP_FLAG_SYN+TCP_FLAG_ACK)   /* This is the connection setup response from the server. */
    {
       if (tcpState == TCP_STATE_SYN_SENT)
@@ -138,6 +145,13 @@ void evaluateTcpPacket(void)
       TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
       lastUnackTransmissionTime = 0; /* mark timer as "not used", because we received the ACK */
       retryCounter = 0;
+   }
+   if (flags & TCP_FLAG_FIN)
+   {
+       addToTrace(MOD_TCP, "[TCP] FIN received, closing connection.");
+       TcpAckNr = remoteSeqNr + 1;
+       tcp_sendAck();
+       tcpState = TCP_STATE_CLOSED;
    }
 }
 
@@ -321,35 +335,37 @@ static void tcp_packRequestIntoEthernet(void)
    myEthTransmit();
 }
 
-void tcp_Disconnect(void)
+void tcp_sendFin(void)
 {
-   /* we should normally use the FIN handshake, to tell the charger that we closed the connection.
-   But for the moment, just go away silently, and use an other port for the next connection. The
-   server will detect our absense sooner or later by timeout, this should be good enough. */
-   tcpState = TCP_STATE_CLOSED;
-   /* use a new port */
-   /* But: This causes multiple open connections and the Win10 messes-up them. */
-   //evccPort++;
-   //if (evccPort>65000) evccPort=60000;
+   addToTrace(MOD_TCP, "[TCP] sending FIN");
+   tcpHeaderLen = 20;  // no options
+   tcpPayloadLen = 0;  // no payload
+   TcpAckNr = 0; // not acknowledging any data
+   tcp_prepareTcpHeader(TCP_FLAG_FIN + TCP_FLAG_ACK);
+   tcp_packRequestIntoIp();
 }
 
-void tcp_reset(void)
+void tcp_sendRst(void)
 {
-   /* Tesla v2 (at least mine) seem to run tcp over a queue that never times out:-) It deliver packets to
-   previously used/wrong ports, several days since my last visit! A brutal RST seems to do the trick,
-   no more wrong-port packets delivered after this.
-   TODO: also call tcp_reset() before powerOff, to make sure the last connection is also freed.
-   */
-   
-   if (tcpState != TCP_STATE_CLOSED)
+   addToTrace(MOD_TCP, "[TCP] sending RST");
+   tcpHeaderLen = 20;  // no options
+   tcpPayloadLen = 0;  // no payload
+   TcpAckNr = 0; // not acknowledging any data
+   tcp_prepareTcpHeader(TCP_FLAG_RST);
+   tcp_packRequestIntoIp();
+}
+
+void tcp_disconnect(void)
+{
+   if (tcpState == TCP_STATE_ESTABLISHED)
    {
-      tcpHeaderLen = 20;  // no options
-      tcpPayloadLen = 0;  // no payload
-      TcpAckNr = 0; // not acknowledging any data
-      tcp_prepareTcpHeader(TCP_FLAG_RST);
-      tcp_packRequestIntoIp();
-      tcpState = TCP_STATE_CLOSED;  // close connection state
+      tcp_sendFin();
    }
+   else if (tcpState == TCP_STATE_SYN_SENT) 
+   {
+      tcp_sendRst();
+   }
+   tcpState = TCP_STATE_CLOSED;
 }
 
 uint8_t tcp_isClosed(void)
@@ -383,7 +399,7 @@ void tcp_Mainfunction(void)
    {
       /* No SDP done. Means: It does not make sense to start or continue TCP. */
       lastUnackTransmissionTime = 0;
-      tcp_reset();
+      tcp_disconnect();
       return;
    }
    if ((connMgr_getConnectionLevel()==50) && (tcpState == TCP_STATE_CLOSED))

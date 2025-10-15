@@ -26,6 +26,7 @@
 #include "stm32_can.h"
 #include "canmap.h"
 #include "cansdo.h"
+#include "sdocommands.h"
 #include "terminal.h"
 #include "params.h"
 #include "hwdefs.h"
@@ -234,6 +235,7 @@ extern "C" int main(void)
     //This is all we need to do to set up a terminal on USART4
     Terminal t(UART4, termCmds);
     TerminalCommands::SetCanMap(canMap);
+    SdoCommands::SetCanMap(canMap);
 
     printf("This is Clara version %s\r\n", VERSTR);
     printf("githubRunNumber %d\r\n", GITHUB_RUN_NUMBER);
@@ -255,7 +257,13 @@ extern "C" int main(void)
     while(1)
     {
         char c = 0;
-        //t.Run();
+        CanSdo::SdoFrame* sdoFrame = sdo.GetPendingUserspaceSdo();
+
+        if (0 != sdoFrame)
+        {
+           SdoCommands::ProcessStandardCommands(sdoFrame);
+        }
+
         if (sdo.GetPrintRequest() == PRINT_JSON)
         {
             TerminalCommands::PrintParamsJson(&sdo, &c);

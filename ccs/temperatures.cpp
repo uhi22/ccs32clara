@@ -83,7 +83,9 @@ static float ohmToCelsius(float resistance_ohm) {
 
 void temperatures_calculateTemperatures(void) {
     float temp = AnaIn::temp1.Get();
+    Param::SetFloat(Param::temp1Adc, temp);
     temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
+    Param::SetFloat(Param::temp1Resistance, temp);
     temp = ohmToCelsius(temp);
     Param::SetFloat(Param::temp1, temp);
     float tempMax = temp;

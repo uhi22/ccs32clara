@@ -45,7 +45,7 @@
 #include "myLogging.h"
 
 //Next param id (increase when adding new parameter!): 38
-//Next value Id: 2039
+//Next value Id: 2041
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    2.63,   1   ) \
@@ -102,6 +102,8 @@
     VALUE_ENTRY(temp2,              "°C",            2004 ) \
     VALUE_ENTRY(temp3,              "°C",            2005 ) \
     VALUE_ENTRY(MaxTemp,            "°C",            2024 ) \
+    VALUE_ENTRY(temp1Adc,           "dig",           2039 ) \
+    VALUE_ENTRY(temp1Resistance,    "ohm",           2040 ) \
     VALUE_ENTRY(ContactorDuty,      "%",             2013 ) \
     VALUE_ENTRY(AdcLockFeedback,    "dig",           2011 ) \
     VALUE_ENTRY(AdcProximityPilot,  "dig",           2018 ) \

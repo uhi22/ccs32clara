@@ -44,7 +44,7 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 37
+//Next param id (increase when adding new parameter!): 38
 //Next value Id: 2039
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
@@ -58,6 +58,7 @@
     PARAM_ENTRY(CAT_HARDWARE,LockClosedThresh,     "dig",     0,      4095,   0,      11  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockOpenThresh,       "dig",     0,      4095,   0,      12  ) \
     PARAM_ENTRY(CAT_HARDWARE,LockControlVariant,   LCKCVAR,   0,      2,      0,      36  ) \
+    PARAM_ENTRY(CAT_HARDWARE,TempSensorType,       TEMPTYPE,  0,      1,      0,      37  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorNomRes,     "Ohm",     1,      1000000,10000,  26  ) \
     PARAM_ENTRY(CAT_HARDWARE,TempSensorBeta,       "",        1,      100000, 3900,   27  ) \
     PARAM_ENTRY(CAT_HARDWARE,ppvariant,            PPVARIANT, 0,      9,      2,      28  ) \
@@ -141,6 +142,7 @@
 #define ACOBCSTT     "0=Idle, 1=Lock, 2=Charging, 3=Pause, 4=Complete, 5=Error"
 #define PORTSTAT     "0=Idle, 1=PluggedIn, 2=Ready, 3=ChargingAC, 4=ChargingDC, 5=Stopping, 6=Unlock, 7=PortError"
 #define LCKCVAR      "0=TimeBased_VirtualFeedback, 1=TimeBased_HwFeedback, 2=FeedbackBased"
+#define TEMPTYPE     "0=NTC, 1=PT1000"
 
 #define PARAM_ID_SUM_START_OFFSET GITHUB_RUN_NUMBER
 

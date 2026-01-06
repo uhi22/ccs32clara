@@ -11,7 +11,10 @@
 
 #include "ccs32_globals.h"
 
+#define INLET_VOLTAGE_ERROR_DEBOUNCE_TIME_100MS 20 /* 20 * 100ms = 2 seconds debounce of
+                                                      the voltage deviation error */
 uint8_t hwIf_isInletVoltageError = false;
+uint8_t hwIf_nInletVoltageOutOfRangeCounter = 0;
 
 
 /* cyclic runnable in 100ms. Reads the different inputs for inlet voltage and calculates
@@ -48,6 +51,7 @@ void hwIf_handleInletVoltage(void) {
             /* we have only one source, so we have no deviation and no error. */
             Param::SetFixed(Param::InletVoltageDeviation, 0);
             hwIf_isInletVoltageError = false;
+            hwIf_nInletVoltageOutOfRangeCounter = 0; /* reset the debounce counter */
             break;
         case IVSRC_ANAIN:
             /* if we have two values, the hardware value and the EvsePresentVoltage, we use the hardware value,
@@ -62,11 +66,19 @@ void hwIf_handleInletVoltage(void) {
                    1. Not in all states we receive the EvsePresentVoltage. So we only should look at the error flag in
                       the states when it make sense.
                    2. There may be a time shift between the analog measured value and the values from the charging station.
-                      So it may be senseful to add a debouning here, e.g. deviation longer than one or two seconds. */
-                hwIf_isInletVoltageError = true;
+                      So we use a debouning here, e.g. deviation is treated as error only if it
+                      lasts longer than one or two seconds. */
+                if (hwIf_nInletVoltageOutOfRangeCounter<INLET_VOLTAGE_ERROR_DEBOUNCE_TIME_100MS) {
+                   /* it was only a short deviation. Increment the debounce counter. No error yet. */
+                   hwIf_nInletVoltageOutOfRangeCounter++;
+                } else {
+                   /* The voltage deviation is longer. The error is qualified now. */
+                   hwIf_isInletVoltageError = true;
+                }
             } else {
                 /* good case: The EvsePresentVoltage fits to the hardware measured voltage */
                 hwIf_isInletVoltageError = false;
+                hwIf_nInletVoltageOutOfRangeCounter = 0; /* reset the debounce counter */
             }
             break;
         default:
@@ -75,6 +87,7 @@ void hwIf_handleInletVoltage(void) {
             /* we have only one source, so we have no deviation and no error. */
             Param::SetFixed(Param::InletVoltageDeviation, 0);
             hwIf_isInletVoltageError = false;
+            hwIf_nInletVoltageOutOfRangeCounter = 0; /* reset the debounce counter */
             break;
     }
 }

@@ -57,6 +57,13 @@ static float ohmToCelsiusPT1000(float resistance) {
     const float R0 = 1000.0;      // Resistance at 0°C (ohms)
     const float ALPHA = 0.00385;  // Temperature coefficient (Ω/Ω/°C)
     
+    if (resistance>2000) { /* 2000 ohms are ~270°C. We treat everything above as non-plausible value. */
+        return -50.0; /* ... and show -50°C as error value */
+    }
+    if (resistance<800) { /* 800 ohms are ~-50°C. We treat everything below as non-plausible value. */
+        return -50.0; /* ... and show -50°C as error value */
+    }
+    
     // Linear approximation: T = (R - R0) / (R0 * alpha)
     float temperature = (resistance - R0) / (R0 * ALPHA);
     

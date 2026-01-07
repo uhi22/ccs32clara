@@ -10,7 +10,12 @@
 *  - NUM_SAMPLES = 12: Average of last 4 medians is returned
 */
 #define NUM_SAMPLES 12
-#define SAMPLE_TIME ADC_SMPR_SMP_7DOT5CYC //Sample&Hold time for each pin. Increases sample time, might increase accuracy
+/* Sample&Hold time for each pin. Increased sample time might increase accuracy. */
+//#define SAMPLE_TIME ADC_SMPR_SMP_7DOT5CYC
+/* longer sampling time leads to longer round-trip time, which reduces charge-injection by the
+   sample&hold capacitor. https://openinverter.org/forum/viewtopic.php?p=88753#p88753
+*/
+#define SAMPLE_TIME ADC_SMPR_SMP_239DOT5CYC
 
 //Here you specify a list of analog inputs, see main.cpp on how to use them
 #define ANA_IN_LIST \

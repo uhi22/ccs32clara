@@ -912,9 +912,9 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
              /* If we detect a strong deviation between the hardware-based inlet voltage and the EvsePresentVoltage reported by the
                 charging station, this indicates a severe hardware issue. Stop charging. */
             addToTrace(MOD_PEV, "Large deviation of the inlet voltage. Stopping.");
-            uHw        = Param::Get(Param::InletVoltageHw);
-            uEvse      = Param::Get(Param::EvsePresentVoltage);
-            uDeviation = Param::Get(Param::InletVoltageDeviation);
+            uHw        = Param::GetInt(Param::InletVoltageHw);
+            uEvse      = Param::GetInt(Param::EvsePresentVoltage);
+            uDeviation = Param::GetInt(Param::InletVoltageDeviation);
             printf("Hardware %dV, Evse %dV, Deviation %dV\r\n", uHw, uEvse, uDeviation);
             pev_wasPowerDeliveryRequestedOn=0;
             setCheckpoint(800);

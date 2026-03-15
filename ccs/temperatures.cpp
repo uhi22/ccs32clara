@@ -29,7 +29,7 @@
 
 #define MAX_ADC_VALUE 4095 /* we have 12 bit ADC resolution */
 
-static float ohmToCelsius(float rNTC) {
+static float ohmToCelsiusNTC(float rNTC) {
     /* Convert the resistance to a temperature */
     /* Based on: https://learn.adafruit.com/thermistor/using-a-thermistor */
     float steinhart;
@@ -42,9 +42,50 @@ static float ohmToCelsius(float rNTC) {
     return steinhart;
 }
 
+/**
+ * Converts PT1000 resistance (in ohms) to temperature (in Celsius)
+ * Uses linear approximation: R = R0 * (1 + alpha * T)
+ * where R0 = 1000Ω at 0°C, alpha ≈ 0.00385 Ω/Ω/°C
+ * 
+ * Valid range: approximately -200°C to +850°C
+ * Precision: ±1K
+ * 
+ * @param resistance Resistance value in ohms
+ * @return Temperature in degrees Celsius
+ */
+static float ohmToCelsiusPT1000(float resistance) {
+    const float R0 = 1000.0;      // Resistance at 0°C (ohms)
+    const float ALPHA = 0.00385;  // Temperature coefficient (Ω/Ω/°C)
+    
+    if (resistance>2000) { /* 2000 ohms are ~270°C. We treat everything above as non-plausible value. */
+        return -50.0; /* ... and show -50°C as error value */
+    }
+    if (resistance<800) { /* 800 ohms are ~-50°C. We treat everything below as non-plausible value. */
+        return -50.0; /* ... and show -50°C as error value */
+    }
+    
+    // Linear approximation: T = (R - R0) / (R0 * alpha)
+    float temperature = (resistance - R0) / (R0 * ALPHA);
+    
+    return temperature;
+}
+
+static float ohmToCelsius(float resistance_ohm) {
+    switch(Param::GetInt(Param::TempSensorType)) {
+        case 0:
+            return ohmToCelsiusNTC(resistance_ohm);
+        case 1:
+            return ohmToCelsiusPT1000(resistance_ohm);
+        default:
+            return -99.0; /* invalid sensor type -> invalid temperature */
+    }
+}
+
 void temperatures_calculateTemperatures(void) {
     float temp = AnaIn::temp1.Get();
+    Param::SetFloat(Param::temp1Adc, temp);
     temp = SERIESRESISTOR / ((MAX_ADC_VALUE / temp) - 1.0f);
+    Param::SetFloat(Param::temp1Resistance, temp);
     temp = ohmToCelsius(temp);
     Param::SetFloat(Param::temp1, temp);
     float tempMax = temp;

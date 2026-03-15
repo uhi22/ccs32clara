@@ -262,6 +262,7 @@ extern "C" int main(void)
         if (0 != sdoFrame)
         {
            SdoCommands::ProcessStandardCommands(sdoFrame);
+           sdo.SendSdoReply(sdoFrame);
         }
 
         if (sdo.GetPrintRequest() == PRINT_JSON)

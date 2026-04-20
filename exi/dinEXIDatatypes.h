@@ -1814,7 +1814,7 @@ struct dinSalesTariffType {
 	} SalesTariffEntry;
 };
 
-/* Complex type name='urn:iso:15118:2:2010:MsgHeader,MessageHeaderType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("urn:iso:15118:2:2010:MsgHeader":SessionID,"urn:iso:15118:2:2010:MsgHeader":Notification{0-1},"http://www.w3.org/2000/09/xmldsig#":Signature{0-1})',  derivedBy='RESTRICTION'.  */
+/* Complex type name='urn:iso:15118:2:2010:MsgHeader,MessageHeaderType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("urn:iso:15118:2:2010:MsgHeader":SessionID,"urn:iso:15118:2:2010:MsgHeader":Notification{0-1})',  derivedBy='RESTRICTION'.  */
 #define dinMessageHeaderType_SessionID_BYTES_SIZE 8 /* XML schema facet length for urn:iso:15118:2:2010:MsgDataTypes,sessionIDType is 8 */
 struct dinMessageHeaderType {
 	/* element: "urn:iso:15118:2:2010:MsgHeader":SessionID, urn:iso:15118:2:2010:MsgDataTypes,sessionIDType */
@@ -1825,9 +1825,6 @@ struct dinMessageHeaderType {
 	/* element: "urn:iso:15118:2:2010:MsgHeader":Notification, Complex type name='urn:iso:15118:2:2010:MsgDataTypes,NotificationType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("urn:iso:15118:2:2010:MsgDataTypes":FaultCode,"urn:iso:15118:2:2010:MsgDataTypes":FaultMsg{0-1})',  derivedBy='RESTRICTION'.  */
 	struct dinNotificationType Notification ;
 	unsigned int Notification_isUsed:1;
-	/* element: "http://www.w3.org/2000/09/xmldsig#":Signature, Complex type name='http://www.w3.org/2000/09/xmldsig#,SignatureType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("http://www.w3.org/2000/09/xmldsig#":SignedInfo,"http://www.w3.org/2000/09/xmldsig#":SignatureValue,"http://www.w3.org/2000/09/xmldsig#":KeyInfo{0-1},"http://www.w3.org/2000/09/xmldsig#":Object{0-UNBOUNDED})',  derivedBy='RESTRICTION'.  */
-	struct dinSignatureType Signature ;
-	unsigned int Signature_isUsed:1;
 };
 
 /* Complex type name='urn:iso:15118:2:2010:MsgDataTypes,SAScheduleTupleType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("urn:iso:15118:2:2010:MsgDataTypes":SAScheduleTupleID,"urn:iso:15118:2:2010:MsgDataTypes":PMaxSchedule,"urn:iso:15118:2:2010:MsgDataTypes":SalesTariff{0-1})',  derivedBy='RESTRICTION'.  */

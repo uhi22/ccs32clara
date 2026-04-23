@@ -13983,6 +13983,8 @@ int decode_dinExiDocument(bitstream_t* stream, struct dinEXIDocument* exiDoc) {
 		init_dinEXIDocument(exiDoc);
 		errn = decodeNBitUnsignedInteger(stream, 7, &eventCode);
 		if(errn == 0) {
+			/* PEV-only: all V2G messages are wrapped in V2G_Message (event code 77).
+			 * Standalone element encoding paths are not used in this application. */
 			if (eventCode == 77) {
 				/* START_ELEMENT({urn:iso:15118:2:2010:MsgDef}V2G_Message) */
 				errn = decode_dinAnonType_V2G_Message(stream, &exiDoc->V2G_Message);

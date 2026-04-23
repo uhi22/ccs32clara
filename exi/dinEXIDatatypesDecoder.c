@@ -5123,7 +5123,7 @@ static int decode_dinEVChargeParameterType(bitstream_t* stream, struct dinEVChar
 	return errn;
 }
 
-/* Complex type name='urn:iso:15118:2:2010:MsgHeader,MessageHeaderType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("urn:iso:15118:2:2010:MsgHeader":SessionID,"urn:iso:15118:2:2010:MsgHeader":Notification{0-1},"http://www.w3.org/2000/09/xmldsig#":Signature{0-1})',  derivedBy='RESTRICTION'.  */
+/* Complex type name='urn:iso:15118:2:2010:MsgHeader,MessageHeaderType',  base type name='anyType',  content type='ELEMENT',  isAbstract='false',  hasTypeId='false',  final='0',  block='0',  particle='("urn:iso:15118:2:2010:MsgHeader":SessionID,"urn:iso:15118:2:2010:MsgHeader":Notification{0-1})',  derivedBy='RESTRICTION'.  */
 static int decode_dinMessageHeaderType(bitstream_t* stream, struct dinMessageHeaderType* dinMessageHeaderType) {
 	int grammarID = 108;
 	int done = 0;
@@ -5171,7 +5171,7 @@ static int decode_dinMessageHeaderType(bitstream_t* stream, struct dinMessageHea
 			}
 			break;
 		case 109:
-			/* Element[START_ELEMENT({urn:iso:15118:2:2010:MsgHeader}Notification), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Signature), END_ELEMENT] */
+			/* Element[START_ELEMENT({urn:iso:15118:2:2010:MsgHeader}Notification), END_ELEMENT] */
 			errn = decodeNBitUnsignedInteger(stream, 2, &eventCode);
 			if (errn == 0) {
 				switch(eventCode) {
@@ -5179,11 +5179,6 @@ static int decode_dinMessageHeaderType(bitstream_t* stream, struct dinMessageHea
 					errn = decode_dinNotificationType(stream, &dinMessageHeaderType->Notification);
 					dinMessageHeaderType->Notification_isUsed = 1u;
 					grammarID = 110;
-					break;
-				case 1:
-					errn = decode_dinSignatureType(stream, &dinMessageHeaderType->Signature);
-					dinMessageHeaderType->Signature_isUsed = 1u;
-					grammarID = 4;
 					break;
 				case 2:
 					done = 1;
@@ -5196,15 +5191,10 @@ static int decode_dinMessageHeaderType(bitstream_t* stream, struct dinMessageHea
 			}
 			break;
 		case 110:
-			/* Element[START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Signature), END_ELEMENT] */
+			/* Element[END_ELEMENT] */
 			errn = decodeNBitUnsignedInteger(stream, 2, &eventCode);
 			if (errn == 0) {
 				switch(eventCode) {
-				case 0:
-					errn = decode_dinSignatureType(stream, &dinMessageHeaderType->Signature);
-					dinMessageHeaderType->Signature_isUsed = 1u;
-					grammarID = 4;
-					break;
 				case 1:
 					done = 1;
 					grammarID = 5;

@@ -280,217 +280,73 @@ static int encode_dinBodyType(bitstream_t* stream, struct dinBodyType* dinBodyTy
 		switch(grammarID) {
 		case 6:
 			/* FirstStartTag[START_ELEMENT({urn:iso:15118:2:2010:MsgDef}BodyElement), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CableCheckReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CableCheckRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateInstallationReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateInstallationRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateUpdateReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateUpdateRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargeParameterDiscoveryReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargeParameterDiscoveryRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargingStatusReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargingStatusRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ContractAuthenticationReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ContractAuthenticationRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CurrentDemandReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CurrentDemandRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}MeteringReceiptReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}MeteringReceiptRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PaymentDetailsReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PaymentDetailsRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PowerDeliveryReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PowerDeliveryRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PreChargeReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PreChargeRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDetailReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDetailRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDiscoveryReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDiscoveryRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServicePaymentSelectionReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServicePaymentSelectionRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionSetupReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionSetupRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionStopReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionStopRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}WeldingDetectionReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}WeldingDetectionRes), END_ELEMENT] */
-			if ( dinBodyType->BodyElement_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 0);
-				if(errn == 0) {
-					errn = encode_dinBodyBaseType(stream, &dinBodyType->BodyElement );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->CableCheckReq_isUsed == 1u ) {
+			if ( dinBodyType->CableCheckReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 1);
 				if(errn == 0) {
 					errn = encode_dinCableCheckReqType(stream, &dinBodyType->CableCheckReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->CableCheckRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 2);
-				if(errn == 0) {
-					errn = encode_dinCableCheckResType(stream, &dinBodyType->CableCheckRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->CertificateInstallationReq_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 3);
-				if(errn == 0) {
-					errn = encode_dinCertificateInstallationReqType(stream, &dinBodyType->CertificateInstallationReq );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->CertificateInstallationRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 4);
-				if(errn == 0) {
-					errn = encode_dinCertificateInstallationResType(stream, &dinBodyType->CertificateInstallationRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->CertificateUpdateReq_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 5);
-				if(errn == 0) {
-					errn = encode_dinCertificateUpdateReqType(stream, &dinBodyType->CertificateUpdateReq );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->CertificateUpdateRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 6);
-				if(errn == 0) {
-					errn = encode_dinCertificateUpdateResType(stream, &dinBodyType->CertificateUpdateRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ChargeParameterDiscoveryReq_isUsed == 1u ) {
+			} else if ( dinBodyType->ChargeParameterDiscoveryReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 7);
 				if(errn == 0) {
 					errn = encode_dinChargeParameterDiscoveryReqType(stream, &dinBodyType->ChargeParameterDiscoveryReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->ChargeParameterDiscoveryRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 8);
-				if(errn == 0) {
-					errn = encode_dinChargeParameterDiscoveryResType(stream, &dinBodyType->ChargeParameterDiscoveryRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ChargingStatusReq_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 9);
-				if(errn == 0) {
-					errn = encode_dinChargingStatusReqType(stream, &dinBodyType->ChargingStatusReq );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ChargingStatusRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 10);
-				if(errn == 0) {
-					errn = encode_dinChargingStatusResType(stream, &dinBodyType->ChargingStatusRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ContractAuthenticationReq_isUsed == 1u ) {
+			} else if ( dinBodyType->ContractAuthenticationReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 11);
 				if(errn == 0) {
 					errn = encode_dinContractAuthenticationReqType(stream, &dinBodyType->ContractAuthenticationReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->ContractAuthenticationRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 12);
-				if(errn == 0) {
-					errn = encode_dinContractAuthenticationResType(stream, &dinBodyType->ContractAuthenticationRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->CurrentDemandReq_isUsed == 1u ) {
+			} else if ( dinBodyType->CurrentDemandReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 13);
 				if(errn == 0) {
 					errn = encode_dinCurrentDemandReqType(stream, &dinBodyType->CurrentDemandReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->CurrentDemandRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 14);
-				if(errn == 0) {
-					errn = encode_dinCurrentDemandResType(stream, &dinBodyType->CurrentDemandRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->MeteringReceiptReq_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 15);
-				if(errn == 0) {
-					errn = encode_dinMeteringReceiptReqType(stream, &dinBodyType->MeteringReceiptReq );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->MeteringReceiptRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 16);
-				if(errn == 0) {
-					errn = encode_dinMeteringReceiptResType(stream, &dinBodyType->MeteringReceiptRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->PaymentDetailsReq_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 17);
-				if(errn == 0) {
-					errn = encode_dinPaymentDetailsReqType(stream, &dinBodyType->PaymentDetailsReq );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->PaymentDetailsRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 18);
-				if(errn == 0) {
-					errn = encode_dinPaymentDetailsResType(stream, &dinBodyType->PaymentDetailsRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->PowerDeliveryReq_isUsed == 1u ) {
+			} else if ( dinBodyType->PowerDeliveryReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 19);
 				if(errn == 0) {
 					errn = encode_dinPowerDeliveryReqType(stream, &dinBodyType->PowerDeliveryReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->PowerDeliveryRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 20);
-				if(errn == 0) {
-					errn = encode_dinPowerDeliveryResType(stream, &dinBodyType->PowerDeliveryRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->PreChargeReq_isUsed == 1u ) {
+			} else if ( dinBodyType->PreChargeReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 21);
 				if(errn == 0) {
 					errn = encode_dinPreChargeReqType(stream, &dinBodyType->PreChargeReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->PreChargeRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 22);
-				if(errn == 0) {
-					errn = encode_dinPreChargeResType(stream, &dinBodyType->PreChargeRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ServiceDetailReq_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 23);
-				if(errn == 0) {
-					errn = encode_dinServiceDetailReqType(stream, &dinBodyType->ServiceDetailReq );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ServiceDetailRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 24);
-				if(errn == 0) {
-					errn = encode_dinServiceDetailResType(stream, &dinBodyType->ServiceDetailRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ServiceDiscoveryReq_isUsed == 1u ) {
+			} else if ( dinBodyType->ServiceDiscoveryReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 25);
 				if(errn == 0) {
 					errn = encode_dinServiceDiscoveryReqType(stream, &dinBodyType->ServiceDiscoveryReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->ServiceDiscoveryRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 26);
-				if(errn == 0) {
-					errn = encode_dinServiceDiscoveryResType(stream, &dinBodyType->ServiceDiscoveryRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->ServicePaymentSelectionReq_isUsed == 1u ) {
+			} else if ( dinBodyType->ServicePaymentSelectionReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 27);
 				if(errn == 0) {
 					errn = encode_dinServicePaymentSelectionReqType(stream, &dinBodyType->ServicePaymentSelectionReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->ServicePaymentSelectionRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 28);
-				if(errn == 0) {
-					errn = encode_dinServicePaymentSelectionResType(stream, &dinBodyType->ServicePaymentSelectionRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->SessionSetupReq_isUsed == 1u ) {
+			} else if ( dinBodyType->SessionSetupReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 29);
 				if(errn == 0) {
 					errn = encode_dinSessionSetupReqType(stream, &dinBodyType->SessionSetupReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->SessionSetupRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 30);
-				if(errn == 0) {
-					errn = encode_dinSessionSetupResType(stream, &dinBodyType->SessionSetupRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->SessionStopReq_isUsed == 1u ) {
+			} else if ( dinBodyType->SessionStopReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 31);
 				if(errn == 0) {
 					errn = encode_dinSessionStopType(stream, &dinBodyType->SessionStopReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->SessionStopRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 32);
-				if(errn == 0) {
-					errn = encode_dinSessionStopResType(stream, &dinBodyType->SessionStopRes );
-				}
-				grammarID = 4;
-			} else 			if ( dinBodyType->WeldingDetectionReq_isUsed == 1u ) {
+			} else if ( dinBodyType->WeldingDetectionReq_isUsed == 1u ) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 33);
 				if(errn == 0) {
 					errn = encode_dinWeldingDetectionReqType(stream, &dinBodyType->WeldingDetectionReq );
 				}
 				grammarID = 4;
-			} else 			if ( dinBodyType->WeldingDetectionRes_isUsed == 1u ) {
-				errn = encodeNBitUnsignedInteger(stream, 6, 34);
-				if(errn == 0) {
-					errn = encode_dinWeldingDetectionResType(stream, &dinBodyType->WeldingDetectionRes );
-				}
-				grammarID = 4;
-			} else 			if (1==1) {
+			} else if (1==1) {
 				errn = encodeNBitUnsignedInteger(stream, 6, 35);
 				if(errn == 0) {
 					done = 1;
@@ -10024,524 +9880,16 @@ int encode_dinExiDocument(bitstream_t* stream, struct dinEXIDocument* exiDoc) {
 
 	if(errn == 0) {
 		/* DocContent[START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}AC_EVChargeParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}AC_EVSEChargeParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}AC_EVSEStatus), START_ELEMENT({urn:iso:15118:2:2010:MsgDef}BodyElement), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CableCheckReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CableCheckRes), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateInstallationReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateInstallationRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateUpdateReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateUpdateRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargeParameterDiscoveryReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargeParameterDiscoveryRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargingStatusReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargingStatusRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ContractAuthenticationReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ContractAuthenticationRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CurrentDemandReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CurrentDemandRes), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVChargeParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVPowerDeliveryParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVSEChargeParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVSEStatus), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVStatus), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}DSAKeyValue), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}DigestMethod), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}DigestValue), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVChargeParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVPowerDeliveryParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVSEChargeParameter), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVSEStatus), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVStatus), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}Entry), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}KeyInfo), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}KeyName), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}KeyValue), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Manifest), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}MeteringReceiptReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}MeteringReceiptRes), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}MgmtData), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Object), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}PGPData), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}PMaxScheduleEntry), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PaymentDetailsReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PaymentDetailsRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PowerDeliveryReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PowerDeliveryRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PreChargeReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PreChargeRes), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}RSAKeyValue), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Reference), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}RelativeTimeInterval), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}RetrievalMethod), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}SAScheduleList), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}SASchedules), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SPKIData), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}SalesTariffEntry), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}ServiceCharge), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDetailReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDetailRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDiscoveryReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDiscoveryRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServicePaymentSelectionReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServicePaymentSelectionRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionSetupReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionSetupRes), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionStopReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionStopRes), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Signature), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureMethod), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureProperties), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureProperty), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureValue), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignedInfo), START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}TimeInterval), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Transform), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Transforms), START_ELEMENT({urn:iso:15118:2:2010:MsgDef}V2G_Message), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}WeldingDetectionReq), START_ELEMENT({urn:iso:15118:2:2010:MsgBody}WeldingDetectionRes), START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}X509Data), START_ELEMENT_GENERIC] */
-		if ( exiDoc->AC_EVChargeParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}AC_EVChargeParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 0);
-			if(errn == 0) {
-				errn = encode_dinAC_EVChargeParameterType(stream, &exiDoc->AC_EVChargeParameter );
-			}
-		} else if ( exiDoc->AC_EVSEChargeParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}AC_EVSEChargeParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 1);
-			if(errn == 0) {
-				errn = encode_dinAC_EVSEChargeParameterType(stream, &exiDoc->AC_EVSEChargeParameter );
-			}
-		} else if ( exiDoc->AC_EVSEStatus_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}AC_EVSEStatus) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 2);
-			if(errn == 0) {
-				errn = encode_dinAC_EVSEStatusType(stream, &exiDoc->AC_EVSEStatus );
-			}
-		} else if ( exiDoc->BodyElement_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDef}BodyElement) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 3);
-			if(errn == 0) {
-				errn = encode_dinBodyBaseType(stream, &exiDoc->BodyElement );
-			}
-		} else if ( exiDoc->CableCheckReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CableCheckReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 4);
-			if(errn == 0) {
-				errn = encode_dinCableCheckReqType(stream, &exiDoc->CableCheckReq );
-			}
-		} else if ( exiDoc->CableCheckRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CableCheckRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 5);
-			if(errn == 0) {
-				errn = encode_dinCableCheckResType(stream, &exiDoc->CableCheckRes );
-			}
-		} else if ( exiDoc->CanonicalizationMethod_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}CanonicalizationMethod) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 6);
-			if(errn == 0) {
-				errn = encode_dinCanonicalizationMethodType(stream, &exiDoc->CanonicalizationMethod );
-			}
-		} else if ( exiDoc->CertificateInstallationReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateInstallationReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 7);
-			if(errn == 0) {
-				errn = encode_dinCertificateInstallationReqType(stream, &exiDoc->CertificateInstallationReq );
-			}
-		} else if ( exiDoc->CertificateInstallationRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateInstallationRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 8);
-			if(errn == 0) {
-				errn = encode_dinCertificateInstallationResType(stream, &exiDoc->CertificateInstallationRes );
-			}
-		} else if ( exiDoc->CertificateUpdateReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateUpdateReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 9);
-			if(errn == 0) {
-				errn = encode_dinCertificateUpdateReqType(stream, &exiDoc->CertificateUpdateReq );
-			}
-		} else if ( exiDoc->CertificateUpdateRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CertificateUpdateRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 10);
-			if(errn == 0) {
-				errn = encode_dinCertificateUpdateResType(stream, &exiDoc->CertificateUpdateRes );
-			}
-		} else if ( exiDoc->ChargeParameterDiscoveryReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargeParameterDiscoveryReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 11);
-			if(errn == 0) {
-				errn = encode_dinChargeParameterDiscoveryReqType(stream, &exiDoc->ChargeParameterDiscoveryReq );
-			}
-		} else if ( exiDoc->ChargeParameterDiscoveryRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargeParameterDiscoveryRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 12);
-			if(errn == 0) {
-				errn = encode_dinChargeParameterDiscoveryResType(stream, &exiDoc->ChargeParameterDiscoveryRes );
-			}
-		} else if ( exiDoc->ChargingStatusReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargingStatusReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 13);
-			if(errn == 0) {
-				errn = encode_dinChargingStatusReqType(stream, &exiDoc->ChargingStatusReq );
-			}
-		} else if ( exiDoc->ChargingStatusRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ChargingStatusRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 14);
-			if(errn == 0) {
-				errn = encode_dinChargingStatusResType(stream, &exiDoc->ChargingStatusRes );
-			}
-		} else if ( exiDoc->ContractAuthenticationReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ContractAuthenticationReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 15);
-			if(errn == 0) {
-				errn = encode_dinContractAuthenticationReqType(stream, &exiDoc->ContractAuthenticationReq );
-			}
-		} else if ( exiDoc->ContractAuthenticationRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ContractAuthenticationRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 16);
-			if(errn == 0) {
-				errn = encode_dinContractAuthenticationResType(stream, &exiDoc->ContractAuthenticationRes );
-			}
-		} else if ( exiDoc->CurrentDemandReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CurrentDemandReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 17);
-			if(errn == 0) {
-				errn = encode_dinCurrentDemandReqType(stream, &exiDoc->CurrentDemandReq );
-			}
-		} else if ( exiDoc->CurrentDemandRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}CurrentDemandRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 18);
-			if(errn == 0) {
-				errn = encode_dinCurrentDemandResType(stream, &exiDoc->CurrentDemandRes );
-			}
-		} else if ( exiDoc->DC_EVChargeParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVChargeParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 19);
-			if(errn == 0) {
-				errn = encode_dinDC_EVChargeParameterType(stream, &exiDoc->DC_EVChargeParameter );
-			}
-		} else if ( exiDoc->DC_EVPowerDeliveryParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVPowerDeliveryParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 20);
-			if(errn == 0) {
-				errn = encode_dinDC_EVPowerDeliveryParameterType(stream, &exiDoc->DC_EVPowerDeliveryParameter );
-			}
-		} else if ( exiDoc->DC_EVSEChargeParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVSEChargeParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 21);
-			if(errn == 0) {
-				errn = encode_dinDC_EVSEChargeParameterType(stream, &exiDoc->DC_EVSEChargeParameter );
-			}
-		} else if ( exiDoc->DC_EVSEStatus_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVSEStatus) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 22);
-			if(errn == 0) {
-				errn = encode_dinDC_EVSEStatusType(stream, &exiDoc->DC_EVSEStatus );
-			}
-		} else if ( exiDoc->DC_EVStatus_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}DC_EVStatus) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 23);
-			if(errn == 0) {
-				errn = encode_dinDC_EVStatusType(stream, &exiDoc->DC_EVStatus );
-			}
-		} else if ( exiDoc->DSAKeyValue_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}DSAKeyValue) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 24);
-			if(errn == 0) {
-				errn = encode_dinDSAKeyValueType(stream, &exiDoc->DSAKeyValue );
-			}
-		} else if ( exiDoc->DigestMethod_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}DigestMethod) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 25);
-			if(errn == 0) {
-				errn = encode_dinDigestMethodType(stream, &exiDoc->DigestMethod );
-			}
-		} else if ( exiDoc->DigestValue_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}DigestValue) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 26);
-			if(errn == 0) {
-				/* FirstStartTag[CHARACTERS[BINARY_BASE64]] */
-				errn = encodeNBitUnsignedInteger(stream, 1, 0);
-				if(errn == 0) {
-					errn = encodeUnsignedInteger16(stream, (uint16_t)(exiDoc->DigestValue.bytesLen));
-					if (errn == 0) {
-						errn = encodeBytes(stream, exiDoc->DigestValue.bytes, exiDoc->DigestValue.bytesLen);
-					}
-					/* valid EE */
-					errn = encodeNBitUnsignedInteger(stream, 1, 0);
-				}
-			}
-		} else if ( exiDoc->EVChargeParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVChargeParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 27);
-			if(errn == 0) {
-				errn = encode_dinEVChargeParameterType(stream, &exiDoc->EVChargeParameter );
-			}
-		} else if ( exiDoc->EVPowerDeliveryParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVPowerDeliveryParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 28);
-			if(errn == 0) {
-				errn = encode_dinEVPowerDeliveryParameterType(stream, &exiDoc->EVPowerDeliveryParameter );
-			}
-		} else if ( exiDoc->EVSEChargeParameter_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVSEChargeParameter) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 29);
-			if(errn == 0) {
-				errn = encode_dinEVSEChargeParameterType(stream, &exiDoc->EVSEChargeParameter );
-			}
-		} else if ( exiDoc->EVSEStatus_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVSEStatus) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 30);
-			if(errn == 0) {
-				errn = encode_dinEVSEStatusType(stream, &exiDoc->EVSEStatus );
-			}
-		} else if ( exiDoc->EVStatus_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}EVStatus) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 31);
-			if(errn == 0) {
-				errn = encode_dinEVStatusType(stream, &exiDoc->EVStatus );
-			}
-		} else if ( exiDoc->Entry_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}Entry) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 32);
-			if(errn == 0) {
-				errn = encode_dinEntryType(stream, &exiDoc->Entry );
-			}
-		} else if ( exiDoc->KeyInfo_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}KeyInfo) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 33);
-			if(errn == 0) {
-				errn = encode_dinKeyInfoType(stream, &exiDoc->KeyInfo );
-			}
-		} else if ( exiDoc->KeyName_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}KeyName) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 34);
-			if(errn == 0) {
-				/* First(xsi:type)StartTag[CHARACTERS[STRING]] */
-				errn = encodeNBitUnsignedInteger(stream, 1, 0);
-				if(errn == 0) {
-					/* encode string as string table miss (+2 len)*/
-					errn = encodeUnsignedInteger16(stream, (uint16_t)(exiDoc->KeyName.charactersLen + 2));
-					if (errn == 0) {
-						errn = encodeCharacters(stream, exiDoc->KeyName.characters, exiDoc->KeyName.charactersLen);
-					}
-					/* valid EE */
-					errn = encodeNBitUnsignedInteger(stream, 1, 0);
-				}
-			}
-		} else if ( exiDoc->KeyValue_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}KeyValue) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 35);
-			if(errn == 0) {
-				errn = encode_dinKeyValueType(stream, &exiDoc->KeyValue );
-			}
-		} else if ( exiDoc->Manifest_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Manifest) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 36);
-			if(errn == 0) {
-				errn = encode_dinManifestType(stream, &exiDoc->Manifest );
-			}
-		} else if ( exiDoc->MeteringReceiptReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}MeteringReceiptReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 37);
-			if(errn == 0) {
-				errn = encode_dinMeteringReceiptReqType(stream, &exiDoc->MeteringReceiptReq );
-			}
-		} else if ( exiDoc->MeteringReceiptRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}MeteringReceiptRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 38);
-			if(errn == 0) {
-				errn = encode_dinMeteringReceiptResType(stream, &exiDoc->MeteringReceiptRes );
-			}
-		} else if ( exiDoc->MgmtData_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}MgmtData) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 39);
-			if(errn == 0) {
-				/* First(xsi:type)StartTag[CHARACTERS[STRING]] */
-				errn = encodeNBitUnsignedInteger(stream, 1, 0);
-				if(errn == 0) {
-					/* encode string as string table miss (+2 len)*/
-					errn = encodeUnsignedInteger16(stream, (uint16_t)(exiDoc->MgmtData.charactersLen + 2));
-					if (errn == 0) {
-						errn = encodeCharacters(stream, exiDoc->MgmtData.characters, exiDoc->MgmtData.charactersLen);
-					}
-					/* valid EE */
-					errn = encodeNBitUnsignedInteger(stream, 1, 0);
-				}
-			}
-		} else if ( exiDoc->Object_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Object) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 40);
-			if(errn == 0) {
-				errn = encode_dinObjectType(stream, &exiDoc->Object );
-			}
-		} else if ( exiDoc->PGPData_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}PGPData) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 41);
-			if(errn == 0) {
-				errn = encode_dinPGPDataType(stream, &exiDoc->PGPData );
-			}
-		} else if ( exiDoc->PMaxScheduleEntry_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}PMaxScheduleEntry) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 42);
-			if(errn == 0) {
-				errn = encode_dinPMaxScheduleEntryType(stream, &exiDoc->PMaxScheduleEntry );
-			}
-		} else if ( exiDoc->PaymentDetailsReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PaymentDetailsReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 43);
-			if(errn == 0) {
-				errn = encode_dinPaymentDetailsReqType(stream, &exiDoc->PaymentDetailsReq );
-			}
-		} else if ( exiDoc->PaymentDetailsRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PaymentDetailsRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 44);
-			if(errn == 0) {
-				errn = encode_dinPaymentDetailsResType(stream, &exiDoc->PaymentDetailsRes );
-			}
-		} else if ( exiDoc->PowerDeliveryReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PowerDeliveryReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 45);
-			if(errn == 0) {
-				errn = encode_dinPowerDeliveryReqType(stream, &exiDoc->PowerDeliveryReq );
-			}
-		} else if ( exiDoc->PowerDeliveryRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PowerDeliveryRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 46);
-			if(errn == 0) {
-				errn = encode_dinPowerDeliveryResType(stream, &exiDoc->PowerDeliveryRes );
-			}
-		} else if ( exiDoc->PreChargeReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PreChargeReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 47);
-			if(errn == 0) {
-				errn = encode_dinPreChargeReqType(stream, &exiDoc->PreChargeReq );
-			}
-		} else if ( exiDoc->PreChargeRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}PreChargeRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 48);
-			if(errn == 0) {
-				errn = encode_dinPreChargeResType(stream, &exiDoc->PreChargeRes );
-			}
-		} else if ( exiDoc->RSAKeyValue_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}RSAKeyValue) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 49);
-			if(errn == 0) {
-				errn = encode_dinRSAKeyValueType(stream, &exiDoc->RSAKeyValue );
-			}
-		} else if ( exiDoc->Reference_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Reference) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 50);
-			if(errn == 0) {
-				errn = encode_dinReferenceType(stream, &exiDoc->Reference );
-			}
-		} else if ( exiDoc->RelativeTimeInterval_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}RelativeTimeInterval) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 51);
-			if(errn == 0) {
-				errn = encode_dinRelativeTimeIntervalType(stream, &exiDoc->RelativeTimeInterval );
-			}
-		} else if ( exiDoc->RetrievalMethod_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}RetrievalMethod) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 52);
-			if(errn == 0) {
-				errn = encode_dinRetrievalMethodType(stream, &exiDoc->RetrievalMethod );
-			}
-		} else if ( exiDoc->SAScheduleList_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}SAScheduleList) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 53);
-			if(errn == 0) {
-				errn = encode_dinSAScheduleListType(stream, &exiDoc->SAScheduleList );
-			}
-		} else if ( exiDoc->SASchedules_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}SASchedules) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 54);
-			if(errn == 0) {
-				errn = encode_dinSASchedulesType(stream, &exiDoc->SASchedules );
-			}
-		} else if ( exiDoc->SPKIData_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SPKIData) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 55);
-			if(errn == 0) {
-				errn = encode_dinSPKIDataType(stream, &exiDoc->SPKIData );
-			}
-		} else if ( exiDoc->SalesTariffEntry_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}SalesTariffEntry) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 56);
-			if(errn == 0) {
-				errn = encode_dinSalesTariffEntryType(stream, &exiDoc->SalesTariffEntry );
-			}
-		} else if ( exiDoc->ServiceCharge_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}ServiceCharge) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 57);
-			if(errn == 0) {
-				errn = encode_dinServiceChargeType(stream, &exiDoc->ServiceCharge );
-			}
-		} else if ( exiDoc->ServiceDetailReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDetailReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 58);
-			if(errn == 0) {
-				errn = encode_dinServiceDetailReqType(stream, &exiDoc->ServiceDetailReq );
-			}
-		} else if ( exiDoc->ServiceDetailRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDetailRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 59);
-			if(errn == 0) {
-				errn = encode_dinServiceDetailResType(stream, &exiDoc->ServiceDetailRes );
-			}
-		} else if ( exiDoc->ServiceDiscoveryReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDiscoveryReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 60);
-			if(errn == 0) {
-				errn = encode_dinServiceDiscoveryReqType(stream, &exiDoc->ServiceDiscoveryReq );
-			}
-		} else if ( exiDoc->ServiceDiscoveryRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServiceDiscoveryRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 61);
-			if(errn == 0) {
-				errn = encode_dinServiceDiscoveryResType(stream, &exiDoc->ServiceDiscoveryRes );
-			}
-		} else if ( exiDoc->ServicePaymentSelectionReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServicePaymentSelectionReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 62);
-			if(errn == 0) {
-				errn = encode_dinServicePaymentSelectionReqType(stream, &exiDoc->ServicePaymentSelectionReq );
-			}
-		} else if ( exiDoc->ServicePaymentSelectionRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}ServicePaymentSelectionRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 63);
-			if(errn == 0) {
-				errn = encode_dinServicePaymentSelectionResType(stream, &exiDoc->ServicePaymentSelectionRes );
-			}
-		} else if ( exiDoc->SessionSetupReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionSetupReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 64);
-			if(errn == 0) {
-				errn = encode_dinSessionSetupReqType(stream, &exiDoc->SessionSetupReq );
-			}
-		} else if ( exiDoc->SessionSetupRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionSetupRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 65);
-			if(errn == 0) {
-				errn = encode_dinSessionSetupResType(stream, &exiDoc->SessionSetupRes );
-			}
-		} else if ( exiDoc->SessionStopReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionStopReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 66);
-			if(errn == 0) {
-				errn = encode_dinSessionStopType(stream, &exiDoc->SessionStopReq );
-			}
-		} else if ( exiDoc->SessionStopRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}SessionStopRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 67);
-			if(errn == 0) {
-				errn = encode_dinSessionStopResType(stream, &exiDoc->SessionStopRes );
-			}
-		} else if ( exiDoc->Signature_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Signature) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 68);
-			if(errn == 0) {
-				errn = encode_dinSignatureType(stream, &exiDoc->Signature );
-			}
-		} else if ( exiDoc->SignatureMethod_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureMethod) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 69);
-			if(errn == 0) {
-				errn = encode_dinSignatureMethodType(stream, &exiDoc->SignatureMethod );
-			}
-		} else if ( exiDoc->SignatureProperties_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureProperties) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 70);
-			if(errn == 0) {
-				errn = encode_dinSignaturePropertiesType(stream, &exiDoc->SignatureProperties );
-			}
-		} else if ( exiDoc->SignatureProperty_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureProperty) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 71);
-			if(errn == 0) {
-				errn = encode_dinSignaturePropertyType(stream, &exiDoc->SignatureProperty );
-			}
-		} else if ( exiDoc->SignatureValue_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignatureValue) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 72);
-			if(errn == 0) {
-				errn = encode_dinSignatureValueType(stream, &exiDoc->SignatureValue );
-			}
-		} else if ( exiDoc->SignedInfo_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}SignedInfo) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 73);
-			if(errn == 0) {
-				errn = encode_dinSignedInfoType(stream, &exiDoc->SignedInfo );
-			}
-		} else if ( exiDoc->TimeInterval_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDataTypes}TimeInterval) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 74);
-			if(errn == 0) {
-				errn = encode_dinIntervalType(stream, &exiDoc->TimeInterval );
-			}
-		} else if ( exiDoc->Transform_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Transform) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 75);
-			if(errn == 0) {
-				errn = encode_dinTransformType(stream, &exiDoc->Transform );
-			}
-		} else if ( exiDoc->Transforms_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}Transforms) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 76);
-			if(errn == 0) {
-				errn = encode_dinTransformsType(stream, &exiDoc->Transforms );
-			}
-		} else if ( exiDoc->V2G_Message_isUsed == 1u ) { 
+		if ( exiDoc->V2G_Message_isUsed == 1u ) {
 			/* START_ELEMENT({urn:iso:15118:2:2010:MsgDef}V2G_Message) */
 			errn = encodeNBitUnsignedInteger(stream, 7, 77);
 			if(errn == 0) {
 				errn = encode_dinAnonType_V2G_Message(stream, &exiDoc->V2G_Message );
 			}
-		} else if ( exiDoc->WeldingDetectionReq_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}WeldingDetectionReq) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 78);
-			if(errn == 0) {
-				errn = encode_dinWeldingDetectionReqType(stream, &exiDoc->WeldingDetectionReq );
-			}
-		} else if ( exiDoc->WeldingDetectionRes_isUsed == 1u ) { 
-			/* START_ELEMENT({urn:iso:15118:2:2010:MsgBody}WeldingDetectionRes) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 79);
-			if(errn == 0) {
-				errn = encode_dinWeldingDetectionResType(stream, &exiDoc->WeldingDetectionRes );
-			}
-		} else if ( exiDoc->X509Data_isUsed == 1u ) { 
-			/* START_ELEMENT({http://www.w3.org/2000/09/xmldsig#}X509Data) */
-			errn = encodeNBitUnsignedInteger(stream, 7, 80);
-			if(errn == 0) {
-				errn = encode_dinX509DataType(stream, &exiDoc->X509Data );
-			}
 		} else {
 			errn = EXI_ERROR_UNKOWN_EVENT;
 		}
+
 
 	}
 

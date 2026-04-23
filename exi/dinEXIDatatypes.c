@@ -635,7 +635,6 @@ void init_dinEVChargeParameterType(struct dinEVChargeParameterType* dinEVChargeP
 
 void init_dinMessageHeaderType(struct dinMessageHeaderType* dinMessageHeaderType) {
 	dinMessageHeaderType->Notification_isUsed = 0u;
-	dinMessageHeaderType->Signature_isUsed = 0u;
 }
 
 void init_dinBodyBaseType(struct dinBodyBaseType* dinBodyBaseType) {
@@ -966,4 +965,3 @@ void init_dinSubCertificatesType(struct dinSubCertificatesType* dinSubCertificat
 #endif /* DEPLOY_DIN_CODEC */
 
 #endif
-

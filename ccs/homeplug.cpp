@@ -511,7 +511,6 @@ void evaluateGetSwCnf(void)
       Reference: see wireshark interpreted frame from TPlink, Ioniq and Alpitronic charger */
    uint8_t i, x;
    char strMac[20];
-   bool handledByPlcboot = false;
    addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received GET_SW.CNF");
    for (i=0; i<6; i++)
    {
@@ -522,6 +521,7 @@ void evaluateGetSwCnf(void)
    if ((verLen>0) && (verLen<0x30))
    {
       char strVersion[200];
+      bool handledByPlcboot = false;
 
       for (i=0; i<verLen; i++)
       {
@@ -551,10 +551,10 @@ void evaluateGetSwCnf(void)
       OledLine3 = StringVersion.substring(22, 33);
       OledLine4 = StringVersion.substring(33, 44);
 #endif
-   }
-   if (!handledByPlcboot)
-   {
-      numberOfSoftwareVersionResponses+=1;
+      if (!handledByPlcboot)
+      {
+         numberOfSoftwareVersionResponses+=1;
+      }
    }
 }
 

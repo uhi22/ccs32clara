@@ -2,9 +2,15 @@
 
 /* Global Defines */
 
+#ifdef ENABLE_PLCBOOT
+#define MY_SPI_TX_RX_BUFFER_SIZE 1600
+#define MY_ETH_TRANSMIT_BUFFER_LEN 1500
+#define MY_ETH_RECEIVE_BUFFER_LEN 1500
+#else
 #define MY_SPI_TX_RX_BUFFER_SIZE 1100
 #define MY_ETH_TRANSMIT_BUFFER_LEN 250
 #define MY_ETH_RECEIVE_BUFFER_LEN 250
+#endif
 
 #ifdef __cplusplus
 extern "C" {

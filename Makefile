@@ -23,6 +23,7 @@ BINARY		= stm32_ccs
 SIZE        = $(PREFIX)-size
 CC		      = $(PREFIX)-gcc
 CPP	      = $(PREFIX)-g++
+AS		      = $(PREFIX)-g++
 LD		      = $(PREFIX)-gcc
 OBJCOPY		= $(PREFIX)-objcopy
 OBJDUMP		= $(PREFIX)-objdump
@@ -33,6 +34,7 @@ CFLAGS		= -Os -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
 CPPFLAGS    = -Os -ggdb -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
 				-fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 \
 				-ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
+ASFLAGS     = $(CPPFLAGS) -x assembler-with-cpp
 # Check if the variable GITHUB_RUN_NUMBER exists. When running on the github actions running, this
 # variable is automatically available.
 # Create a compiler define with the content of the variable. Or, if it does not exist, use replacement value 0.
@@ -56,11 +58,19 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 BitInputStream.o dinEXIDatatypesEncoder.o MethodsBag.o \
 				 BitOutputStream.o dinEXIDatatypes.o projectExiConnector.o
 
+ifneq ($(filter ReleaseQCAFlash,$(MAKECMDGOALS)),)
+CFLAGS      += -Iplcboot -DENABLE_PLCBOOT
+CPPFLAGS    += -Iplcboot -DENABLE_PLCBOOT
+ASFLAGS     += -Iplcboot -DENABLE_PLCBOOT
+OBJSL       += plcboot/plcboot.o plcboot/embedded_images.o plcboot/embedded_images_data.o
+endif
+
 
 OBJS     = $(patsubst %.o,obj/%.o, $(OBJSL))
 DEPENDS := $(patsubst %.o,obj/%.d, $(OBJSL))
 vpath %.c src/ libopeninv/src exi/ ccs/
 vpath %.cpp src/ libopeninv/src exi/ ccs/
+vpath %.s plcboot/
 
 OPENOCD_BASE	= /usr
 OPENOCD		= $(OPENOCD_BASE)/bin/openocd
@@ -95,6 +105,7 @@ LDFLAGS	+= $(call ld-option,--no-warn-rwx-segments)
 all: directories images
 Debug:images
 Release: images
+ReleaseQCAFlash: images
 cleanDebug:clean
 images: $(BINARY)
 	@printf "  OBJCOPY $(BINARY).bin\n"
@@ -116,11 +127,18 @@ $(BINARY): $(OBJS) $(LDSCRIPT)
 
 $(OUT_DIR)/%.o: %.c Makefile
 	@printf "  CC      $(subst $(shell pwd)/,,$(@))\n"
+	$(Q)$(MKDIR_P) $(dir $@)
 	$(Q)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
 
 $(OUT_DIR)/%.o: %.cpp Makefile
 	@printf "  CPP     $(subst $(shell pwd)/,,$(@))\n"
+	$(Q)$(MKDIR_P) $(dir $@)
 	$(Q)$(CPP) $(CPPFLAGS) $(EXTRACOMPILERFLAGS) -MMD -MP -o $@ -c $<
+
+$(OUT_DIR)/%.o: %.s Makefile
+	@printf "  AS      $(subst $(shell pwd)/,,$(@))\n"
+	$(Q)$(MKDIR_P) $(dir $@)
+	$(Q)$(AS) $(ASFLAGS) $(EXTRACOMPILERFLAGS) -MMD -MP -o $@ -c $<
 
 clean:
 	@printf "  CLEAN   ${OUT_DIR}\n"

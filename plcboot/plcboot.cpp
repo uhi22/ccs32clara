@@ -396,7 +396,9 @@ static bool sendWriteExecuteChunk(void)
     if (chunk > PLC_MODULE_SIZE) {
         chunk = PLC_MODULE_SIZE;
     }
-    if ((writeExecuteTransfer.offset + chunk) >= totalLen && writeExecuteTransfer.execute && (writeExecuteTransfer.hdr->EntryPoint != NVM_NO_NEXT_HEADER)) {
+    bool lastChunk = (writeExecuteTransfer.offset + chunk) >= totalLen;
+    bool shouldExecute = writeExecuteTransfer.execute && (writeExecuteTransfer.hdr->EntryPoint != NVM_NO_NEXT_HEADER);
+    if (lastChunk && shouldExecute) {
         flags |= PLC_MODULE_EXECUTE;
     }
 
@@ -593,7 +595,9 @@ static bool handleWriteExecuteConfirm(const uint8_t *frame, uint16_t len)
         plcbootFail("write-and-execute status error");
         return true;
     }
-    if (rd32le(frame + MME_HDR_LEN + 28u) != writeExecuteTransfer.currentChunk || rd32le(frame + MME_HDR_LEN + 32u) != writeExecuteTransfer.currentOffset) {
+    uint32_t confirmedLength = rd32le(frame + MME_HDR_LEN + 28u);
+    uint32_t confirmedOffset = rd32le(frame + MME_HDR_LEN + 32u);
+    if ((confirmedLength != writeExecuteTransfer.currentChunk) || (confirmedOffset != writeExecuteTransfer.currentOffset)) {
         plcbootFail("write-and-execute confirm mismatch");
         return true;
     }

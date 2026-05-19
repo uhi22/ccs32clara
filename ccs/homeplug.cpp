@@ -553,6 +553,9 @@ void evaluateGetSwCnf(void)
 #endif
       if (!handledByPlcboot)
       {
+         /* BootLoader responses start the flashing path and must not be counted as
+            an operational modem, otherwise the normal SLAC flow would continue in
+            parallel with the flash sequence. */
          numberOfSoftwareVersionResponses+=1;
       }
    }

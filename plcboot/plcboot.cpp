@@ -37,7 +37,7 @@
 #define COMMIT_CODE_FW_PIB             (PLC_COMMIT_FORCE)
 
 #define SESSION_ID                     0x78563412u
-#define RESPONSE_TIMEOUT_MS            2000u
+#define RESPONSE_TIMEOUT_MS            10000u
 #define SESSION_TIMEOUT_MS             5000u
 #define RUNTIME_TIMEOUT_MS             30000u
 #define GET_SW_RETRY_MS                500u

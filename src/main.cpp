@@ -57,6 +57,9 @@
 #include "hardwareVariants.h"
 #include "acOBC.h"
 #include "wakecontrol.h"
+#ifdef ENABLE_PLCBOOT
+#include "plcboot.h"
+#endif
 
 #define PRINT_JSON 0
 
@@ -116,6 +119,17 @@ static void Ms100Task(void)
 static void Ms30Task()
 {
     spiQCA7000checkForReceivedData();
+#ifdef ENABLE_PLCBOOT
+    plcboot_Mainfunction();
+    if (plcboot_isActive())
+    {
+        hardwareInterface_cyclic();
+        pushbutton_handlePushbutton();
+        Param::SetInt(Param::ButtonPushed, pushbutton_isPressed500ms());
+        ErrorMessage::SetTime(rtc_get_counter_val());
+        return;
+    }
+#endif
     connMgr_Mainfunction(); /* ConnectionManager */
     modemFinder_Mainfunction();
     runSlacSequencer();
@@ -278,4 +292,3 @@ extern "C" int main(void)
 
     return 0;
 }
-

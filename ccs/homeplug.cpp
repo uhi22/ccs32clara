@@ -1,6 +1,9 @@
 /* Homeplug message handling */
 
 #include "ccs32_globals.h"
+#ifdef ENABLE_PLCBOOT
+#include "plcboot.h"
+#endif
 
 
 
@@ -509,7 +512,6 @@ void evaluateGetSwCnf(void)
    uint8_t i, x;
    char strMac[20];
    addToTrace(MOD_HOMEPLUG, "[PEVSLAC] received GET_SW.CNF");
-   numberOfSoftwareVersionResponses+=1;
    for (i=0; i<6; i++)
    {
       sourceMac[i] = myethreceivebuffer[6+i];
@@ -519,6 +521,7 @@ void evaluateGetSwCnf(void)
    if ((verLen>0) && (verLen<0x30))
    {
       char strVersion[200];
+      bool handledByPlcboot = false;
 
       for (i=0; i<verLen; i++)
       {
@@ -530,6 +533,9 @@ void evaluateGetSwCnf(void)
          strVersion[i]=x;
       }
       strVersion[i] = 0;
+#ifdef ENABLE_PLCBOOT
+      handledByPlcboot = plcboot_handle_software_version(strVersion, sourceMac);
+#endif
       if (Param::GetInt(Param::logging) & MOD_HOMEPLUG) {
          sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
          printf("For MAC %s ", strMac);
@@ -545,6 +551,13 @@ void evaluateGetSwCnf(void)
       OledLine3 = StringVersion.substring(22, 33);
       OledLine4 = StringVersion.substring(33, 44);
 #endif
+      if (!handledByPlcboot)
+      {
+         /* BootLoader responses start the flashing path and must not be counted as
+            an operational modem, otherwise the normal SLAC flow would continue in
+            parallel with the flash sequence. */
+         numberOfSoftwareVersionResponses+=1;
+      }
    }
 }
 
@@ -837,6 +850,8 @@ static void evaluateGetKeyCnf(void) {}
 
 void evaluateReceivedHomeplugPacket(void)
 {
+   uint16_t mmtype = getManagementMessageType();
+
    if (connMgr_getConnectionLevel()==100) {
        /* we have TCP traffic running, so we ignore all homeplug management packets. This
        makes us robust against cross-talk from other charging cables.
@@ -844,7 +859,11 @@ void evaluateReceivedHomeplugPacket(void)
        addToTrace(MOD_HOMEPLUG, "[HOMEPLUG] Ignoring homeplug message, because high level communication is ongoing.");
        return;
    }
-   switch (getManagementMessageType())
+#ifdef ENABLE_PLCBOOT
+   if (plcboot_handle_homeplug_packet(mmtype, myethreceivebuffer, myethreceivebufferLen))
+      return;
+#endif
+   switch (mmtype)
    {
    case CM_GET_KEY + MMTYPE_CNF:
       evaluateGetKeyCnf();

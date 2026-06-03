@@ -8,8 +8,9 @@
   - When LockOpenThresh == LockClosedThresh: no feedback assumed, purely time-based.
     The motor runs for LockRunTime and the state is then assumed to have changed.
   - When LockOpenThresh != LockClosedThresh: feedback is used to detect when the
-    target position is reached and stop the motor early. Feedback is interpreted
-    as binary opened/closed only; no analog intermediate movement state is derived.
+    closed target position is reached and stop the motor early. During opening the
+    motor always runs for full LockRunTime. Feedback is interpreted as binary
+    opened/closed only; no analog intermediate movement state is derived.
     In either case the motor is never run for longer than LockRunTime.
   - While moving from Open to Closed the state reports "Closing" (transition active).
   - While moving from Closed to Open the state reports "Opening" (transition active).
@@ -138,7 +139,8 @@ void hwIf_handleLockRequests(void)
 
    if (lockTimer > 0) {
       bool doneByFeedback = false;
-      if (useFeedback) {
+      bool allowFeedbackStop = useFeedback && (lockRequest == LOCK_CLOSED);
+      if (allowFeedbackStop) {
          lockState = hwIf_getLockState();
          if (lockState == lockRequest) {
             doneByFeedback = true;
@@ -153,7 +155,9 @@ void hwIf_handleLockRequests(void)
          hardwareInteface_setHBridge(0, 0);
          if (!doneByFeedback) {
             lockState = lockRequest; /* assume target reached */
-            if (useFeedback) addToTrace(MOD_HWIF, "connector lock timed out without feedback confirmation");
+            if (allowFeedbackStop) {
+               addToTrace(MOD_HWIF, "connector lock timed out without feedback confirmation");
+            }
          }
          Param::SetInt(Param::LockState, lockState);
          addToTrace(MOD_HWIF, "finished connector (un)locking");

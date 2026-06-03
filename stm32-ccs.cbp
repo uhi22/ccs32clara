@@ -57,6 +57,8 @@
 		<Unit filename="ccs/hardwareVariants.h" />
 		<Unit filename="ccs/homeplug.cpp" />
 		<Unit filename="ccs/homeplug.h" />
+		<Unit filename="ccs/hwif_connectorlock.cpp" />
+		<Unit filename="ccs/hwif_inletvoltage.cpp" />
 		<Unit filename="ccs/ipv6.cpp" />
 		<Unit filename="ccs/ipv6.h" />
 		<Unit filename="ccs/modemFinder.cpp" />

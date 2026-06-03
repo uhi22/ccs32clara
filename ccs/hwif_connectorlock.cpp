@@ -8,10 +8,11 @@
   - When LockOpenThresh == LockClosedThresh: no feedback assumed, purely time-based.
     The motor runs for LockRunTime and the state is then assumed to have changed.
   - When LockOpenThresh != LockClosedThresh: feedback is used to detect when the
-    target position is reached and stop the motor early. In either case the motor
-    is never run for longer than LockRunTime.
-  - While moving from Open to Closed the state reports "Closing".
-  - While moving from Closed to Open the state reports "Opening".
+    target position is reached and stop the motor early. Feedback is interpreted
+    as binary opened/closed only; no analog intermediate movement state is derived.
+    In either case the motor is never run for longer than LockRunTime.
+  - While moving from Open to Closed the state reports "Closing" (transition active).
+  - While moving from Closed to Open the state reports "Opening" (transition active).
 
 */
 
@@ -81,7 +82,6 @@ uint8_t hardwareInterface_isConnectorLocked(void)
 
 static LockStt hwIf_getLockState()
 {
-   static int lastFeedbackValue = 0;
    int lockOpenThresh = Param::GetInt(Param::LockOpenThresh);
    int lockClosedThresh = Param::GetInt(Param::LockClosedThresh);
    int feedbackValue = AnaIn::lockfb.Get();
@@ -93,10 +93,6 @@ static LockStt hwIf_getLockState()
          state = LOCK_CLOSED;
       else if (feedbackValue < lockOpenThresh)
          state = LOCK_OPEN;
-      else if ((feedbackValue - lastFeedbackValue) < 10)
-         state = LOCK_OPENING;
-      else if ((feedbackValue - lastFeedbackValue) > 10)
-         state = LOCK_CLOSING;
    }
    else /* (lockClosedThresh < lockOpenThresh) */
    {
@@ -104,13 +100,7 @@ static LockStt hwIf_getLockState()
          state = LOCK_CLOSED;
       else if (feedbackValue > lockOpenThresh)
          state = LOCK_OPEN;
-      else if ((feedbackValue - lastFeedbackValue) > 10)
-         state = LOCK_OPENING;
-      else if ((feedbackValue - lastFeedbackValue) < 10)
-         state = LOCK_CLOSING;
    }
-
-   lastFeedbackValue = feedbackValue;
 
    return state;
 }
@@ -166,5 +156,3 @@ void hwIf_handleLockRequests(void)
       }
    }
 }
-
-

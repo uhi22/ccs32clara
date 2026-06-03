@@ -157,7 +157,10 @@ void hwIf_handleLockRequests(void)
       }
       if (lockTimer == 0) {
          hardwareInteface_setHBridge(0, 0);
-         if (!doneByFeedback) lockState = lockRequest; /* assume target reached */
+         if (!doneByFeedback) {
+            lockState = lockRequest; /* assume target reached */
+            if (useFeedback) addToTrace(MOD_HWIF, "connector lock timed out without feedback confirmation");
+         }
          Param::SetInt(Param::LockState, lockState);
          addToTrace(MOD_HWIF, "finished connector (un)locking");
       }

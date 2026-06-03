@@ -93,6 +93,8 @@ static LockStt hwIf_getLockState()
          state = LOCK_CLOSED;
       else if (feedbackValue < lockOpenThresh)
          state = LOCK_OPEN;
+      else
+         state = LOCK_UNKNOWN;
    }
    else /* (lockClosedThresh < lockOpenThresh) */
    {
@@ -100,6 +102,8 @@ static LockStt hwIf_getLockState()
          state = LOCK_CLOSED;
       else if (feedbackValue > lockOpenThresh)
          state = LOCK_OPEN;
+      else
+         state = LOCK_UNKNOWN;
    }
 
    return state;

@@ -4,16 +4,41 @@
  This module handles the actuation of the connector lock motor and the
  evaluation of the connector lock feedback.
 
- Behaviour:
-  - When LockOpenThresh == LockClosedThresh: no feedback assumed, purely time-based.
-    The motor runs for LockRunTime and the state is then assumed to have changed.
-  - When LockOpenThresh != LockClosedThresh: feedback is used to detect when the
-    closed target position is reached and stop the motor early. During opening the
-    motor always runs for full LockRunTime. Feedback is interpreted as binary
-    opened/closed only; no analog intermediate movement state is derived.
-    In either case the motor is never run for longer than LockRunTime.
-  - While moving from Open to Closed the state reports "Closing" (transition active).
-  - While moving from Closed to Open the state reports "Opening" (transition active).
+ Two operating modes are selected by the threshold parameters:
+
+ 1. Time-based only (LockOpenThresh == LockClosedThresh, e.g. both 0):
+    No hardware feedback is evaluated. The motor runs for LockRunTime in
+    either direction and the state is then assumed to have changed.
+
+ 2. Time-based with hardware feedback (LockOpenThresh != LockClosedThresh):
+    The analog feedback is compared against the two thresholds to detect
+    the closed and open positions. Multiple feedback circuit types are
+    supported, for example:
+    - single switch: only one position (typically "closed") is confirmed
+    - dual switch with resistors: both positions give distinct ADC levels
+      Example: https://openinverter.org/forum/viewtopic.php?p=82137#p82137
+    - single switch without resistor (direct digital-style):
+      Example: https://openinverter.org/forum/viewtopic.php?p=82141#p82141
+    - continuous sensor (potentiometer or analog Hall sensor)
+
+    When closing: the motor may stop early once feedback confirms the
+    closed position. If no confirmation arrives within LockRunTime the
+    closed state is assumed (and a timeout trace message is emitted).
+    When opening: the motor always runs for the full LockRunTime regardless
+    of the feedback signal. Some locks report "open" as soon as they leave
+    "closed" (i.e. before actually reaching the open position); running
+    the full time avoids declaring the lock open prematurely.
+    Feedback values that fall between the two thresholds result in the
+    intermediate state LOCK_UNKNOWN (neither open nor closed confirmed).
+
+    While the motor is idle the hardware feedback is continuously routed
+    to the LockState spot value so that unexpected state changes (e.g. a
+    lock slipping open) are visible.
+
+    In all cases the motor is never driven for longer than LockRunTime.
+
+ - While moving from Open to Closed the state reports "Closing" (transition active).
+ - While moving from Closed to Open the state reports "Opening" (transition active).
 
 */
 
@@ -162,5 +187,12 @@ void hwIf_handleLockRequests(void)
          Param::SetInt(Param::LockState, lockState);
          addToTrace(MOD_HWIF, "finished connector (un)locking");
       }
+   } else if (useFeedback) {
+      /* Motor is idle and hardware feedback is configured: continuously route the
+         feedback to lockState and the LockState spot value so that unintended state
+         changes (e.g. the lock slipping open after a successful closing) remain
+         visible to the application and to the user via the spot value. */
+      lockState = hwIf_getLockState();
+      Param::SetInt(Param::LockState, lockState);
    }
 }

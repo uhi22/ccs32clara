@@ -264,71 +264,28 @@ static void handleApplicationRGBLeds(void)
    {
       /* modem is sleeping (or defective), or modem search ongoing */
       hardwareInterface_setRGB(RGB_WHITE);
-      return;
    }
-   else if ((checkpointNumber>=100) && (checkpointNumber<150))
+   else if (checkpointNumber<560)
    {
-      /* One modem detected. This is the normal "ready" case. */
-      hardwareInterface_setRGB(RGB_GREEN);
-   }
-   else if ((checkpointNumber>150) && (checkpointNumber<=530))
-   {
-      if (LedBlinkDivider & 4)
-      {
-         hardwareInterface_setRGB(RGB_GREEN);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if ((checkpointNumber>=540) /* Auth finished */ && (checkpointNumber<560 /* CableCheck */))
-   {
-      if (LedBlinkDivider & 2)
-      {
-         hardwareInterface_setRGB(RGB_GREEN);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if (checkpointNumber>=560 /* CableCheck */)
-   {
-      if (LedBlinkDivider & 2)
-      {
-         hardwareInterface_setRGB(RGB_BLUE);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if ((checkpointNumber>=570 /* PreCharge */) && (checkpointNumber<700 /* charge loop start */))
-   {
-      if (LedBlinkDivider & 1) /* very fast flashing during the PreCharge */
-      {
-         hardwareInterface_setRGB(RGB_BLUE);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if ((checkpointNumber>=700 /* charge loop */) && (checkpointNumber<800 /* charge loop */))
-   {
+      /* plugged in, PLC communication ongoing */
       hardwareInterface_setRGB(RGB_BLUE);
    }
-   else if ((checkpointNumber>=800 /* charge end */) && (checkpointNumber<900 /* welding detection */))
+   else if (checkpointNumber<700)
    {
-      if (LedBlinkDivider & 1)
+      /* DC charging is being negotiated (CableCheck, PreCharge) */
+      if (LedBlinkDivider & 2)
       {
          hardwareInterface_setRGB(RGB_BLUE);
       }
       else
       {
-         hardwareInterface_setRGB(RGB_GREEN);
+         hardwareInterface_setRGB(RGB_OFF);
       }
+   }
+   else if (checkpointNumber<900)
+   {
+      /* AC or DC charging is ongoing */
+      hardwareInterface_setRGB(RGB_GREEN);
    }
    else if (checkpointNumber==900 /* session stop */)
    {

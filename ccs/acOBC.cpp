@@ -172,22 +172,17 @@ static void evaluateProximityPilot(void)
 
 uint8_t acOBC_getRGB(void)
 {
-    static uint8_t cycleDivider;
-    cycleDivider++;
-
     switch (previousStateBasicAcCharging) {
         case OBC_IDLE:
-            return (cycleDivider & 2) ? RGB_BLUE : RGB_OFF;
         case OBC_LOCK:
-            return RGB_BLUE;
+            return RGB_BLUE;   /* plugged in */
         case OBC_CHARGE:
-            return (cycleDivider & 2) ? RGB_GREEN : RGB_OFF;
+            return RGB_GREEN;  /* charging ongoing */
         case OBC_COMPLETE:
             return RGB_CYAN;
         case OBC_ERROR:
-            return RGB_RED;
-        default: //Every other state, flash red
-            return (cycleDivider & 1) ? RGB_RED : RGB_OFF;
+        default:
+            return RGB_RED;    /* error */
     }
 }
 

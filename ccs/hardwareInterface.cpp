@@ -233,7 +233,7 @@ static void hwIf_handleContactorRequests(void)
       dutyContactor1 = 0;
       ContactorOnTimer1=0;
   }
-  
+
   if (ContactorRequest & 2) {
       /* contactor 2 is requested */
       if (ContactorOnTimer2==0) {
@@ -260,19 +260,19 @@ static void handleApplicationRGBLeds(void)
        hardwareInterface_setRGB(acOBC_getRGB());
        return;
    }
-   if (checkpointNumber<100)
+   if (checkpointNumber<150)
    {
       /* modem is sleeping (or defective), or modem search ongoing */
       hardwareInterface_setRGB(RGB_WHITE);
    }
    else if (checkpointNumber<400)
    {
-      /* SLAC/SDP etc. Flash blue only when at least SLAC is ongoing. */
+      /* SLAC/SDP etc. Flash green only when at least SLAC is ongoing. */
       if (connMgr_getConnectionLevel() >= CONNLEVEL_15_SLAC_ONGOING)
       {
          if (LedBlinkDivider & 1)
          {
-            hardwareInterface_setRGB(RGB_BLUE);
+            hardwareInterface_setRGB(RGB_GREEN);
          }
          else
          {
@@ -298,10 +298,10 @@ static void handleApplicationRGBLeds(void)
    }
    else if (checkpointNumber<700)
    {
-      /* up to/including WaitForPowerDeliveryResponse: blue + flashing green */
-      if (LedBlinkDivider & 1)
+      /* up to/including WaitForPowerDeliveryResponse: flashing blue */
+      if (LedBlinkDivider & 3)
       {
-         hardwareInterface_setRGB(RGB_CYAN);
+         hardwareInterface_setRGB(RGB_OFF);
       }
       else
       {
@@ -458,7 +458,7 @@ void hardwareInterface_cyclic(void)
    /* make an exception: the lock/unlock actuator test shall always be possible, to be able to test also
       while the plug is inserted. */
    if ((Param::GetInt(Param::ActuatorTest)==TEST_CLOSELOCK) ||
-       (Param::GetInt(Param::ActuatorTest)==TEST_OPENLOCK)) { 
+       (Param::GetInt(Param::ActuatorTest)==TEST_OPENLOCK)) {
        blActuatorTestAllowed = 1;
    }
    if (blActuatorTestAllowed) {

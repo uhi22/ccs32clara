@@ -265,15 +265,10 @@ static void handleApplicationRGBLeds(void)
       /* modem is sleeping (or defective), or modem search ongoing */
       hardwareInterface_setRGB(RGB_WHITE);
    }
-   else if (checkpointNumber<560)
+   else if (checkpointNumber<400)
    {
-      /* plugged in, PLC communication ongoing */
-      hardwareInterface_setRGB(RGB_BLUE);
-   }
-   else if (checkpointNumber<700)
-   {
-      /* DC charging is being negotiated (CableCheck, PreCharge) */
-      if (LedBlinkDivider & 2)
+      /* SLAC/SDP etc. */
+      if (LedBlinkDivider & 1)
       {
          hardwareInterface_setRGB(RGB_BLUE);
       }
@@ -282,14 +277,39 @@ static void handleApplicationRGBLeds(void)
          hardwareInterface_setRGB(RGB_OFF);
       }
    }
-   else if (checkpointNumber<900)
+   else if (checkpointNumber<540)
    {
-      /* AC or DC charging is ongoing */
-      hardwareInterface_setRGB(RGB_GREEN);
+      /* up to ChargeParameterDiscovery: green + flashing blue */
+      if (LedBlinkDivider & 1)
+      {
+         hardwareInterface_setRGB(RGB_CYAN);
+      }
+      else
+      {
+         hardwareInterface_setRGB(RGB_GREEN);
+      }
    }
-   else if (checkpointNumber==900 /* session stop */)
+   else if (checkpointNumber<700)
    {
-      hardwareInterface_setRGB(RGB_CYAN);
+      /* up to/including WaitForPowerDeliveryResponse: blue + flashing green */
+      if (LedBlinkDivider & 1)
+      {
+         hardwareInterface_setRGB(RGB_CYAN);
+      }
+      else
+      {
+         hardwareInterface_setRGB(RGB_BLUE);
+      }
+   }
+   else if (checkpointNumber<800)
+   {
+      /* CurrentDemand charging loop */
+      hardwareInterface_setRGB(RGB_BLUE);
+   }
+   else if (checkpointNumber<=1000)
+   {
+      /* plugged in / ready (not actively charging) */
+      hardwareInterface_setRGB(RGB_GREEN);
    }
    else if (checkpointNumber>1000)   /* error states */
    {
@@ -460,5 +480,4 @@ void hardwareInterface_init(void)
    hardwareInteface_setHBridge(0, 0); /* both low */
    hardwareInteface_setContactorPwm(0, 0); /* both off */
 }
-
 

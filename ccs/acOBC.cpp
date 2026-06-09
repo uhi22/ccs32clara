@@ -19,10 +19,10 @@ static uint8_t previousStateBasicAcCharging = OBC_IDLE;
    https://openinverter.org/forum/viewtopic.php?p=66713#p66713
    and define
      0 invalid. Clara ignores the data.
-     1 initializing. Clara locks the connector. Green light flashing.
+     1 initializing. Clara locks the connector. LED green.
      2 charging. Clara activates the 1k3 resistor (StateC). LED blue.
      3 (pause. Clara ignores this value)
-     4 charging finished. Clara deactivates the 1k3 resistor. Todo: also unlocking the connector? LED green/blue flashing.
+     4 charging finished. Clara deactivates the 1k3 resistor. Todo: also unlocking the connector? LED green.
      5 charge error. LED red. Todo: Unlocking the connector?
      >=6 invalid. Clara ignores the data.
 */
@@ -175,11 +175,10 @@ uint8_t acOBC_getRGB(void)
     switch (previousStateBasicAcCharging) {
         case OBC_IDLE:
         case OBC_LOCK:
-            return RGB_BLUE;   /* plugged in */
-        case OBC_CHARGE:
-            return RGB_GREEN;  /* charging ongoing */
         case OBC_COMPLETE:
-            return RGB_CYAN;
+            return RGB_GREEN;  /* plugged in / ready */
+        case OBC_CHARGE:
+            return RGB_BLUE;   /* charging ongoing */
         case OBC_ERROR:
         default:
             return RGB_RED;    /* error */

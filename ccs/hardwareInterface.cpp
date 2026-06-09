@@ -267,14 +267,21 @@ static void handleApplicationRGBLeds(void)
    }
    else if (checkpointNumber<400)
    {
-      /* SLAC/SDP etc. */
-      if (LedBlinkDivider & 1)
+      /* SLAC/SDP etc. Flash blue only when at least SLAC is ongoing. */
+      if (connMgr_getConnectionLevel() >= CONNLEVEL_15_SLAC_ONGOING)
       {
-         hardwareInterface_setRGB(RGB_BLUE);
+         if (LedBlinkDivider & 1)
+         {
+            hardwareInterface_setRGB(RGB_BLUE);
+         }
+         else
+         {
+            hardwareInterface_setRGB(RGB_OFF);
+         }
       }
       else
       {
-         hardwareInterface_setRGB(RGB_OFF);
+         hardwareInterface_setRGB(RGB_GREEN);
       }
    }
    else if (checkpointNumber<540)

@@ -176,7 +176,7 @@ uint8_t acOBC_getRGB(void)
         case OBC_IDLE:
         case OBC_LOCK:
         case OBC_COMPLETE:
-            return RGB_GREEN;  /* plugged in / ready */
+            return RGB_GREEN;  /* plugged in / ready (OBC_IDLE is treated as ready in this mapping) */
         case OBC_CHARGE:
             return RGB_BLUE;   /* charging ongoing */
         case OBC_ERROR:

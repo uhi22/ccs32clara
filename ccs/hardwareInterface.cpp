@@ -254,7 +254,7 @@ static void hwIf_handleContactorRequests(void)
 
 static void handleApplicationRGBLeds(void)
 {
-   LedBlinkDivider++;
+   LedBlinkDivider++; /* Called every 30ms, so (LedBlinkDivider & 1) toggles every cycle. */
    if (acOBC_isBasicAcCharging()) {
        /* In case of analog AC charging, we take the LED state from the acOBC handler, and do not care for the PLC modem state. */
        hardwareInterface_setRGB(acOBC_getRGB());
@@ -480,4 +480,3 @@ void hardwareInterface_init(void)
    hardwareInteface_setHBridge(0, 0); /* both low */
    hardwareInteface_setContactorPwm(0, 0); /* both off */
 }
-

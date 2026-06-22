@@ -233,7 +233,7 @@ static void hwIf_handleContactorRequests(void)
       dutyContactor1 = 0;
       ContactorOnTimer1=0;
   }
-  
+
   if (ContactorRequest & 2) {
       /* contactor 2 is requested */
       if (ContactorOnTimer2==0) {
@@ -254,85 +254,69 @@ static void hwIf_handleContactorRequests(void)
 
 static void handleApplicationRGBLeds(void)
 {
-   LedBlinkDivider++;
+   LedBlinkDivider++; /* Called every 30ms, so (LedBlinkDivider & 1) toggles every cycle. */
    if (acOBC_isBasicAcCharging()) {
        /* In case of analog AC charging, we take the LED state from the acOBC handler, and do not care for the PLC modem state. */
        hardwareInterface_setRGB(acOBC_getRGB());
        return;
    }
-   if (checkpointNumber<100)
+   if (checkpointNumber<150)
    {
       /* modem is sleeping (or defective), or modem search ongoing */
       hardwareInterface_setRGB(RGB_WHITE);
-      return;
    }
-   else if ((checkpointNumber>=100) && (checkpointNumber<150))
+   else if (checkpointNumber<400)
    {
-      /* One modem detected. This is the normal "ready" case. */
-      hardwareInterface_setRGB(RGB_GREEN);
-   }
-   else if ((checkpointNumber>150) && (checkpointNumber<=530))
-   {
-      if (LedBlinkDivider & 4)
+      /* SLAC/SDP etc. Flash green only when at least SLAC is ongoing. */
+      if (connMgr_getConnectionLevel() >= CONNLEVEL_15_SLAC_ONGOING)
+      {
+         if (LedBlinkDivider & 1)
+         {
+            hardwareInterface_setRGB(RGB_GREEN);
+         }
+         else
+         {
+            hardwareInterface_setRGB(RGB_OFF);
+         }
+      }
+      else
       {
          hardwareInterface_setRGB(RGB_GREEN);
       }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
    }
-   else if ((checkpointNumber>=540) /* Auth finished */ && (checkpointNumber<560 /* CableCheck */))
+   else if (checkpointNumber<540)
    {
-      if (LedBlinkDivider & 2)
-      {
-         hardwareInterface_setRGB(RGB_GREEN);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if (checkpointNumber>=560 /* CableCheck */)
-   {
-      if (LedBlinkDivider & 2)
-      {
-         hardwareInterface_setRGB(RGB_BLUE);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if ((checkpointNumber>=570 /* PreCharge */) && (checkpointNumber<700 /* charge loop start */))
-   {
-      if (LedBlinkDivider & 1) /* very fast flashing during the PreCharge */
-      {
-         hardwareInterface_setRGB(RGB_BLUE);
-      }
-      else
-      {
-         hardwareInterface_setRGB(RGB_OFF);
-      }
-   }
-   else if ((checkpointNumber>=700 /* charge loop */) && (checkpointNumber<800 /* charge loop */))
-   {
-      hardwareInterface_setRGB(RGB_BLUE);
-   }
-   else if ((checkpointNumber>=800 /* charge end */) && (checkpointNumber<900 /* welding detection */))
-   {
+      /* up to ChargeParameterDiscovery: green + flashing blue */
       if (LedBlinkDivider & 1)
       {
-         hardwareInterface_setRGB(RGB_BLUE);
+         hardwareInterface_setRGB(RGB_CYAN);
       }
       else
       {
          hardwareInterface_setRGB(RGB_GREEN);
       }
    }
-   else if (checkpointNumber==900 /* session stop */)
+   else if (checkpointNumber<700)
    {
-      hardwareInterface_setRGB(RGB_CYAN);
+      /* up to/including WaitForPowerDeliveryResponse: flashing blue */
+      if (LedBlinkDivider & 3)
+      {
+         hardwareInterface_setRGB(RGB_OFF);
+      }
+      else
+      {
+         hardwareInterface_setRGB(RGB_BLUE);
+      }
+   }
+   else if (checkpointNumber<800)
+   {
+      /* CurrentDemand charging loop */
+      hardwareInterface_setRGB(RGB_BLUE);
+   }
+   else if (checkpointNumber<=1000)
+   {
+      /* plugged in / ready (not actively charging) */
+      hardwareInterface_setRGB(RGB_GREEN);
    }
    else if (checkpointNumber>1000)   /* error states */
    {
@@ -474,7 +458,7 @@ void hardwareInterface_cyclic(void)
    /* make an exception: the lock/unlock actuator test shall always be possible, to be able to test also
       while the plug is inserted. */
    if ((Param::GetInt(Param::ActuatorTest)==TEST_CLOSELOCK) ||
-       (Param::GetInt(Param::ActuatorTest)==TEST_OPENLOCK)) { 
+       (Param::GetInt(Param::ActuatorTest)==TEST_OPENLOCK)) {
        blActuatorTestAllowed = 1;
    }
    if (blActuatorTestAllowed) {
@@ -503,5 +487,3 @@ void hardwareInterface_init(void)
    hardwareInteface_setHBridge(0, 0); /* both low */
    hardwareInteface_setContactorPwm(0, 0); /* both off */
 }
-
-

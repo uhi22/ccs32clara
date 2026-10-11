@@ -484,7 +484,9 @@ void ChademoCharger::RunStateMachine()
         {
             // d2 = true is telling the car, you can close contactors now, so precharge voltage must be (close to) battery voltage at this point. 
             SetSwitchD2(true);
-            println("[cha] Car progressing to ChargingLoop in its own time. Tip: if the car fails shortly after, the adapter contactor may be welded.");
+
+            println("[cha] Car progressing to ChargingLoop in its own time");
+            println("[cha] Tip: if car fails shortly after, adapter contactor may be welded or adapter can't support enough current through D2");
 
             SetState(ChargerState::WaitForCarContactorsClosed);
         }

@@ -144,7 +144,7 @@ Charging via usb is not part of the software, AFAICS its only hardware.
 Original fw: while charging, you will see the led flashing. Periodically, you will see led flashes rapidly, this is the bootloader starting.
 Meaning, charging automatically triggers power on, then adapter will auto power off due to inactivity and then auto powered on again by charging, and this goes on forever.
 
-This fw: charging is detected based on the ADC voltages: if vcc4 is close to 0.00 volt and vcc12 is close to 4.20 volt, adapter charging is assumed, and the led is permanently on and the fw tries to do as little as possible (sleep).
+This fw: charging is detected based on ADC voltages: if vcc4 is close to 0.00 volt and vcc12 is close to 4.20 volt, adapter is assumed to be charging. The led flashes slowly, and startup is halted.
 It does not periodically restart. You can stop it with the stop button, but it will power itself on again:-)
 
 Charging via USB is very slow, and can take up to 10 hours if the internal battery is really empty.

@@ -124,17 +124,7 @@ How to get the log out of the app? Two ways: use top right button [...]->Data->S
 
 Alternative app "EV-BOY CHAdeMO-CCS Debugger": https://play.google.com/store/apps/details?id=com.ev_boy.ev_boyadaptordebugginglogger
 
-## Other
-There is a 5sec. watchdog that will reset (effectively power off) adapter if there is a hung.
-
-If charging is started with welded contactor, the car will most likely (at least it did for me), display a warning and say the EV need service, and put car into turtle mode!
-I used LeafSpy Pro to clear the DTCs, else I would probably need to visit a garage! This happened every time until I got the contactor unwelded.
-Not sure why it happened, if it was by chance or if the firmware made a bad move. This was in the early stage of development, maybe the firmware works better now...or maybe not!
-In any case, I suggest traveling with a ODB2 BT dongle, LeafSpy Pro and a multimeter, at least I do. Be warned.
-
-This firmware support chademo dynamic current control, if supported by the car (at least Leaf 40kwh does). This allows charging on chargers that deliver a lot less current than
-they say they have available. Without this, the car will fail to charge and produce an error (current deviation too large). This behaviour seems to become more common among ccs chargers.
-
+## Firmware update
 Firmware update logic is inside the bootloader, so this is not affected by the firmware:
 With adapter off, plug in usb stick with the firmware.
 Hold power button down and don't let go.
@@ -143,7 +133,12 @@ Firmware update is done and you can let go of the power button.
 Finally, adapter turns on and adapter led is flashing.
 Press the stop button to turn adapter off.
 
-### Charging the adapter
+## Other
+If charging is started with welded contactor, the car will most likely (at least it did for me), display a warning and say the EV need service, and put car into turtle mode!
+I used LeafSpy Pro to clear the DTCs, else I would probably need to visit a garage! This happened every time until I got the contactor unwelded.
+In any case, I suggest traveling with a ODB2 BT dongle, LeafSpy Pro and a multimeter, at least I do. Be warned.
+
+## Charging the adapter
 Charging via usb is not part of the software, AFAICS its only hardware.
 
 Original fw: while charging, you will see the led flashing. Periodically, you will see led flashes rapidly, this is the bootloader starting.
@@ -176,65 +171,6 @@ Currently, all chargers I have tested has worked.
 ## Supported cars
 This firmware emulate chademo 1.0 and is tested on Leaf 40kwh.
 
-### i-Miev
-Tests has been made on old i-Miev's but without success: https://github.com/osexpert/ccs32clara-chademo/issues/7
-From logs collected, the car ask for amps and the charger gradually increase voltage up to max 370v, but no amps ever flow.
-Meaning, CAN and signalling works, but seem like there is no high voltage contact. I suspected the contactors did not close and added more delay to give more time for contactors to close, but no success.
-I remebered when probing the GPIO's and were testing chademo d1 and d2. I heard a click when activating d1, but nothing when activating d2. Why was d2 not using a relay? In the chademo circuit schema, d1 and d2 are two equal switches and the chademo spec says charger must be able to continously deliver 12V 2A between pin2(d1) and pin10(d2).
-So I assumed d2 was a semiconductor. It could still be a solid state relay, but seemed unlikely when a cheaper mechanical relay would have sufficed.
-
-To make sure I tested with a 12V 10W and 12V 21W light bulb:
-
-Between d1 and d2:
-- Unloaded: 13.8V
-- 10w load: 11v 0.64A = 7W
-- 21w load: 9.4v 1.3A = 12.2W
-
-Between d1 and gnd:
-- Unloaded: 14.3V
-- 10w load: 12.5v 0.68A = 8.5W
-- 21w load: 14V 1.7A = 23W
-
-Suspicions confirmed: between d1 and d2 the adapter can only deliver half (at best) of what the spec demands.
-Maybe the makers believed 12V 2A was only between d1 and gnd and not between d1 and d2. The spec/circuit schema shows it clearly, but maybe they never saw it and use trial end error and found it worked, because it _does_ work on newer cars:-)
-So this is two wrongs make a right: the adapter does not follow the spec/circuit schema, but newer chademo cars also does not:-D So then we have the unlucky i-Miev's that actually followed the spec, but do not work.
-Note: 12V 2A demand was introduced in chademo 1.0 spec. i-Miev predate chademo 1.0, for these cars the amps between d1 and d2 were undefined. But I think it is unlikely that i-Miev draw more than 2A, it would be odd to define 2A in the spec if they knew early i-Mievs would draw more than this.
-
-Similar finding by people rebuilding cars to support chademo, that even some genuine chademo chargers deliver too little amps between d1 and d2 to power a car that follow the spec: https://openinverter.org/forum/viewtopic.php?p=50262#p50262 Their solution: add a relay or use staggered contactors (the latter will involve way to much work in this case, I assume both contactors must be replaced and completely rewired).
-
-To understand the following, need to know how d1, d2, gnd related to which pins in the chademo plug:
-- pcb(d1) -> pin2
-- pcb(d2) -> pin10 (need to cut)
-- pcb(gnd) -> pin1
-
-What can be done?
-It is possibly to add a relay inside the adapter, eg. HF49FD-012-1H11T from aliexpress. Coil:12V Switching:5A 30VDC. T=AgSnO₂ (Silver Tin Oxide, should be better for inductive loads than the one without T). H11 vs H12 is pin spacing and only matter if pcb mounted.
-The wire going from pcb(d2) to pin10 need to be cut. The relay coil(+) would be powered by constant 12v from pcb (or hook into wire going to pin2). The coil(-) should be powered from the cut wire going from pcb(d2).
-One of the relay switching pins should go to gnd on the pcb (or hook into wire going to pin1) and the other switching pin connects to cut wire going to pin10.
-The problem is, it is very tight inside the adapter, and especially at the end of the chademo plug. It can be done, but not easily.
-
-The alternative is to add a relay inside the car instead. Someone added a button to i-Miev to control the contactors: https://300mpg.org/2021/11/11/chademo-relay-hack-switch-and-testing/ and video https://www.youtube.com/watch?v=hBV9CIVN0fs. The prodecure will be similar, but instead of adding a button, add a relay that power the contactors by using the car 12v battery. d1 and d2 will now only power the added relay.
-The bonus with modifying the car is, that the car also work on stubborn chademo chargers that does not follow the spec, as mentioned above (similar findings).
-WARNING: it does not _seem_ like the procedure exposes high voltage wires, but be carefull.
-
-I don't own a i-Miev, so I can not test it. I could modify my adapter, but it would only prove it is possible to add a relay, but this I already know:-)
-
-Update: I ended up modifying my own adapter, so you don't have to:-) [Add D2 Relay](add_d2_relay/readme.md)
-
-WARNING: there is no guarantee that adding a relay will make it work, you may create new problems and there may be additional problems as well.
-
-Discussion here: https://github.com/osexpert/ccs32clara-chademo/discussions/34
-
-### Orion BMS
-Some has tried the adapter on Orion BMS without luck: https://github.com/osexpert/ccs32clara-chademo/discussions/50
-The log show similar behaviour as iMiev: After D2 is set, car start asking for amps, but no amp flowing.
-Charger start increasing the voltage, eventually reaching max voltage. But no amps flowing. Charger eventually fails.
-It is the same behaviour as iMiev: HV seems to be open circuit (car contactors not closing).
-Looking at the Orion BMS manual, I see the problem: https://www.orionbms.com/manuals/pdf/chademo_integration.pdf
-They are following the suggested setup from the Chademo spec. and seem to be powering the car contactors directly from D2.
-So either it has to be rewired with a setup that a modern Chademo car uses (they do not power contactors directly from D2),
-or maybe try a different brand adapter eg. Electway (small chance that other adapter brands follow the Chademo spec better).
-
 ## Dischargers / V2X
 The following are known to work, but may not work on all cars (Leaf ZE1 typically works best):
 - SigenStor EVDC domestic 12.5kW charger https://github.com/osexpert/ccs32clara-chademo/discussions/49
@@ -242,12 +178,32 @@ The following are known to work, but may not work on all cars (Leaf ZE1 typicall
 
 If using on a regular basis, its easiest to use a V2X build, else you must enable V2X mode every time you power on the adapter.
 
+## Relay mod
+Chademo spec says D2 (pin 10) should drive the car contactors directly and be able to supply 12V 2A.
+The adapter uses a transistor and can supply (at best) 1/3 of this. AFAIK, Electway have the same problem.
+Most cars do not follow the spec and use D2 to drive a small relay, that again drive the car contactors from the 12V car battery.
+So in this case, two wrongs make a right:-) The problem is, some cars _do_ follow the spec:
+- The triplets (Mitsubishi i-Miev, Peugeot iOn, Citroen C-Zero) is most known.
+
+- Orion BMS. The standard wiring follow the spec and does not work: https://www.orionbms.com/manuals/pdf/chademo_integration.pdf
+One alternative wiring is spotted: instead of pulling current from D2, it switches its own current from GND to D2. This wiring will burn the D2 transistor after a few minutes: https://github.com/osexpert/ccs32clara-chademo/discussions/50
+It is possible to wire Orion BMS to work, by using D2 to drive a small relay, that again drive the car contactors from the 12v car battery.
+
+- Japan imported cars. I am guessing these cars were originally made with ccs, but were rebuilt to chademo.
+So depending on what kit was used in the rebuild, it may or may not work.
+At least there are reports on some Japan imported cars not working: 
+https://github.com/osexpert/ccs32clara-chademo/discussions/93
+https://github.com/osexpert/ccs32clara-chademo/discussions/94
+
+If you don't want to mod the car, it is possible to mod the adapter to make it use a relay: [Add D2 Relay](add_d2_relay/readme.md)
+AFAIK, Longood can perform this modification (during manufacturing) by special request (ask your supplier).
+There may be other adapter brands that follow the spec and will work. I am curios to know:-)
+
+[Long story](d2-long-story.md)
+
 ## Download
 Every commit is built automatically and can be downloaded here, as artifact of a workflow run: [https://github.com/osexpert/ccs32clara-chademo/actions](https://github.com/osexpert/ccs32clara-chademo/actions?query=branch%3Amain)
 Releases are made less often and the difference is, a release has been tested in minimum one charging session on a Leaf 40kwh.
-
-### Build tags
-The releases and the actions has updated info.
 
 ## Building
 If you want to compile the software from scratch, you can follow these instructions

@@ -34,8 +34,8 @@
     },
     {
       "name": "C09",
-      "description": "Emulate chademo 0.9 without welding detection (default: chademo 1.0 with welding detection). Probably better for sensitive cars like Mitsubishi Outlander PHEV that produce DTC's (P101B, P101C) after charging is done.",
-      "values": { "chademo-0.9": true }
+      "description": "Emulate chademo 0.9 without welding detection (default: chademo 1.0 with welding detection). Probably better for sensitive cars like Mitsubishi Outlander PHEV that produce DTC's (P101B, P101C) after charging is done, and the triplets (Mitsubishi i-Miev, Peugeot iOn, Citroen C-Zero), that can produce check engine error after charging.",
+      "values": { "chademo-0.9": true, "chademo-wd": false }
     }
   ],
   "settings": {
@@ -53,7 +53,8 @@
     "voltage-modulation": "Modulates the voltage reported to the car by +-N Volt every 100ms. 0 = off (default). Added to prevent voltage deviation error, by tricking the car into thinking the voltage is (periodically) within range. The error no longer happens.",
     "precharge-start-delay-ms": "Delay (ms) before CCS precharge starts. 2000ms should be a safe default. In very special edge cases, some chargers could benefit from a higher value (e.g. 3000ms), but you would need to be an expert to know.",
     "max-undersupply-amps": "Maximum allowed difference (undersupply) of output current compared to request current. If the difference is larger, available output current is reduced to (output current + N).",
-    "chademo-0.9": "Simulate chademo 0.9 without welding detection. Default: chademo 1.0 with welding detection (welding detection became mandatory in chademo 1.0)",
+    "chademo-wd": "Enable welding detection. Mandatory in chademo 1.0, optional in chademo 0.9.",
+    "chademo-0.9": "Simulate chademo 0.9 instead of chademo 1.0.",
     "open-adapter-contactor-before-wd": "Open the adapter contactor before welding detection. Pro: voltage drops consistently and does not depend on the charger's bleed-down speed. Con: the inlet may not bleed down at all (spec demands <1uF, but charge could be trapped).",
     "exi-logging": "Log the EXI messages exchanged with the charger (debugging).",
     "max-report-soc": "SOC reported to the charger is scaled from chademo's 0-100% to 0-N%."

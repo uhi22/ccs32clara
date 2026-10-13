@@ -3,7 +3,7 @@ Pictures:
 1 Unscrew 6 screws (torx 10)
 2 Unscrew 2 screws to the left, inside ccs socket (torx 10)
 7 I measure 12V on left coil pin on main relay
-8 Plan: to avoid dissassembly of everything, cut pcb trace above 10_S2 (SS2, D2).
+8 Plan: to avoid disassembly of everything, cut pcb trace above 10_S2 (SS2, D2).
 TODO: Future improvement: figure out what wire goes to D2 and can cut the wire instead of the pcb trace?
 9 Right square pad i measure GND
 11 with very little flat screwdriver, i scraped off the paint, exposing the copper. Then i very carefully cut the trace above 10_S2. If not being careful, this can quickly cause great damage.
@@ -16,20 +16,20 @@ TODO: Future improvement: figure out what wire goes to D2 and can cut the wire i
 IMPORTANT: If you put the diode the wrong way, you will instead of adding protection, create a short circuit, and the transistor and diode will burn up, destroying the adapter!!!
 20 closeup
 21 note the plastic corner, make room for it (do not put the relay too far to the pcb corner edge)
-22 cover relay with electric tape, spanning both relays, creating a roof:-) I used some silicone on the wires and also enpacsulated the diode body (can be seen to the left of the electric tape).
+22 cover relay with electric tape, spanning both relays, creating a roof:-) I used some silicone on the wires and also encapsulated the diode body (can be seen to the left of the electric tape).
 23 Between D1 and GND, nothing changed here. 1.4A but still far from the spec that demand 2A.
 24 Between D1 and D2. Now same as Between D1 and GND. Better. But still not 2A. So is this good for anything? Who knows. It is more according to spec, but it may still be too little amps for the triplets.
 25 Voltage in both cases is 10V. So 10 x 1.4 = 14W. It is less than I measured on the main page, but maybe the battery was fully charged then.
 
-So...I do not recomend anyone to do this, its a bit too complicated and not sure how reliable it is in the long run.
+So...I do not recommend anyone to do this, its a bit too complicated and not sure how reliable it is in the long run.
 If some wires come loose and touch high voltage, it will be bad!
 
-But how much is really needed? Google thinks that iMiev need:
-- Approx 0.2A per contactor continously (so 0.4A total). Easy.
+But how much is really needed? Google thinks that i-Miev need:
+- Approx 0.2A per contactor continuously (so 0.4A total). Easy.
 - Combined in-rush current: 3-5A for 50ms. Worse... So the 5A relay absolutely make sense. Thou it depends if the adapter is capable of delivering such a spike.
 
 Relay:
-Listing: 5Pcs HF49FD-005-1H11 HF49FD-024-1H12 HF49FD 005 012 024 1H11 1H11T 1H12 1H12T 24VDC 4Pin DIP Power RELAY
+Aliexpress search: 5Pcs HF49FD-005-1H11 HF49FD-024-1H12 HF49FD 005 012 024 1H11 1H11T 1H12 1H12T 24VDC 4Pin DIP Power RELAY
 Part: HF49FD-012-1H11T
 HF49FD -> type
 012 -> 12v coil
@@ -41,14 +41,17 @@ manufacturer: HONGFA
 5A switching
 
 Silicone:
-Listing: 704 Silicone Rubber High-Temperature Resistant Electronic Waterproof Insulation Strong Heat-Resistant Silicone Sealing Adhesive
+Aliexpress search: 704 Silicone Rubber High-Temperature Resistant Electronic Waterproof Insulation Strong Heat-Resistant Silicone Sealing Adhesive
 I ordered: 60ml white
 
 Silicone wires:
-Aliexpress Listing: 16 18 20 22 24 26 28 30 Gauge Silicone Electrical Wire Kit 6 Color Each 5ft Flexible 18 AWG Stranded Tinned Copper Wire
+Aliexpress search: 16 18 20 22 24 26 28 30 Gauge Silicone Electrical Wire Kit 6 Color Each 5ft Flexible 18 AWG Stranded Tinned Copper Wire
 
 Soldering paste (flux) is nice to have.
-Listing: Solder Paste Rosin Flux 10g/30g/100g Lead-free Welding Flux Iron Repair Welding Paste Soldering Tin Soldering Oil Soldering Flux
+Aliexpress search: Solder Paste Rosin Flux 10g/30g/100g Lead-free Welding Flux Iron Repair Welding Paste Soldering Tin Soldering Oil Soldering Flux
+
+Double sided foam tape (eg. 25mm width, 1mm thick)
+Aliexpress search: 1pc 1mm thickness Super Strong Double side Adhesive foam Tape Strong Permanent Doppelseitiges（Length 10 meters/32.8 feet）
 
 </pre>
 

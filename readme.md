@@ -133,11 +133,6 @@ Firmware update is done and you can let go of the power button.
 Finally, adapter turns on and adapter led is flashing.
 Press the stop button to turn adapter off.
 
-## Other
-If charging is started with welded contactor, the car will most likely (at least it did for me), display a warning and say the EV need service, and put car into turtle mode!
-I used LeafSpy Pro to clear the DTCs, else I would probably need to visit a garage! This happened every time until I got the contactor unwelded.
-In any case, I suggest traveling with a ODB2 BT dongle, LeafSpy Pro and a multimeter, at least I do. Be warned.
-
 ## Charging the adapter
 Charging via usb is not part of the software, AFAICS its only hardware.
 
@@ -177,6 +172,26 @@ The following are known to work, but may not work on all cars (Leaf ZE1 typicall
 - EVniculus 7kW discharger https://github.com/osexpert/ccs32clara-chademo/discussions/53
 
 If using on a regular basis, its easiest to use a V2X build, else you must enable V2X mode every time you power on the adapter.
+
+## Problems
+
+### Welded adapter contactor
+Welded adapter contactor should normally never happen, but it happened to me once with the original fw and once during development of this fw, so its not impossible.
+If charging is started with welded adapter contactor, the car will most likely (at least it did for me), display a warning and say the EV need service, and put car into turtle mode.
+I used LeafSpy Pro to clear the DTCs, else I would probably need to visit a garage. This happened every time until I got the adapter contactor unwelded.
+In any case, I suggest traveling with a ODB2 BT dongle, LeafSpy Pro and a multimeter, at least I do. Be warned.
+
+### Welding detection errors
+The standard build simulate chademo 1.0 with welding detection (welding detector is mandatory in chademo 1.0). I wanted to use the latest version and I saw no problems with it, so this became the standard build.
+This works fine for Leaf and most other cars. But some cars have a problem with it:
+
+- Mitsubishi Outlander PHEV produce DTC's (P101B, P101C) after charging is done. Car can not be driven (or turtle mode).
+- One Mitsubishi i-Miev is known to produce check engine error after charging is done. Car can not be driven (or turtle mode). Possibly all triplets may be suspect to this, since produced by Mitsubishi.
+
+I think the reason for the errors is that the standard build declare it support welding detection (mandatory for chademo 1.0), but the ccs charger is slower to bleed down the voltage after changing is done, than chademo spec and Mitsubishi allows (malicious compliance).
+
+For these cars, the C09 build that simulate chademo 0.9 without welding detection, should be a better fit.
+C09 build should work fine for all cars and it could have been the stadard build. It just happened that the standard build already existed when I discovered this problem, so C09 became a new build.
 
 ## Relay mod
 Chademo spec says D2 (pin 10) should drive the car contactors directly and be able to supply 12V 2A.

@@ -110,7 +110,7 @@ jobs:
           - **AO**: Always on. After inactivity or charging ended, do a soft restart instead of shutting down. When battery drops below 3.3V, it will power off instead. Errors and stop buttons will power off, as usual.
           - **SX**: Start a fake chademo charging, then wait for ccs to join. Should work better with Xpeng and Lexus.
           - **JDEMO**: Jdemo quirk: disable dynamic current.
-          - **C09**: Emulate chademo 0.9 without welding detection. Probably better for sensitive cars like Mitsubishi Outlander PHEV that produce DTC's (P101B, P101C) after charging is done.
+          - **C09**: Emulate chademo 0.9 without welding detection. Probably better for sensitive cars like Mitsubishi Outlander PHEV that produce DTC's (P101B, P101C) after charging is done, and the triplets (Mitsubishi i-Miev, Peugeot iOn, Citroen C-Zero), that can produce check engine error after charging.
 
           ### Config editor
           - If you need something special, eg. reduce max amps, you can use this [Config editor](https://osexpert.github.io/ccs32clara-chademo/config.html) to customize the downloaded firmware.

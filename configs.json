@@ -34,7 +34,7 @@
     },
     {
       "name": "C09",
-      "description": "Emulate chademo 0.9 without welding detection (default: chademo 1.0 with welding detection). Probably better for sensitive cars like Mitsubishi Outlander PHEV that produce DTC's (P101B, P101C) after charging is done, and the triplets (Mitsubishi i-Miev, Peugeot iOn, Citroen C-Zero), that can produce check engine error after charging.",
+      "description": "Emulate chademo 0.9 without welding detection (default: chademo 1.0 with welding detection). Probably better for sensitive cars like Mitsubishi Outlander PHEV and the triplets (Mitsubishi i-Miev, Peugeot iOn, Citroen C-Zero), that can produce DTC's (P101B, P101C) after charging is done. Triplets are made by Mitsubishi, so seems to be Mitsubishi specific.",
       "values": { "chademo-0.9": true, "chademo-wd": false }
     }
   ],

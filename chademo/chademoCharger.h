@@ -691,6 +691,7 @@ struct ChargerData
 class ChademoCharger
 {
 public:
+    int GetMaxDischargeAmps() const;
     int GetCyclicOffset(uint8_t offset);
     bool IsPowerOffOk();
     bool PreChargeCompleted();
@@ -792,7 +793,7 @@ public:
 
         bool _preChargeDoneButStalled = false;
         bool _dischargeEnabled = false;
-        bool _isDischarging = false;
+
         uint8_t _estimatedOutputVoltageModulation = CHADEMO_VOLTAGE_MODULATION;
 
         // only allowed to use in: HandlePendingIsrMessages, HandleCanMessage
@@ -829,7 +830,8 @@ public:
 
         int _sxState = SX_INITIAL;
         int _fakeOutputCurrentCycles = FAKE_OUTPUT_CURRENT_INTERVAL; // fake once during start
-        int _zeroOutputAmpsCycles = 0;
         int _offset_index = 0;
+        int _v2xModeStdZeroOutputAmpsCycles = 0;
+        int _v2xModeLightZeroOutputAmpsCycles = 0;
 };
 

@@ -12,6 +12,8 @@ extern uint8_t SeccIp[16];
 /* Global Functions */
 
 extern void ipv6_initiateSdpRequest(void);
+extern uint8_t ipv6_isChargerTlsOnly(void); /* the charger answered SDP with TLS, and only ISO 15118-2 is offered */
+extern void ipv6_clearChargerTlsOnly(void);
 extern void ipv6_evaluateReceivedPacket(void);
 
 

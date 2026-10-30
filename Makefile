@@ -49,7 +49,7 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
 				 picontroller.o terminalcommands.o sdocommands.o \
 				 ipv6.o tcp.o \
-				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o acOBC.o wakecontrol.o serialRing.o v2gtp.o qcaframe.o \
+				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o acOBC.o wakecontrol.o serialRing.o v2gtp.o qcaframe.o appHandRequest.o \
 				 hardwareInterface.o hwif_connectorlock.o hwif_inletvoltage.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
 				 appHandEXIDatatypesDecoder.o ByteStream.o EncoderChannel.o \
@@ -58,18 +58,19 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 BitInputStream.o dinEXIDatatypesEncoder.o MethodsBag.o \
 				 BitOutputStream.o dinEXIDatatypes.o projectExiConnector.o
 
-# Optional features. The default build is DIN 70121 only, as before.
-#   make ISO1=1            adds the ISO 15118-2:2013 codec (iso1), linked but not used yet.
-#   make SHARED_EXI_DOC=1  one EXI document for the encoder and the decoder instead of two (saves RAM, but the DIN
-#                          state machine isn't ready for it yet: it reads some responses after preparing the next request).
+# Optional features.
+#   ISO1=1 (the default)   DIN 70121 and ISO 15118-2:2013 (iso1); which ones are offered is the parameter V2gProtocols
+#                          (default DIN only). make ISO1=0 builds DIN 70121 only. See doc/iso15118-2.md.
+#   make SHARED_EXI_DOC=1  one EXI document for the encoder and the decoder instead of two (saves RAM; not yet tried
+#                          on a charger, see doc/iso15118-2.md).
 #   make EXTRAFLAGS=...    extra compiler flags, e.g. "-fstack-usage"
-ISO1           ?= 0
+ISO1           ?= 1
 SHARED_EXI_DOC ?= 0
 EXTRAFLAGS     ?=
 CONFIGURATIONFLAGS =
 ifeq ($(ISO1),1)
 CONFIGURATIONFLAGS += -DUSE_ISO1
-OBJSL       += iso1EXIDatatypesDecoder.o iso1EXIDatatypesEncoder.o iso1EXIDatatypes.o
+OBJSL       += iso1EXIDatatypesDecoder.o iso1EXIDatatypesEncoder.o iso1EXIDatatypes.o pevIso1.o
 endif
 ifeq ($(SHARED_EXI_DOC),1)
 CONFIGURATIONFLAGS += -DUSE_SAME_DOC_FOR_ENCODER_AND_DECODER

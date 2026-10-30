@@ -15,6 +15,8 @@ extern "C" {
 /* pev state machine */
 extern void pevStateMachine_ReInit(void);
 extern void pevStateMachine_Mainfunction(void);
+/* 1 if the car offers DIN 70121 (V2gProtocols 0, 1 or 2, or a build without ISO 15118-2) */
+extern uint8_t pevStateMachine_isDinOffered(void);
 
 #ifdef __cplusplus
 }

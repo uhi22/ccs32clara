@@ -10,7 +10,7 @@
 #include "dinEXIDatatypesEncoder.h"
 #include "dinEXIDatatypesDecoder.h"
 
-/* ISO 15118-2:2013 ("iso1"), only with "make ISO1=1". */
+/* ISO 15118-2:2013 ("iso1"), unless built with "make ISO1=0" (see doc/iso15118-2.md). */
 #ifdef USE_ISO1
   #include "iso1EXIDatatypes.h"
   #include "iso1EXIDatatypesEncoder.h"
@@ -31,7 +31,7 @@ extern struct appHandEXIDocument aphsDoc; /* The application handshake document.
   };
   #ifdef USE_SAME_DOC_FOR_ENCODER_AND_DECODER
     /* One document for the encoder and the decoder ("make SHARED_EXI_DOC=1"). Saves half of the RAM, but a decoded
-       response is overwritten as soon as the next request is prepared. */
+       response is overwritten as soon as the next request is prepared: see doc/iso15118-2.md before using it. */
     extern union ExiDocUnion_type ExiDoc;
     #define ExiDocEnc ExiDoc
     #define ExiDocDec ExiDoc
@@ -65,6 +65,8 @@ extern "C"
 #endif
 void projectExiConnector_decode_appHandExiDocument(void);
   /* precondition: The global_streamDec.size and global_streamDec.data have been set to the byte array with EXI data. */
+void projectExiConnector_encode_appHandExiDocument(void);
+  /* precondition: aphsDoc holds a supportedAppProtocolReq. Output: global_stream.data and global_stream.pos. */
 #if defined(__cplusplus)
 }
 #endif
@@ -90,8 +92,6 @@ void projectExiConnector_prepare_Iso1ExiDocument(void);
   /* before filling and encoding the ISO document, we initialize here all its content. */
 void projectExiConnector_encode_Iso1ExiDocument(void);
   /* precondition: ExiDocEnc.iso1D is filled. Output: global_stream.data and global_stream.pos. */
-void projectExiConnector_keepIso1Linked(void);
-  /* Until the ISO state machine uses it: keeps the iso1 codec in the build (see projectExiConnector.c). */
 #if defined(__cplusplus)
 }
 #endif

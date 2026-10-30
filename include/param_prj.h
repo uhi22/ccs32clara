@@ -44,8 +44,8 @@
 
 #include "myLogging.h"
 
-//Next param id (increase when adding new parameter!): 38
-//Next value Id: 2041
+//Next param id (increase when adding new parameter!): 39
+//Next value Id: 2042
 /*              category     name                  unit       min     max     default id */
 #define PARAM_LIST \
     PARAM_ENTRY(CAT_HARDWARE,UdcDivider,           "dig/V",   0,      100,    2.63,   1   ) \
@@ -65,6 +65,7 @@
     PARAM_ENTRY(CAT_HARDWARE,AllowUnlock,          OFFON,     0,      1,      1,      32 ) \
     PARAM_ENTRY(CAT_COMM,    NodeId,               "",        1,      63,     22,     21  ) \
     PARAM_ENTRY(CAT_COMM,    CanSpeed,             CANSPEEDS, 0,      4,      2,      22  ) \
+    PARAM_ENTRY(CAT_COMM,    V2gProtocols,         V2GOFFERS, 0,      3,      0,      38  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxPower,             "kW",      0,      1000,   100,    17  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxVoltage,           "V",       0,      1000,   410,    18  ) \
     PARAM_ENTRY(CAT_CHARGE,  MaxCurrent,           "A",       0,      500,    125,    19  ) \
@@ -115,6 +116,7 @@
     VALUE_ENTRY(AdcIpropi,          "",              2023 ) \
     VALUE_ENTRY(LockState,          LOCK,            2014 ) \
     VALUE_ENTRY(StopReason,         STOPREASONS,     2017 ) \
+    VALUE_ENTRY(V2gProtocol,        V2GPROTOCOLS,    2041 ) \
     VALUE_ENTRY(checkpoint,         "dig",           2015 ) \
     VALUE_ENTRY(CanWatchdog,        "dig",           2016 ) \
     VALUE_ENTRY(CanAwake,           OFFON,           2032 ) \
@@ -132,7 +134,9 @@
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
 #define ACMODES      "0=CANRemoteControlled, 1=StandAlone"
-#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat, 8=EvseMalfunction,9=InletVoltageDeviation"
+#define STOPREASONS  "0=None, 1=Button, 2=MissingEnable, 3=CANTimeout, 4=ChargerShutdown, 5=AccuFull, 6=ChargerEmergency, 7=InletOverheat, 8=EvseMalfunction,9=InletVoltageDeviation, 10=ChargerRequiresTls, 11=NoCommonProtocol, 12=V2gMessageError, 13=ChargerResponseFailed"
+#define V2GOFFERS    "0=DinOnly, 1=IsoThenDin, 2=DinThenIso, 3=IsoOnly"
+#define V2GPROTOCOLS "0=None, 1=DIN70121, 2=ISO15118_2"
 #define WAKEUP       "0=Level, 1=Pulse, 2=LevelOnValidCp, 3=PulseOnValidCp, 4=LevelOnValidPP"
 #define CAT_HARDWARE "Hardware Config"
 #define CAT_CHARGE   "Charge parameters"
@@ -212,7 +216,11 @@ enum _stopreasons
    STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN,
    STOP_REASON_INLET_OVERHEAT,
    STOP_REASON_CHARGER_EVSE_MALFUNCTION,
-   STOP_REASON_INLET_VOLTAGE_DEVIATION
+   STOP_REASON_INLET_VOLTAGE_DEVIATION,
+   STOP_REASON_CHARGER_REQUIRES_TLS,
+   STOP_REASON_NO_COMMON_PROTOCOL,
+   STOP_REASON_V2G_MESSAGE_ERROR,
+   STOP_REASON_CHARGER_RESPONSE_FAILED
 };
 
 enum _limitationreasons

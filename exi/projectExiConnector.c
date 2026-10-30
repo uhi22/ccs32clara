@@ -39,6 +39,15 @@ void projectExiConnector_decode_appHandExiDocument(void) {
    g_errn = decode_appHandExiDocument(&global_streamDec, &aphsDoc);
 }
 
+void projectExiConnector_encode_appHandExiDocument(void) {
+   /* precondition: aphsDoc holds a supportedAppProtocolReq. Output: global_stream.data and global_stream.pos. */
+   global_streamEnc.size = EXI_TRANSMIT_BUFFER_SIZE;
+   global_streamEnc.data = exiTransmitBuffer;
+   global_streamEnc.pos = &global_streamEncPos;
+   *(global_streamEnc.pos) = 0; /* start adding data at position 0 */
+   g_errn = encode_appHandExiDocument(&global_streamEnc, &aphsDoc);
+}
+
 void projectExiConnector_decode_DinExiDocument(void) {
    /* precondition: The global_streamDec.size and global_streamDec.data have been set to the byte array with EXI data. */
 
@@ -96,16 +105,4 @@ void projectExiConnector_encode_Iso1ExiDocument(void) {
    g_errn = encode_iso1ExiDocument(&global_streamEnc, &ExiDocEnc.iso1D);
 }
 
-/* Nothing selects ISO 15118-2 yet, so the linker (--gc-sections) would drop the
-   whole iso1 codec, and its flash and RAM cost couldn't be measured. This references the encoder and the decoder
-   behind a flag that nothing sets, so they are linked but never run. The ISO state machine replaces this. */
-static volatile uint8_t iso1LinkedOnly = 0;
-
-void projectExiConnector_keepIso1Linked(void) {
-   if (iso1LinkedOnly) {
-      projectExiConnector_decode_Iso1ExiDocument();
-      projectExiConnector_prepare_Iso1ExiDocument();
-      projectExiConnector_encode_Iso1ExiDocument();
-   }
-}
 #endif

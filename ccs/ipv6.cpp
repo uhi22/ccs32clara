@@ -29,6 +29,7 @@ static uint8_t UdpRequestLen;
 static uint8_t* UdpRequest = &IpRequest[40];
 static uint8_t v2gtpFrameLen;
 static uint8_t* v2gtpFrame = &UdpRequest[8];
+static uint8_t sdpTlsOnly; /* the charger answered with TLS only, and we offer no protocol that can do without */
 
 /*** local function prototypes ******************************************/
 void ipv6_packRequestIntoEthernet(void);
@@ -38,6 +39,14 @@ void evaluateNeighborSolicitation(void);
 
 
 /*** functions **********************************************************/
+
+uint8_t ipv6_isChargerTlsOnly(void) {
+   return sdpTlsOnly;
+}
+
+void ipv6_clearChargerTlsOnly(void) {
+   sdpTlsOnly = 0;
+}
 
 void evaluateUdpPayload(void) {
    uint16_t v2gptPayloadType;
@@ -66,9 +75,21 @@ void evaluateUdpPayload(void) {
                addToTrace(MOD_SDP, "[SDP] Checkpoint203: Received SDP response");
                setCheckpoint(203);
                /* We asked for no TLS (0x10) over TCP (0x00). DIN 70121 has no TLS, and a DIN charger that answers with
-                  TLS (0x00) by mistake may still accept plain TCP, so we only report it and go on with plain TCP. */
+                  TLS (0x00) by mistake may still accept plain TCP. So while DIN 70121 is offered (V2gProtocols 0, 1
+                  or 2), we only report it and go on with plain TCP. With ISO 15118-2 only (3), a charger that wants
+                  TLS won't run the session without it: stop, until the link goes down (ipv6_clearChargerTlsOnly). */
                if (sdp.security == V2GTP_SDP_SECURITY_TLS) {
-                  addToTrace(MOD_SDP, "[SDP] The charger answered with TLS, which is not supported. Trying plain TCP.");
+                  if (pevStateMachine_isDinOffered()) {
+                     addToTrace(MOD_SDP, "[SDP] The charger answered with TLS, which is not supported. Trying plain TCP.");
+                  } else {
+                     if (!sdpTlsOnly) {
+                        addToTrace(MOD_SDP, "[SDP] The charger only offers TLS, which is not supported. Stopping.");
+                        publishStatus("Charger needs TLS", "");
+                        Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_REQUIRES_TLS);
+                     }
+                     sdpTlsOnly = 1;
+                     return;
+                  }
                }
                if (sdp.transport != V2GTP_SDP_TRANSPORT_TCP) {
                   addToTrace(MOD_SDP, "[SDP] The charger answered with a transport protocol other than TCP. Trying TCP.");

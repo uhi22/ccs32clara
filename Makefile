@@ -49,7 +49,7 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
 				 picontroller.o terminalcommands.o sdocommands.o \
 				 ipv6.o tcp.o \
-				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o acOBC.o wakecontrol.o serialRing.o \
+				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o acOBC.o wakecontrol.o serialRing.o v2gtp.o qcaframe.o \
 				 hardwareInterface.o hwif_connectorlock.o hwif_inletvoltage.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
 				 appHandEXIDatatypesDecoder.o ByteStream.o EncoderChannel.o \

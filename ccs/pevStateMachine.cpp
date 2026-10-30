@@ -410,6 +410,9 @@ static void stateFunctionWaitForSupportedApplicationProtocolResponse(void)
                 aphsDoc.supportedAppProtocolRes.SchemaID_isUsed,
                 aphsDoc.supportedAppProtocolRes.SchemaID);
          publishStatus("Schema negotiated", "");
+#ifdef USE_ISO1
+         projectExiConnector_keepIso1Linked(); /* links the iso1 codec without using it yet */
+#endif
          addToTrace(MOD_PEV, "Checkpoint403: Schema negotiated. And Checkpoint500: Will send SessionSetupReq");
          setCheckpoint(500);
          projectExiConnector_prepare_DinExiDocument();

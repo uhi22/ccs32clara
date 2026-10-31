@@ -860,6 +860,7 @@ static void stateFunctionWaitForCurrentDownAfterStateB(void) {
 static void stateFunctionWaitForCurrentDemandResponse(void)
 {
    int16_t uHw, uEvse, uDeviation;
+   uint8_t isPowerDeliveryOffSent = 0; /* a stop below has sent PowerDeliveryReq(0): nothing more for this response */
    if (tcp_rxdataLen>V2GTP_HEADER_SIZE)
    {
       //addToTrace(MOD_PEV, "In state WaitForCurrentDemandRes, received:");
@@ -897,8 +898,9 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
             Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_EVSE_MALFUNCTION);
+            isPowerDeliveryOffSent = 1;
          }
-         if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
+         else if (dinDocDec.V2G_Message.Body.CurrentDemandRes.DC_EVSEStatus.EVSEStatusCode == dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown)
          {
             /* If the charger reports an emergency, we stop the charging. */
             addToTrace(MOD_PEV, "Charger reported EmergencyShutdown.");
@@ -907,8 +909,9 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
             Param::SetInt(Param::StopReason, STOP_REASON_CHARGER_EMERGENCY_SHUTDOWN);
+            isPowerDeliveryOffSent = 1;
          }
-         if (hwIf_isInletVoltageError) {
+         else if (hwIf_isInletVoltageError) {
              /* If we detect a strong deviation between the hardware-based inlet voltage and the EvsePresentVoltage reported by the
                 charging station, this indicates a severe hardware issue. Stop charging. */
             addToTrace(MOD_PEV, "Large deviation of the inlet voltage. Stopping.");
@@ -921,10 +924,17 @@ static void stateFunctionWaitForCurrentDemandResponse(void)
             pev_sendPowerDeliveryReq(0);
             pev_enterState(PEV_STATE_WaitForPowerDeliveryResponse);
             Param::SetInt(Param::StopReason, STOP_REASON_INLET_VOLTAGE_DEVIATION);
+            isPowerDeliveryOffSent = 1;
          }
          /* If the pushbutton is pressed longer than 0.5s or enable is set to off, we interpret this as charge stop request. */
          pev_isUserStopRequestOnCarSide = hardwareInterface_stopChargeRequested();
-         if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
+         if (isPowerDeliveryOffSent)
+         {
+            /* Already stopping: wait for the PowerDeliveryRes. Sending another request now (a second
+               PowerDeliveryReq, or a CurrentDemandReq that would also take us back to
+               WaitForCurrentDemandResponse) would put two requests on the wire without waiting for a response. */
+         }
+         else if (hardwareInterface_getIsAccuFull() || pev_isUserStopRequestOnCarSide || pev_isUserStopRequestOnChargerSide)
          {
             if (hardwareInterface_getIsAccuFull())
             {

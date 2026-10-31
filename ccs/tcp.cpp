@@ -4,6 +4,7 @@
 
 #define NEXT_TCP 0x06 /* the next protocol is TCP */
 
+#define TCP_FLAG_FIN 0x01
 #define TCP_FLAG_SYN 0x02
 #define TCP_FLAG_RST 0x04
 #define TCP_FLAG_PSH 0x08
@@ -13,6 +14,12 @@
 #define TCP_ACK_TIMEOUT_MS 100 /* if for 100ms no ACK is received, we retry the transmission */
 #define TCP_MAX_NUMBER_OF_RETRANSMISSIONS 40 /* allow 40 retries with 100ms cycle, to bridge 4 seconds of broken line. */
 #define TCP_ACTIVITY_TIMER_START (5*33) /* 5 seconds */
+
+/* offsets in myethreceivebuffer: 14 bytes Ethernet, 40 bytes IPv6 (without extension headers), then TCP */
+#define TCP_RX_IP_SOURCE 22
+#define TCP_RX_IP_DEST 38
+#define TCP_RX_SEGMENT 54
+#define TCP_RX_MIN_HEADER 20
 
 #define TCP_STATE_CLOSED 0
 #define TCP_STATE_SYN_SENT 1
@@ -34,7 +41,9 @@ uint8_t tcp_rxdata[TCP_RX_DATA_LEN]; /* dedicated receive buffer for TCP data wi
 
 static uint8_t tcpState = TCP_STATE_CLOSED;
 
-static uint32_t TcpSeqNr=200; /* a "random" start sequence number */
+static uint32_t TcpSeqNr=200; /* a "random" start sequence number. The first byte not yet acknowledged by the charger
+                                 (SND.UNA in RFC 9293), and the sequence number of the next segment we build. */
+static uint32_t TcpSndNxt=200; /* the sequence number after the last byte sent (SND.NXT) */
 static uint32_t TcpAckNr;
 static uint32_t tcp_debug_totalRetryCounter;
 
@@ -51,6 +60,28 @@ uint32_t tcp_getTotalNumberOfRetries(void) {
   return tcp_debug_totalRetryCounter;
 }
 
+#define TCP_SEGMENT_OK        0
+#define TCP_SEGMENT_TOO_LONG  1 /* the segment isn't complete in the receive buffer */
+#define TCP_SEGMENT_BAD_SUM   2 /* its checksum is wrong */
+
+/* Checks the received TCP segment (segLen bytes, from the IPv6 payload length): is it complete in the receive buffer,
+   and is its checksum over the IPv6 pseudo header and the segment right (RFC 9293 section 3.1, RFC 8200 section 8.1)?
+   Summed with the checksum field included, a correct segment gives 0. qca7000.cpp keeps at most
+   MY_ETH_RECEIVE_BUFFER_LEN bytes of a frame, so a longer segment can't be checked (or used). The checksum function
+   writes a padding byte after an odd-length segment, so an odd one needs that byte free in the buffer too. */
+static uint8_t tcp_checkSegment(uint16_t segLen)
+{
+   uint16_t needed = TCP_RX_SEGMENT + segLen + (segLen & 1);
+   if (segLen < TCP_RX_MIN_HEADER || TCP_RX_SEGMENT + segLen > myethreceivebufferLen
+       || needed > MY_ETH_RECEIVE_BUFFER_LEN)
+      return TCP_SEGMENT_TOO_LONG;
+   if (calculateUdpAndTcpChecksumForIPv6(&myethreceivebuffer[TCP_RX_SEGMENT], segLen,
+                                         &myethreceivebuffer[TCP_RX_IP_SOURCE], &myethreceivebuffer[TCP_RX_IP_DEST],
+                                         NEXT_TCP) != 0)
+      return TCP_SEGMENT_BAD_SUM;
+   return TCP_SEGMENT_OK;
+}
+
 void evaluateTcpPacket(void)
 {
    uint8_t flags;
@@ -58,7 +89,7 @@ void evaluateTcpPacket(void)
    uint32_t remoteAckNr;
    uint16_t sourcePort, destinationPort, pLen, hdrLen, tmpPayloadLen;
 
-   /* todo: check the IP addresses, checksum etc */
+   /* todo: check the IP addresses (the checksum is checked below) */
    nTcpPacketsReceived++;
    pLen =  (((uint16_t)myethreceivebuffer[18])<<8) +  myethreceivebuffer[19]; /* length of the IP payload */
    hdrLen=(myethreceivebuffer[66]>>4) * 4; /* header length in byte */
@@ -79,6 +110,22 @@ void evaluateTcpPacket(void)
       log_v("%d %d %d %d",sourcePort,seccTcpPort,destinationPort, evccPort   );
       return; /* wrong port */
    }
+   switch (tcp_checkSegment(pLen))
+   {
+   case TCP_SEGMENT_TOO_LONG:
+      /* The frame was longer than the receive buffer and was cut (or the IPv6 length is wrong). Its end is missing,
+         so it can't be checked or used. Before, a payload of 177 to 199 bytes was copied from beyond the end of
+         myethreceivebuffer. */
+      addToTrace(MOD_TCP, "[TCP] segment longer than the receive buffer, dropped.");
+      return;
+   case TCP_SEGMENT_BAD_SUM:
+      /* A corrupted segment changes nothing; the charger sends it again, as it does a lost one. Without this check, a
+         corrupted segment was taken as it came: its flags, its sequence and ACK numbers and its data. */
+      addToTrace(MOD_TCP, "[TCP] bad checksum, dropped.");
+      return;
+   default:
+      break;
+   }
    tcpActivityTimer=TCP_ACTIVITY_TIMER_START;
    remoteSeqNr =
       (((uint32_t)myethreceivebuffer[58])<<24) +
@@ -96,6 +143,7 @@ void evaluateTcpPacket(void)
       if (tcpState == TCP_STATE_SYN_SENT)
       {
          TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
+         TcpSndNxt = TcpSeqNr; /* nothing sent yet on the new connection */
          TcpAckNr = remoteSeqNr+1; /* The ACK number of our next transmit packet is one more than the received seq number. */
          setCheckpoint(303);
          tcpState = TCP_STATE_ESTABLISHED;
@@ -114,8 +162,46 @@ void evaluateTcpPacket(void)
    }
    /* It can be an ACK, or a data package, or a combination of both. We treat the ACK and the data independent from each other,
      to treat each combination. */
+   /* The ACK first, so that the ACK we send for the data below carries the sequence number the charger expects. We
+      advance TcpSeqNr only when the charger acknowledges a request. A response usually also acknowledges the request;
+      if we acknowledged its data before taking that ACK, our ACK would carry the request's own sequence number, below
+      what the charger has already received. The charger discards such an ACK (RFC 9293 section 3.10.7.4) and, unless
+      our next request comes first, sends its response again after its retransmission timeout.
+      Only an ACK number from TcpSeqNr (SND.UNA) to TcpSndNxt (SND.NXT) is taken (RFC 9293 section 3.10.7.4). A
+      repeated earlier segment from the charger carries an older ACK number: taking it would move TcpSeqNr backwards,
+      so that our next request reuses sequence numbers. The retransmission timer stops only once everything sent is
+      acknowledged; stopping it on such an older ACK would leave a lost request unrepeated. */
+   if (flags & TCP_FLAG_ACK)
+   {
+      nTcpPacketsReceived+=1000;
+      if ((int32_t)(remoteAckNr - TcpSeqNr) < 0 || (int32_t)(remoteAckNr - TcpSndNxt) > 0)
+      {
+         /* acknowledges something already acknowledged, or something never sent: ignore the ACK (the segment's data,
+            if any, is still handled below) */
+         addToTrace(MOD_TCP, "[TCP] ACK number outside what we have sent, ignored.");
+      }
+      else
+      {
+         TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
+         if (TcpSeqNr == TcpSndNxt)
+         {
+            lastUnackTransmissionTime = 0; /* mark timer as "not used", because we received the ACK */
+            retryCounter = 0;
+         }
+      }
+   }
    //log_v("L=%d", tmpPayloadLen);
-   if ((tmpPayloadLen>0) && (tmpPayloadLen<TCP_RX_DATA_LEN))
+   if ((tmpPayloadLen>0) && (tmpPayloadLen<TCP_RX_DATA_LEN) && (remoteSeqNr != TcpAckNr))
+   {
+      /* The data doesn't start at the next byte we expect. Either we already have it (the charger sent the segment
+         again), or a segment before it was lost. As RFC 9293 section 3.10.7.4 requires, acknowledge what has been
+         received and drop the segment; the charger then sends what is missing. Handing a repeated response to the
+         application as a new one would make it send its next request early. */
+      addToTrace(MOD_TCP, "[TCP] data out of sequence, dropped.");
+      connMgr_TcpOk(); /* the link works */
+      tcp_sendAck();
+   }
+   else if ((tmpPayloadLen>0) && (tmpPayloadLen<TCP_RX_DATA_LEN))
    {
       /* This is a data transfer packet. */
       tcp_rxdataLen = tmpPayloadLen;
@@ -128,16 +214,20 @@ void evaluateTcpPacket(void)
       memcpy(tcp_rxdata, &myethreceivebuffer[74], tcp_rxdataLen);  /* provide the received data to the application */
       connMgr_TcpOk();
       TcpAckNr = remoteSeqNr+tcp_rxdataLen; /* The ACK number of our next transmit packet is tcp_rxdataLen more than the received seq number. */
+      if ((flags & TCP_FLAG_FIN) && !(flags & TCP_FLAG_RST))
+         TcpAckNr++; /* a FIN after the data takes one sequence number; acknowledge it too (below) */
       tcp_sendAck();
 
       addToTrace(MOD_TCPTRAFFIC, "Data received: ", tcp_rxdata, tcp_rxdataLen);
    }
-   if (flags & TCP_FLAG_ACK)
+   else if ((tmpPayloadLen == 0) && (flags & TCP_FLAG_FIN) && !(flags & TCP_FLAG_RST))
    {
-      nTcpPacketsReceived+=1000;
-      TcpSeqNr = remoteAckNr; /* The sequence number of our next transmit packet is given by the received ACK number. */
-      lastUnackTransmissionTime = 0; /* mark timer as "not used", because we received the ACK */
-      retryCounter = 0;
+      /* Acknowledge the charger's FIN, new (in sequence) or repeated. Without the ACK the charger keeps sending its
+         last segment and FIN again, for a minute or so after the session. We still don't close our side. */
+      if (remoteSeqNr == TcpAckNr)
+         TcpAckNr++;
+      if (remoteSeqNr + 1 == TcpAckNr)
+         tcp_sendAck();
    }
 }
 
@@ -198,6 +288,7 @@ void tcp_transmit(void)
           addToTrace(MOD_TCPTRAFFIC, "TCP will transmit:", tcpPayload, tcpPayloadLen);
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
+          TcpSndNxt = TcpSeqNr + tcpPayloadLen; /* the charger's ACK for this segment reaches here */
           lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
           retryCounter = TCP_MAX_NUMBER_OF_RETRANSMISSIONS; /* Allow n retries of the same packet */
       }
@@ -221,6 +312,7 @@ void tcp_testSendData(void)
       TcpTransmitPacket[tcpHeaderLen+2] = 0xBB; /* demo data */
       tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
       tcp_packRequestIntoIp();
+      TcpSndNxt = TcpSeqNr + tcpPayloadLen; /* so that the charger's ACK for it is taken */
    }
 }
 

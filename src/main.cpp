@@ -57,6 +57,7 @@
 #include "hardwareVariants.h"
 #include "acOBC.h"
 #include "wakecontrol.h"
+#include "serialRing.h"
 #ifdef ENABLE_PLCBOOT
 #include "plcboot.h"
 #endif
@@ -99,6 +100,7 @@ static void Ms100Task(void)
     acOBC_mainfunction();
     hardwareInterface_WakeupOtherPeripherals();
     hwIf_handleInletVoltage();
+    serialRing_cyclic100ms(); //reports serial lines dropped because the ring was full
 
     //Watchdog
     int wd = Param::GetInt(Param::CanWatchdog);
@@ -323,7 +325,7 @@ extern "C" int main(void)
     canSdo = &sdo;
 
     //This is all we need to do to set up a terminal on USART4
-    Terminal t(UART4, termCmds);
+    RingTerminal t(UART4, termCmds); //output through a ring buffer that never blocks (ccs/serialRing.cpp)
     TerminalCommands::SetCanMap(canMap);
     SdoCommands::SetCanMap(canMap);
 

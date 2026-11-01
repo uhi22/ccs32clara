@@ -9,7 +9,9 @@
 #else
 #define MY_SPI_TX_RX_BUFFER_SIZE 1100
 #define MY_ETH_TRANSMIT_BUFFER_LEN 250
-#define MY_ETH_RECEIVE_BUFFER_LEN 250
+/* The largest frame one SPI read can hold: the buffer less the 2 command bytes and the 12 bytes of QCA7000 framing.
+   TCP's MSS (tcp.cpp) is derived from it, so that the charger doesn't send larger frames. */
+#define MY_ETH_RECEIVE_BUFFER_LEN (MY_SPI_TX_RX_BUFFER_SIZE - 2 - 12)
 #endif
 
 #ifdef __cplusplus

@@ -1,4 +1,5 @@
 #include "ccs32_globals.h"
+#include "v2gtp.h"
 
 #define NEXT_UDP 0x11 /* next protocol is UDP */
 #define NEXT_ICMPv6 0x3a /* next protocol is ICMPv6 */
@@ -40,7 +41,7 @@ void evaluateNeighborSolicitation(void);
 
 void evaluateUdpPayload(void) {
    uint16_t v2gptPayloadType;
-   uint32_t v2gptPayloadLen;
+   struct V2gtpSdpResponse sdp;
    uint8_t i;
    if ((destinationport == 15118) || (sourceport == 15118)) { // port for the SECC
       if ((udpPayload[0]==0x01) && (udpPayload[1]==0xFE)) { //# protocol version 1 and inverted
@@ -53,11 +54,7 @@ void evaluateUdpPayload(void) {
          if (v2gptPayloadType == 0x9001) {
             //# it is a SDP response from the charger to the car
             //addToTrace("it is a SDP response from the charger to the car");
-            v2gptPayloadLen = (((uint32_t)udpPayload[4])<<24)  +
-                              (((uint32_t)udpPayload[5])<<16) +
-                              (((uint32_t)udpPayload[6])<<8) +
-                              udpPayload[7];
-            if (v2gptPayloadLen == 20) {
+            if (v2gtp_parseSdpResponse(udpPayload, udpPayloadLen, &sdp)) {
                //# 20 is the only valid length for a SDP response.
                if (connMgr_getConnectionLevel()==100) {
                     /* we have TCP traffic running, so we ignore additional SDP messages. This
@@ -68,12 +65,19 @@ void evaluateUdpPayload(void) {
                }
                addToTrace(MOD_SDP, "[SDP] Checkpoint203: Received SDP response");
                setCheckpoint(203);
-               //# at byte 8 of the UDP payload starts the IPv6 address of the charger.
-               for (i=0; i<16; i++) {
-                  SeccIp[i] = udpPayload[8+i]; // 16 bytes IP address of the charger
+               /* We asked for no TLS (0x10) over TCP (0x00). DIN 70121 has no TLS, and a DIN charger that answers with
+                  TLS (0x00) by mistake may still accept plain TCP, so we only report it and go on with plain TCP. */
+               if (sdp.security == V2GTP_SDP_SECURITY_TLS) {
+                  addToTrace(MOD_SDP, "[SDP] The charger answered with TLS, which is not supported. Trying plain TCP.");
                }
-               //# Extract the TCP port, on which the charger will listen:
-               seccTcpPort = (((uint16_t)(udpPayload[8+16]))<<8) + udpPayload[8+16+1];
+               if (sdp.transport != V2GTP_SDP_TRANSPORT_TCP) {
+                  addToTrace(MOD_SDP, "[SDP] The charger answered with a transport protocol other than TCP. Trying TCP.");
+               }
+               for (i=0; i<16; i++) {
+                  SeccIp[i] = sdp.seccIp[i]; // 16 bytes IP address of the charger
+               }
+               //# The TCP port, on which the charger will listen:
+               seccTcpPort = sdp.seccPort;
                /* in case we did not yet found out the chargers MAC, because we jumped-over the SLAC,
                   we extract the chargers MAC from the SDP response. */
                if ((evseMac[0]==0) && (evseMac[1]==0)) {

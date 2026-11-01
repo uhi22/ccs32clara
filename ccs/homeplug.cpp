@@ -800,6 +800,13 @@ void runSdpStateMachine(void)
    {
       /* We have no AVLN established, and SLAC is not ongoing. It does not make sense to start SDP. */
       sdp_state = 0;
+      ipv6_clearChargerTlsOnly(); /* a new link may be to another charger */
+      return;
+   }
+   if (ipv6_isChargerTlsOnly())
+   {
+      /* The charger only offers TLS, and we offer only ISO 15118-2 (see ipv6.cpp). Asking again won't change that. */
+      sdp_state = 0;
       return;
    }
    if (connMgr_getConnectionLevel()>20)

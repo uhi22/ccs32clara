@@ -34,6 +34,10 @@
 static uint16_t tcpActivityTimer;
 static uint32_t lastUnackTransmissionTime = 0;
 static uint8_t retryCounter = 0;
+/* Copy of the unacknowledged data frame. myethtransmitbuffer is overwritten by every ACK or RST we send meanwhile,
+   so retransmitting from it sent the wrong frame. */
+static uint8_t retransmitFrame[MY_ETH_TRANSMIT_BUFFER_LEN];
+static uint16_t retransmitFrameLen = 0;
 static uint8_t TcpIpRequestLen;
 static uint8_t* TcpIpRequest = &myethtransmitbuffer[14];
 static uint8_t TcpTransmitPacketLen;
@@ -413,6 +417,8 @@ void tcp_transmit(void)
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
           TcpSndNxt = TcpSeqNr + tcpPayloadLen; /* the charger's ACK for this segment reaches here */
+          memcpy(retransmitFrame, myethtransmitbuffer, myethtransmitbufferLen);
+          retransmitFrameLen = myethtransmitbufferLen;
           lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
           retryCounter = TCP_MAX_NUMBER_OF_RETRANSMISSIONS; /* Allow n retries of the same packet */
       }
@@ -586,13 +592,16 @@ void tcp_Mainfunction(void)
       if (retryCounter>0) {
         /* The maximum number of retransmissions are not yet over. We still are allowed to retransmit. */
         //Retransmit
-        tcp_packRequestIntoEthernet();
+        memcpy(myethtransmitbuffer, retransmitFrame, retransmitFrameLen);
+        myethtransmitbufferLen = retransmitFrameLen;
+        myEthTransmit();
         tcp_debug_totalRetryCounter++;
         lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
         retryCounter--;
         addToTrace(MOD_TCP, "[TCP] Last packet wasn't ACKed for 100 ms, retransmitting");
       } else {
         addToTrace(MOD_TCP, "[TCP] Giving up the retry");
+        lastUnackTransmissionTime = 0; /* once is enough */
       }
    }
    if (connMgr_getConnectionLevel()<50)

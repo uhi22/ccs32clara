@@ -1,5 +1,7 @@
 #include "ccs32_globals.h"
 #include "v2gtp.h"
+#include <libopencm3/cm3/dwt.h>
+#include <libopencm3/stm32/desig.h>
 
 /* Todo: implement a retry strategy, to cover the situation that single packets are lost on the way. */
 
@@ -60,6 +62,7 @@ static void tcp_packRequestIntoIp(void);
 static void tcp_prepareTcpHeader(uint8_t tcpFlag);
 static void tcp_sendAck(void);
 static void tcp_sendFirstAck(void);
+static void tcp_sendRst(uint16_t sourcePort, uint32_t seq);
 
 /*** functions *********************************************************************/
 uint8_t tcp_takeReceiveError(void) {
@@ -124,6 +127,17 @@ void evaluateTcpPacket(void)
    {
       addToTrace(MOD_TCP, "[TCP] wrong port.");
       log_v("%d %d %d %d",sourcePort,seccTcpPort,destinationPort, evccPort   );
+      /* The charger still holds a connection to one of our earlier ports (typically from before a restart) and keeps
+         repeating its data. Reset it, so that it lets go: RST with the sequence number it expects from us, which is
+         the ACK number of its segment (RFC 9293 section 3.10.7.1). */
+      if (sourcePort == seccTcpPort && (myethreceivebuffer[67] & TCP_FLAG_ACK) && !(myethreceivebuffer[67] & TCP_FLAG_RST)
+          && tcp_checkSegment(pLen) == TCP_SEGMENT_OK)
+      {
+         remoteAckNr =
+            (((uint32_t)myethreceivebuffer[62])<<24) + (((uint32_t)myethreceivebuffer[63])<<16) +
+            (((uint32_t)myethreceivebuffer[64])<<8) + (((uint32_t)myethreceivebuffer[65]));
+         tcp_sendRst(destinationPort, remoteAckNr);
+      }
       return; /* wrong port */
    }
    switch (tcp_checkSegment(pLen))
@@ -175,6 +189,20 @@ void evaluateTcpPacket(void)
          tcp_sendFirstAck();
          connMgr_TcpOk();
          addToTrace(MOD_TCP, "[TCP] connected.");
+      }
+      return;
+   }
+   if (tcpState == TCP_STATE_SYN_SENT)
+   {
+      /* Anything but a SYN+ACK while we wait for one. An ACK that doesn't acknowledge our SYN means the charger still
+         has a connection for this port and answers our SYN with a repeated ACK, expecting the sequence number in its
+         ACK field. Reset that connection (RFC 9293 section 3.10.7.3) and start over with a new port and sequence
+         number, instead of waiting for the connect timeout. */
+      if ((flags & TCP_FLAG_ACK) && !(flags & TCP_FLAG_RST))
+      {
+         addToTrace(MOD_TCP, "[TCP] Charger holds an old connection on this port, resetting it.");
+         tcp_sendRst(evccPort, remoteAckNr);
+         tcpState = TCP_STATE_CLOSED; /* tcp_Mainfunction connects again, on the next port */
       }
       return;
    }
@@ -280,8 +308,30 @@ void evaluateTcpPacket(void)
    }
 }
 
+/* After a restart, the charger may still hold connections to the ports and sequence numbers of the previous run, and
+   answers a SYN that matches one of them with a bare ACK instead of a SYN+ACK. Start from a different port and
+   sequence number on each run: the time since power-on, in CPU cycles, differs by far more than the timing jitter of
+   the SLAC and SDP steps before the first connect. */
+static void tcp_seedPortAndSequence(void)
+{
+   static uint8_t seeded;
+   uint32_t r;
+
+   if (seeded)
+      return;
+   seeded = 1;
+   r = dwt_read_cycle_counter() ^ (rtc_get_ms() << 12) ^ DESIG_UNIQUE_ID1;
+   r ^= r >> 15;
+   r *= 2654435761u;
+   r ^= r >> 13;
+   evccPort = 60000 + (r >> 16) % 5000;
+   TcpSeqNr = r * 2246822519u;
+   TcpSndNxt = TcpSeqNr;
+}
+
 void tcp_connect(void)
 {
+   tcp_seedPortAndSequence();
    addToTrace(MOD_TCP, "[TCP] Checkpoint301: connecting");
    setCheckpoint(301);
    TcpTransmitPacket[20] = 0x02; /* options: 12 bytes, as in a Win10 notebook trace, with our own MSS and window scale */
@@ -305,6 +355,31 @@ void tcp_connect(void)
    tcp_packRequestIntoIp();
    tcpState = TCP_STATE_SYN_SENT;
    tcpActivityTimer=TCP_ACTIVITY_TIMER_START;
+}
+
+/* A bare RST for a connection that isn't ours (any more): no data, nothing acknowledged. */
+static void tcp_sendRst(uint16_t sourcePort, uint32_t seq)
+{
+   uint16_t checksum;
+
+   tcpHeaderLen = 20;
+   tcpPayloadLen = 0;
+   TcpTransmitPacketLen = 20;
+   memset(TcpTransmitPacket, 0, 20);
+   TcpTransmitPacket[0] = (uint8_t)(sourcePort >> 8);
+   TcpTransmitPacket[1] = (uint8_t)(sourcePort);
+   TcpTransmitPacket[2] = (uint8_t)(seccTcpPort >> 8);
+   TcpTransmitPacket[3] = (uint8_t)(seccTcpPort);
+   TcpTransmitPacket[4] = (uint8_t)(seq>>24);
+   TcpTransmitPacket[5] = (uint8_t)(seq>>16);
+   TcpTransmitPacket[6] = (uint8_t)(seq>>8);
+   TcpTransmitPacket[7] = (uint8_t)(seq);
+   TcpTransmitPacket[12] = 5 << 4; /* 20 bytes header */
+   TcpTransmitPacket[13] = TCP_FLAG_RST;
+   checksum = calculateUdpAndTcpChecksumForIPv6(TcpTransmitPacket, TcpTransmitPacketLen, EvccIp, SeccIp, NEXT_TCP);
+   TcpTransmitPacket[16] = (uint8_t)(checksum >> 8);
+   TcpTransmitPacket[17] = (uint8_t)(checksum);
+   tcp_packRequestIntoIp();
 }
 
 static void tcp_sendFirstAck(void)

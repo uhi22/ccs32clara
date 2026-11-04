@@ -1,7 +1,5 @@
 #include "ccs32_globals.h"
 #include "v2gtp.h"
-#include <libopencm3/cm3/dwt.h>
-#include <libopencm3/stm32/desig.h>
 
 /* Todo: implement a retry strategy, to cover the situation that single packets are lost on the way. */
 
@@ -312,24 +310,19 @@ void evaluateTcpPacket(void)
    }
 }
 
-/* After a restart, the charger may still hold connections to the ports and sequence numbers of the previous run, and
-   answers a SYN that matches one of them with a bare ACK instead of a SYN+ACK. Start from a different port and
-   sequence number on each run: the time since power-on, in CPU cycles, differs by far more than the timing jitter of
-   the SLAC and SDP steps before the first connect. */
+/* After a restart, the charger may still hold connections to the ports and sequence numbers of the previous run.
+   Start each run elsewhere: the time of the first connect varies with the SLAC and SDP timing. */
 static void tcp_seedPortAndSequence(void)
 {
    static uint8_t seeded;
-   uint32_t r;
+   uint32_t t;
 
    if (seeded)
       return;
    seeded = 1;
-   r = dwt_read_cycle_counter() ^ (rtc_get_ms() << 12) ^ DESIG_UNIQUE_ID1;
-   r ^= r >> 15;
-   r *= 2654435761u;
-   r ^= r >> 13;
-   evccPort = 60000 + (r >> 16) % 5000;
-   TcpSeqNr = r * 2246822519u;
+   t = rtc_get_ms();
+   evccPort = 60000 + t % 5000;
+   TcpSeqNr = t * 2654435761u;
    TcpSndNxt = TcpSeqNr;
 }
 

@@ -325,7 +325,10 @@ static void triggerActions()
             }
             if(Param::GetInt(Param::LockState) == LOCK_CLOSED) //Do not allow Request for AC power without locking
             {
-                hardwareInterface_setStateC();
+                if (Param::GetInt(Param::ExternalStateCResistor) == 0)
+                {
+                    hardwareInterface_setStateC();
+                }
                 Param::SetInt(Param::PortState, PS_CHARGING_AC); //set PortState to AcCharging
             }
             break;

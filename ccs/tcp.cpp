@@ -32,6 +32,10 @@
 static uint16_t tcpActivityTimer;
 static uint32_t lastUnackTransmissionTime = 0;
 static uint8_t retryCounter = 0;
+/* Copy of the unacknowledged data frame. myethtransmitbuffer is overwritten by every ACK or RST we send meanwhile,
+   so retransmitting from it sent the wrong frame. */
+static uint8_t retransmitFrame[MY_ETH_TRANSMIT_BUFFER_LEN];
+static uint16_t retransmitFrameLen = 0;
 static uint8_t TcpIpRequestLen;
 static uint8_t* TcpIpRequest = &myethtransmitbuffer[14];
 static uint8_t TcpTransmitPacketLen;
@@ -60,6 +64,7 @@ static void tcp_packRequestIntoIp(void);
 static void tcp_prepareTcpHeader(uint8_t tcpFlag);
 static void tcp_sendAck(void);
 static void tcp_sendFirstAck(void);
+static void tcp_sendRst(uint16_t sourcePort, uint32_t seq);
 
 /*** functions *********************************************************************/
 uint8_t tcp_takeReceiveError(void) {
@@ -124,6 +129,17 @@ void evaluateTcpPacket(void)
    {
       addToTrace(MOD_TCP, "[TCP] wrong port.");
       log_v("%d %d %d %d",sourcePort,seccTcpPort,destinationPort, evccPort   );
+      /* The charger still holds a connection to one of our earlier ports (typically from before a restart) and keeps
+         repeating its data. Reset it, so that it lets go: RST with the sequence number it expects from us, which is
+         the ACK number of its segment (RFC 9293 section 3.10.7.1). */
+      if (sourcePort == seccTcpPort && (myethreceivebuffer[67] & TCP_FLAG_ACK) && !(myethreceivebuffer[67] & TCP_FLAG_RST)
+          && tcp_checkSegment(pLen) == TCP_SEGMENT_OK)
+      {
+         remoteAckNr =
+            (((uint32_t)myethreceivebuffer[62])<<24) + (((uint32_t)myethreceivebuffer[63])<<16) +
+            (((uint32_t)myethreceivebuffer[64])<<8) + (((uint32_t)myethreceivebuffer[65]));
+         tcp_sendRst(destinationPort, remoteAckNr);
+      }
       return; /* wrong port */
    }
    switch (tcp_checkSegment(pLen))
@@ -175,6 +191,20 @@ void evaluateTcpPacket(void)
          tcp_sendFirstAck();
          connMgr_TcpOk();
          addToTrace(MOD_TCP, "[TCP] connected.");
+      }
+      return;
+   }
+   if (tcpState == TCP_STATE_SYN_SENT)
+   {
+      /* Anything but a SYN+ACK while we wait for one. An ACK that doesn't acknowledge our SYN means the charger still
+         has a connection for this port and answers our SYN with a repeated ACK, expecting the sequence number in its
+         ACK field. Reset that connection (RFC 9293 section 3.10.7.3) and start over with a new port and sequence
+         number, instead of waiting for the connect timeout. */
+      if ((flags & TCP_FLAG_ACK) && !(flags & TCP_FLAG_RST))
+      {
+         addToTrace(MOD_TCP, "[TCP] Charger holds an old connection on this port, resetting it.");
+         tcp_sendRst(evccPort, remoteAckNr);
+         tcpState = TCP_STATE_CLOSED; /* tcp_Mainfunction connects again, on the next port */
       }
       return;
    }
@@ -280,8 +310,25 @@ void evaluateTcpPacket(void)
    }
 }
 
+/* After a restart, the charger may still hold connections to the ports and sequence numbers of the previous run.
+   Start each run elsewhere: the time of the first connect varies with the SLAC and SDP timing. */
+static void tcp_seedPortAndSequence(void)
+{
+   static uint8_t seeded;
+   uint32_t t;
+
+   if (seeded)
+      return;
+   seeded = 1;
+   t = rtc_get_ms();
+   evccPort = 60000 + t % 5000;
+   TcpSeqNr = t * 2654435761u;
+   TcpSndNxt = TcpSeqNr;
+}
+
 void tcp_connect(void)
 {
+   tcp_seedPortAndSequence();
    addToTrace(MOD_TCP, "[TCP] Checkpoint301: connecting");
    setCheckpoint(301);
    TcpTransmitPacket[20] = 0x02; /* options: 12 bytes, as in a Win10 notebook trace, with our own MSS and window scale */
@@ -305,6 +352,31 @@ void tcp_connect(void)
    tcp_packRequestIntoIp();
    tcpState = TCP_STATE_SYN_SENT;
    tcpActivityTimer=TCP_ACTIVITY_TIMER_START;
+}
+
+/* A bare RST for a connection that isn't ours (any more): no data, nothing acknowledged. */
+static void tcp_sendRst(uint16_t sourcePort, uint32_t seq)
+{
+   uint16_t checksum;
+
+   tcpHeaderLen = 20;
+   tcpPayloadLen = 0;
+   TcpTransmitPacketLen = 20;
+   memset(TcpTransmitPacket, 0, 20);
+   TcpTransmitPacket[0] = (uint8_t)(sourcePort >> 8);
+   TcpTransmitPacket[1] = (uint8_t)(sourcePort);
+   TcpTransmitPacket[2] = (uint8_t)(seccTcpPort >> 8);
+   TcpTransmitPacket[3] = (uint8_t)(seccTcpPort);
+   TcpTransmitPacket[4] = (uint8_t)(seq>>24);
+   TcpTransmitPacket[5] = (uint8_t)(seq>>16);
+   TcpTransmitPacket[6] = (uint8_t)(seq>>8);
+   TcpTransmitPacket[7] = (uint8_t)(seq);
+   TcpTransmitPacket[12] = 5 << 4; /* 20 bytes header */
+   TcpTransmitPacket[13] = TCP_FLAG_RST;
+   checksum = calculateUdpAndTcpChecksumForIPv6(TcpTransmitPacket, TcpTransmitPacketLen, EvccIp, SeccIp, NEXT_TCP);
+   TcpTransmitPacket[16] = (uint8_t)(checksum >> 8);
+   TcpTransmitPacket[17] = (uint8_t)(checksum);
+   tcp_packRequestIntoIp();
 }
 
 static void tcp_sendFirstAck(void)
@@ -338,6 +410,8 @@ void tcp_transmit(void)
           tcp_prepareTcpHeader(TCP_FLAG_PSH + TCP_FLAG_ACK); /* data packets are always sent with flags PUSH and ACK. */
           tcp_packRequestIntoIp();
           TcpSndNxt = TcpSeqNr + tcpPayloadLen; /* the charger's ACK for this segment reaches here */
+          memcpy(retransmitFrame, myethtransmitbuffer, myethtransmitbufferLen);
+          retransmitFrameLen = myethtransmitbufferLen;
           lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
           retryCounter = TCP_MAX_NUMBER_OF_RETRANSMISSIONS; /* Allow n retries of the same packet */
       }
@@ -511,13 +585,16 @@ void tcp_Mainfunction(void)
       if (retryCounter>0) {
         /* The maximum number of retransmissions are not yet over. We still are allowed to retransmit. */
         //Retransmit
-        tcp_packRequestIntoEthernet();
+        memcpy(myethtransmitbuffer, retransmitFrame, retransmitFrameLen);
+        myethtransmitbufferLen = retransmitFrameLen;
+        myEthTransmit();
         tcp_debug_totalRetryCounter++;
         lastUnackTransmissionTime = rtc_get_ms(); /* record the time of transmission, to be able to detect the timeout */
         retryCounter--;
         addToTrace(MOD_TCP, "[TCP] Last packet wasn't ACKed for 100 ms, retransmitting");
       } else {
         addToTrace(MOD_TCP, "[TCP] Giving up the retry");
+        lastUnackTransmissionTime = 0; /* once is enough */
       }
    }
    if (connMgr_getConnectionLevel()<50)

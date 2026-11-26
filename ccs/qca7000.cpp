@@ -41,9 +41,35 @@ static uint8_t spiRxDiscard;        /* where the DMA puts what comes back while 
 
 /* The SPI's DMA transfers. The longest, MY_SPI_TX_RX_BUFFER_SIZE (1100) bytes at 72 MHz / 16, takes about 2 ms. */
 #define SPI_DMA_TIMEOUT_US 5000
+/* SPI_SR_BSY should drop within the last byte's shift time (a few us) of the DMA transfer completing. This bounds
+   that wait generously, so that a stuck bit (a glitch on the SPI lines, or the QCA7000 holding them at the wrong
+   moment) can't hang forever: see waitSpiNotBusy(). */
+#define SPI_BSY_TIMEOUT_US 1000
 static uint8_t spiDmaCycleCounter; /* the DWT cycle counter runs (qca7000setup); otherwise rtc_get_ms() is the clock */
 static uint16_t spiDmaTimeouts;    /* SPI DMA transfers that didn't finish in time, since power-on */
+static uint16_t spiBsyTimeouts;    /* SPI_SR_BSY that didn't clear in time, since power-on */
 static struct QcaFrameRx qcaRx;    /* the receive framing (QCA7000checkRxDataAndDistribute) */
+
+/* Waits until SPI_SR_BSY clears, up to timeoutUs, and returns 1. Returns 0 if it is still set after the timeout,
+   without touching the SPI or DMA peripherals: the caller decides how to recover. Called both from the main loop
+   (waitSpiDmaDone, spiDmaAbort) and from dma1_channel2_isr(), which runs at a higher priority than the scheduler's
+   TIM4 interrupt: an unbounded wait here, with SPI_SR_BSY stuck, would block TIM4 (and so iwdg_reset()) until the
+   independent watchdog resets the MCU. */
+static uint8_t waitSpiNotBusy(uint32_t timeoutUs)
+{
+   uint32_t startCycles = spiDmaCycleCounter ? dwt_read_cycle_counter() : 0;
+   uint32_t startMs = rtc_get_ms();
+   uint32_t limitCycles = rcc_ahb_frequency / 1000000 * timeoutUs;
+   uint32_t limitMs = timeoutUs / 1000 + 10; /* (10 ms ticks: round the fallback up by one tick) */
+
+   while (SPI_SR(SPI1) & SPI_SR_BSY) {
+      uint8_t late = spiDmaCycleCounter ? dwt_read_cycle_counter() - startCycles > limitCycles
+                                        : rtc_get_ms() - startMs > limitMs;
+      if (late)
+         return 0;
+   }
+   return 1;
+}
 
 /* A transfer that didn't finish in time: stop it and end it on the bus, so that the next one starts clean. The
    QCA7000 sees the chip select go high, which ends the transfer for it. Nothing in this driver resynchronises or
@@ -57,7 +83,7 @@ static void spiDmaAbort(void)
    dma_disable_channel(DMA1, DMA_CHANNEL2);
    dma_disable_channel(DMA1, DMA_CHANNEL3);
    dma_clear_interrupt_flags(DMA1, DMA_CHANNEL2, DMA_TCIF);
-   while (SPI_SR(SPI1) & SPI_SR_BSY); /* the byte being shifted out, a few us */
+   waitSpiNotBusy(SPI_BSY_TIMEOUT_US); /* the byte being shifted out, a few us; bounded, see waitSpiNotBusy() */
    (void)SPI_DR(SPI1); /* a received byte the DMA no longer takes, so that the next register access starts clean */
    (void)SPI_SR(SPI1);
    DigIo::spics.Set();
@@ -85,7 +111,10 @@ static uint8_t waitSpiDmaDone(void)
          return 0;
       }
    }
-   while (SPI_SR(SPI1) & SPI_SR_BSY);
+   if (!waitSpiNotBusy(SPI_BSY_TIMEOUT_US)) {
+      spiDmaAbort();
+      return 0;
+   }
    return 1;
 }
 
@@ -132,7 +161,17 @@ extern "C" void dma1_channel2_isr()
    if (!dma_get_interrupt_flag(DMA1, DMA_CHANNEL2, DMA_TCIF))
       return; /* only the end of the SPI receive transfer */
    dma_clear_interrupt_flags(DMA1, DMA_CHANNEL2, DMA_TCIF);
-   while (SPI_SR(SPI1) & SPI_SR_BSY);
+   if (!waitSpiNotBusy(SPI_BSY_TIMEOUT_US))
+   {
+      /* SPI_SR_BSY stuck (a glitch on the SPI lines, or the QCA7000 holding them at the wrong moment). This ISR runs
+         at a higher priority than the scheduler's TIM4 interrupt, which calls iwdg_reset(): an unbounded wait here
+         would block TIM4 until the independent watchdog resets the MCU, with no trace of why. Recover the same way
+         spiDmaAbort() does for a DMA transfer that didn't finish in time, and count it separately. */
+      (void)SPI_DR(SPI1); /* a received byte the SPI still holds, so that the next register access starts clean */
+      (void)SPI_SR(SPI1);
+      spiBsyTimeouts++;
+      addToTrace(MOD_QCA, "[QCA] SPI busy after DMA complete, stuck. Count:", (int16_t)spiBsyTimeouts);
+   }
    DigIo::spics.Set();
    spi_disable_tx_dma(SPI1);
    spi_disable_rx_dma(SPI1);

@@ -6,8 +6,6 @@
 
 /* Global Defines */
 
-#define STR_TMP_SIZE 400
-#define MY_SERIAL_PRINTBUFFERLEN 400
 
 extern uint16_t checkpointNumber;
 
@@ -15,7 +13,7 @@ extern uint16_t checkpointNumber;
 
 extern void addToTrace(enum Module module, const char * s);
 extern void addToTrace(enum Module module, const char * s, uint8_t* data, uint16_t len);
-extern void addToTrace(enum Module module, const char * s, int16_t value);
+extern void addToTrace(enum Module module, const char * s, int32_t value);
 extern void sanityCheck(const char *hint);
 extern void mySerialPrint(void);
 extern void setCheckpoint(uint16_t newcheckpoint);

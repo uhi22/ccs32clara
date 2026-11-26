@@ -538,7 +538,7 @@ void evaluateGetSwCnf(void)
 #endif
       if (Param::GetInt(Param::logging) & MOD_HOMEPLUG) {
          sprintf(strMac, "%02x:%02x:%02x:%02x:%02x:%02x", sourceMac[0], sourceMac[1], sourceMac[2], sourceMac[3], sourceMac[4], sourceMac[5]);
-         printf("For MAC %s ", strMac);
+         printf("[%u] [HOMEPLUG] For MAC %s ", rtc_get_ms(), strMac);
          printf("software version %s\r\n", strVersion);
       }
       //addToTrace("For " + strMac + " the software version is " + String(strVersion));

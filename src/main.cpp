@@ -57,7 +57,6 @@
 #include "hardwareVariants.h"
 #include "acOBC.h"
 #include "wakecontrol.h"
-#include "serialRing.h"
 #ifdef ENABLE_PLCBOOT
 #include "plcboot.h"
 #endif
@@ -74,16 +73,9 @@ static Stm32Scheduler* scheduler;
 static CanHardware* can;
 static CanMap* canMap;
 static CanSdo* canSdo;
-static volatile uint8_t catchUpArmed; /* see schedulerCatchUp() */
 
 static void Ms100Task(void)
 {
-    static uint8_t runs;
-    if (runs < 3)
-        runs++;  /* arm the scheduler catch-up from the third run, once start-up is over */
-    else
-        catchUpArmed = 1;
-
     DigIo::led_alive.Toggle();
     //The boot loader enables the watchdog, we have to reset it
     //at least every 2s or otherwise the controller is hard reset.
@@ -100,7 +92,7 @@ static void Ms100Task(void)
     acOBC_mainfunction();
     hardwareInterface_WakeupOtherPeripherals();
     hwIf_handleInletVoltage();
-    serialRing_cyclic100ms(); //reports serial lines dropped because the ring was full
+    //serialRing_cyclic100ms(); //reports serial lines dropped because the ring was full
 
     //Watchdog
     int wd = Param::GetInt(Param::CanWatchdog);
@@ -200,98 +192,47 @@ void Param::Change(Param::PARAM_NUM paramNum)
     }
 }
 
-static void PrintTrace()
+static void PrintTrace(Terminal& t)
 {
     static int lastState = 0;
-    static uint32_t lastSttPrint = 0;
+    static uint32_t lastSttPrint = 0, lastDropped = 0;
     int state = Param::GetInt(Param::opmode);
     const char* label = pevSttLabels[state];
 
     if ((Param::GetInt(Param::logging) & MOD_PEV) && ((rtc_get_counter_val() - lastSttPrint) >= 100 || lastState != state))
     {
         lastSttPrint = rtc_get_counter_val();
-        printf("[%u] In state %s. TcpRetries %u\r\n", rtc_get_ms(), label, tcp_getTotalNumberOfRetries());
+        printf("[%u] [PEV] In state %s. TcpRetries %u\r\n", rtc_get_ms(), label, tcp_getTotalNumberOfRetries());
         lastState = state;
-    }
-}
-
-/* Scheduler catch-up after a task overran.
-   libopeninv's Stm32Scheduler::Run() moves a task's compare value on by one period, runs the task, and then clears the
-   channel's flag. If the task runs longer than its period, the compare match for its next run happens while it runs,
-   and that clear removes it: the 16-bit timer (100 kHz) reaches the compare value again only after it wraps, 655 ms
-   later. Ms30Task overruns in cycles that print a lot (the serial output blocks once its buffer is full), and then
-   doesn't run for about 650 ms: no modem reads, no state machine, no push button.
-   This runs after Run() and moves such a task's next start to CATCHUP_GAP_TICKS from now, when all of these hold:
-   - start-up is over (Ms100Task arms it from its third run; the timer is running);
-   - the task ran in this interrupt (Run() moved its compare value on);
-   - its match was lost: the new compare value is behind the counter by less than one period, and its flag isn't set;
-   - its previous run wasn't itself a catch-up. Two overruns in a row get the old behaviour (the 655 ms wait), so at
-     most one run in two is moved, never back to back, and there are always CATCHUP_GAP_TICKS free.
-   It only writes the compare value: it never raises the interrupt itself (doing so can make the interrupt run forever
-   while AddTask has the counter stopped) and it never prints; the main loop reports it. At worst it does nothing.
-   The root cause is in libopeninv (clearing the flag after running the task); this works around it here.
-   Tasks: Ms30Task on channel 1, Ms100Task on channel 2 (the order of AddTask in main). */
-#define CATCHUP_GAP_TICKS 200 /* 2 ms at 100 kHz */
-static const uint16_t taskPeriodTicks[2] = { 30 * 100, 100 * 100 };
-static uint8_t caughtUp[2];          /* the task's next run is a catch-up */
-static volatile uint16_t catchUpCount; /* catch-ups since power-on, reported by the main loop */
-static volatile uint8_t catchUpTask;   /* 0 Ms30Task, 1 Ms100Task: the last one caught up */
-static volatile uint16_t catchUpLateMs; /* how far its next start was already overdue */
-
-static void schedulerCatchUp(const uint16_t* ccrBefore)
-{
-    if (!catchUpArmed || !(TIM_CR1(TIM4) & TIM_CR1_CEN))
-        return;
-    for (int i = 0; i < 2; i++)
-    {
-        volatile uint32_t* ccr = i == 0 ? &TIM_CCR1(TIM4) : &TIM_CCR2(TIM4);
-        uint16_t now = timer_get_counter(TIM4);
-        uint16_t behind = now - (uint16_t)*ccr; /* less than a period if the next start has already passed */
-
-        if ((uint16_t)*ccr == ccrBefore[i])
-            continue; /* the task didn't run in this interrupt */
-        if (behind >= taskPeriodTicks[i] || timer_get_flag(TIM4, TIM_SR_CC1IF << i))
-        {
-            caughtUp[i] = 0; /* on time (or overdue by more than a period, or already pending): nothing to do */
-            continue;
+        if (lastDropped != t.GetDroppedLines()) {
+            lastDropped = t.GetDroppedLines();
+            addToTrace(MOD_SYS, "[SYSTEM] Total log lines dropped:", lastDropped);
         }
-        if (caughtUp[i])
-        {
-            caughtUp[i] = 0; /* the catch-up run overran too: leave the old behaviour */
-            continue;
-        }
-        *ccr = (uint16_t)(now + CATCHUP_GAP_TICKS);
-        caughtUp[i] = 1;
-        catchUpTask = i;
-        catchUpLateMs = behind / 100;
-        catchUpCount++;
     }
 }
 
 /* Reports the scheduler catch-ups from the main loop, never from the interrupt. */
-static void ReportCatchUps()
+static void ReportCatchUps(Stm32Scheduler& s)
 {
-    static uint16_t reported;
-    uint16_t count = catchUpCount;
+    static uint16_t taskOverruns[2];
 
-    if (count != reported)
-    {
-        reported = count;
-        printf("[%u] Scheduler: Ms%dTask overran, its next run moved forward (%d ms overdue; %u since power-on)\r\n",
-               rtc_get_ms(), catchUpTask == 0 ? 30 : 100, catchUpLateMs, (unsigned)count);
-    }
+    if (taskOverruns[0] < s.GetOverruns(0))
+       addToTrace(MOD_SYS, "[SYSTEM] Ms30Task overruns since power-on", s.GetOverruns(0));
+    if (taskOverruns[1] < s.GetOverruns(1))
+       addToTrace(MOD_SYS, "[SYSTEM] Ms100Task overruns since power-on", s.GetOverruns(1));
+
+    taskOverruns[0] = s.GetOverruns(0);
+    taskOverruns[1] = s.GetOverruns(1);
 }
 
 //Whichever timer(s) you use for the scheduler, you have to
 //implement their ISRs here and call into the respective scheduler
 extern "C" void tim4_isr(void)
 {
-    uint16_t ccrBefore[2] = { (uint16_t)TIM_CCR1(TIM4), (uint16_t)TIM_CCR2(TIM4) }; /* see schedulerCatchUp() */
     scheduler->Run();
-    schedulerCatchUp(ccrBefore);
 }
 
-extern "C" int main(void)
+int main(void)
 {
     extern const TERM_CMD termCmds[];
 
@@ -325,7 +266,8 @@ extern "C" int main(void)
     canSdo = &sdo;
 
     //This is all we need to do to set up a terminal on USART4
-    RingTerminal t(UART4, termCmds); //output through a ring buffer that never blocks (ccs/serialRing.cpp)
+    Terminal t(UART4, termCmds); //output through a ring buffer that never blocks (ccs/serialRing.cpp)
+    t.SetOverrunBehaviour(Terminal::OVERRUN_DROP);
     TerminalCommands::SetCanMap(canMap);
     SdoCommands::SetCanMap(canMap);
 
@@ -349,13 +291,6 @@ extern "C" int main(void)
     while(1)
     {
         char c = 0;
-        CanSdo::SdoFrame* sdoFrame = sdo.GetPendingUserspaceSdo();
-
-        if (0 != sdoFrame)
-        {
-           SdoCommands::ProcessStandardCommands(sdoFrame);
-           sdo.SendSdoReply(sdoFrame);
-        }
 
         if (sdo.GetPrintRequest() == PRINT_JSON)
         {
@@ -363,8 +298,8 @@ extern "C" int main(void)
         }
         else
         {
-            PrintTrace();
-            ReportCatchUps();
+            PrintTrace(t);
+            ReportCatchUps(s);
         }
         t.Run();
     }

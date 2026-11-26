@@ -32,7 +32,7 @@ CFLAGS		= -Os -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
 				 -fno-common -fno-builtin -DSTM32F1 \
 				 -mcpu=cortex-m3 -mthumb -std=gnu99 -ffunction-sections -fdata-sections
 CPPFLAGS    = -Os -ggdb -Wall -Wextra -Iinclude/ -Ilibopeninv/include -Ilibopencm3/include -Iexi -Iccs \
-				-fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 \
+				-fno-common -std=c++11 -pedantic -DSTM32F1 -DUSART_BAUDRATE=921600 -DTERM_BUF_DEPTH=512 \
 				-ffunction-sections -fdata-sections -fno-builtin -fno-rtti -fno-exceptions -fno-unwind-tables -mcpu=cortex-m3 -mthumb
 ASFLAGS     = $(CPPFLAGS) -x assembler-with-cpp
 # Check if the variable GITHUB_RUN_NUMBER exists. When running on the github actions running, this
@@ -49,7 +49,7 @@ OBJSL		  = main.o hwinit.o stm32scheduler.o params.o terminal.o terminal_prj.o \
 				 param_save.o errormessage.o stm32_can.o canhardware.o canmap.o cansdo.o \
 				 picontroller.o terminalcommands.o sdocommands.o \
 				 ipv6.o tcp.o \
-				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o acOBC.o wakecontrol.o serialRing.o v2gtp.o qcaframe.o appHandRequest.o \
+				 connMgr.o modemFinder.o pevStateMachine.o temperatures.o acOBC.o wakecontrol.o v2gtp.o qcaframe.o appHandRequest.o \
 				 hardwareInterface.o hwif_connectorlock.o hwif_inletvoltage.o hardwareVariants.o pushbutton.o udpChecksum.o \
 				 homeplug.o myHelpers.o qca7000.o \
 				 appHandEXIDatatypesDecoder.o ByteStream.o EncoderChannel.o \

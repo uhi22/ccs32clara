@@ -40,7 +40,7 @@
 
  //Define a version string of your firmware here
 
-#define VERSION 1.00
+#define VERSION 1.01
 
 #include "myLogging.h"
 
@@ -81,7 +81,7 @@
     PARAM_ENTRY(CAT_TEST,    DemoVoltage,          "V",       0,      500,    0,      20  ) \
     PARAM_ENTRY(CAT_TEST,    DemoControl,          DEMOCTRL,  0,      511,    0,      25  ) \
     TESTP_ENTRY(CAT_TEST,    ActuatorTest,         ACTEST,    0,      9,      0,      9   ) \
-    PARAM_ENTRY(CAT_TEST,    logging,              MODULES,   0,      2047,   DEFAULT_LOGGINGMASK,    15  ) \
+    PARAM_ENTRY(CAT_TEST,    logging,              MODULES,   0,      4095,   DEFAULT_LOGGINGMASK,    15  ) \
     VALUE_ENTRY(opmode,             pevSttString,    2000 ) \
     VALUE_ENTRY(version,            VERSTR,          2001 ) \
     VALUE_ENTRY(lasterr,            errorListString, 2002 ) \
@@ -130,7 +130,7 @@
 #define IVSRC        "0=ChargerOutput, 1=AnalogInput, 2=CAN"
 #define LOCK         "0=None, 1=Open, 2=Closed, 3=Opening, 4=Closing"
 #define ACTEST       "0=None, 1=OpenLock, 2=CloseLock, 3=Contactor1, 4=Contactor2, 5=ContactorBoth, 6=LedRed, 7=LedGreen, 8=LedBlue, 9=StateC"
-#define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 512=SDP, 1024=EthTraffic, 2047=All, 959=AllButTraffic"
+#define MODULES      "0=None, 1=ConnMgr, 2=HwInterface, 4=Homeplug, 8=StateMachine, 16=QCA, 32=Tcp, 64=TcpTraffic, 128=IPV6, 256=ModemFinder, 512=SDP, 1024=EthTraffic, 2048=System, 4095=All, 3007=AllButTraffic"
 #define CANSPEEDS    "0=125k, 1=250k, 2=500k, 3=800k, 4=1M"
 #define OFFON        "0=Off, 1=On"
 #define DEMOCTRL     "0=CAN, 234=StandAlone"
